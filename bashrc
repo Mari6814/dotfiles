@@ -4,8 +4,8 @@
 
 # If not running interactively, don't do anything
 case $- in
-    *i*) ;;
-      *) return;;
+    *i*) echo "sourcing interactive bashrc";;
+      *) echo "bashrc not sourced: Shell not interactive" && return;;
 esac
 
 # don't put duplicate lines or lines starting with space in the history.
@@ -102,6 +102,7 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 
 if [ -f ~/.bash_aliases ]; then
+    echo "bashrc sourcing bash_aliases"
     . ~/.bash_aliases
 fi
 

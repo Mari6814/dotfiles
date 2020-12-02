@@ -1,8 +1,10 @@
 
+# General aliases
 alias e="$EDITOR"
 alias ebash="e ~/.bashrc && source ~/.bashrc"
 alias eprofile="e ~/.profile && source ~/.profile"
 alias evim="e ~/.config/nvim/init.vim"
+alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
 
 # Create executable bash script and edit it
 function cmd {
@@ -46,12 +48,3 @@ alias clrnotes="rm $NOTES_FILE"
 alias cluster="ssh $CLUSTER"
 function lme() { ssh -L ${1:-8764}:localhost:${1:-8764} $LME; }
 
-function add-env-to-paths {
-    echo "Making env in: ${1:?'Usage: make-env <dir>'}"
-    [[ -d $1/bin ]] && export PATH="$1/bin:$PATH"
-    [[ -d $1/include ]] && export CXX_INCLUDE_PATH="$1/include:$CXX_INCLUDE_PATH"
-    [[ -d $1/lib ]] && export LD_LIBRARY_PATH="$1/lib:$LD_LIBRARY_PATH"
-    [[ -d $1/lib ]] && export LIBRARY_PATH="$1/lib:$LIBRARY_PATH"
-    [[ -d $1/lib64 ]] && export LD_LIBRARY_PATH="$1/lib64:$LD_LIBRARY_PATH"
-    [[ -d $1/lib64 ]] && export LIBRARY_PATH="$1/lib64:$LIBRARY_PATH"
-}

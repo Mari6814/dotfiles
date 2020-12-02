@@ -8,14 +8,6 @@
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
 
-# if running bash
-if [ -n "$BASH_VERSION" ]; then
-    # include .bashrc if it exists
-    if [ -f "$HOME/.bashrc" ]; then
-	. "$HOME/.bashrc"
-    fi
-fi
-
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/bin" ] ; then
     PATH="$HOME/bin:$PATH"
@@ -55,3 +47,11 @@ export NOTES_FILE="$HOME/notes.txt"
 export CLUSTER="cluster.i5.informatik.uni-erlangen.de"
 export LME="lme201.cs.fau.de"
 
+# if running bash
+if [ -n "$BASH_VERSION" ]; then
+    # include .bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+        echo "profile sourcing bashrc: $HOME/.bashrc"
+        . "$HOME/.bashrc"
+    fi
+fi

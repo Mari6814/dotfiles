@@ -1,54 +1,54 @@
 #!/bin/bash
 
-if [ -z $CLONE_DIR ]; then
-    echo 'error: Specify the clone directory target: CLONE_DIR'
-    return 1
+ROOT_DIR="$(realpath $(dirname $0))"
+
+if [ ! -d "$ROOT_DIR" ]; then
+    echo "error: Repository not at $ROOT_DIR"
+    exit 1
 fi
 
-if [ ! -d $CLONE_DIR]; then
-    echo "error: CLONE_DIR is not a directory."
-    return 1
+if [ ! -f "$ROOT_DIR/install.sh" ]; then
+    echo "error: Directory $ROOT_DIR is not the clone dir of this repo."
+    exit 1
 fi
 
-echo "git clone git@github.com:Marian6814/shell.git \"$CLONE_DIR\""
-git clone git@github.com:Marian6814/shell.git "$CLONE_DIR" || echo "error: Failed to clone repository" && return 1
+echo "Repository root at: $ROOT_DIR"
 
-SHELL_HOME=$CLONE_DIR/shell
-
-if [ ! -d "$SHELL_HOME" ]; then
-    echo "error: Failed to download repository to $SHELL_HOME"
-    return 1
-fi
-
-BACKUP_DIR=$SHELL_HOME/backup
+BACKUP_DIR=$ROOT_DIR/backup
 
 if [ -d "$BACKUP_DIR" ]; then
     echo "error: Backup directory $BACKUP_DIR already exists"
-    return 1
+    exit 1
 fi
 
 mkdir "$BACKUP_DIR"
 
 if [ ! -d "$BACKUP_DIR" ]; then
-    echo "error: Failed to create backup directory $BACKUP_DIR" && return 1
-    return 1
+    echo "error: Failed to create backup directory $BACKUP_DIR" && exit 1
+    exit 1
 fi
 
 cd $HOME
 
-FILES_TO_LINK="bachrc profile vimrc bash_aliases"
+FILES_TO_LINK="bashrc profile vimrc bash_aliases"
 
 for FILE in $FILES_TO_LINK
 do
-    if [ -f ".$FILE" ]; then
-        echo "mv \".$FILE\" \"$BACKUP_DIR/$FILE\""
-        if [ -f "$BACKUP_DIR/$FILE" ]; then
-            echo "error: File $FILE already exists in backup dir $BACKUP_DIR."
-            return 1
-        fi
-        mv ".$FILE" "$BACKUP_DIR/$FILE" || echo "error: Failed to move $FILE to backup dir $BACKUP_DIR" && return 1
-
-        echo "ln -s \".$FILE\" \"$SHELL_HOME/$FILE\""
-        ln -s .$FILE "$SHELL_HOME/$FILE" || echo "error: Failed to link file $FILE in $SHELL_HOME/$FILE" && return 1
+    SRC_FILE="$ROOT_DIR/$FILE"
+    ORIGINAL_FILE="$HOME/.$FILE"
+    BACKUP_FILE="$BACKUP_DIR/$FILE"
+    if [ ! -f "$SRC_FILE" ]; then
+        echo "internal error: Attempt to backup $FILE, but $FILE is not provided by this repository."
+        exit 1
     fi
+    if [ -f "$ORIGINAL_FILE" ]; then
+        echo "mv \"$ORIGINAL_FILE\" \"$BACKUP_FILE\""
+        if [ -f "$BACKUP_FILE" ]; then
+            echo "error: Unable to create backup of $ORIGINAL_FILE because backup already exists: $BACKUP_FILE"
+            exit 1
+        fi
+        mv "$ORIGINAL_FILE" "$BACKUP_DIR" || (echo "error: Failed to move $FILE to backup dir $BACKUP_DIR" && exit 1)
+    fi
+    echo "ln -s \"$SRC_FILE\" "\"$ORIGINAL_FILE\"
+    ln -s "$SRC_FILE" "$ORIGINAL_FILE" || (echo "error: Failed to link file $FILE in $SRC_FILE" && exit 1)
 done

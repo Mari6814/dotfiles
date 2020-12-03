@@ -36,7 +36,7 @@ fi
 
 cd $HOME
 
-FILES_TO_LINK="bachrc" "profile" "vimrc" "bash_aliases"
+FILES_TO_LINK="bachrc profile vimrc bash_aliases"
 
 for FILE in $FILES_TO_LINK
 do
@@ -51,4 +51,4 @@ do
         echo "ln -s \".$FILE\" \"$SHELL_HOME/$FILE\""
         ln -s .$FILE "$SHELL_HOME/$FILE" || echo "error: Failed to link file $FILE in $SHELL_HOME/$FILE" && return 1
     fi
-fi
+done

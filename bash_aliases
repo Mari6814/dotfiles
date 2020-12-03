@@ -1,10 +1,22 @@
 
 # General aliases
 alias e="$EDITOR"
+# Edit bashrc
 alias ebash="e ~/.bashrc && source ~/.bashrc"
+# Edit profile
 alias eprofile="e ~/.profile && source ~/.profile"
-alias evim="e ~/.config/nvim/init.vim"
+# Edit vim config
+alias evim="e ~/.vimrc"
+# Edit nvim config
+alias envim="e ~/.config/nvim/init.vim"
+# Edit bash aliases
 alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
+# keep tailing a file
+alias follow="tail -f"
+# Google something
+alias g="googler --count 3"
+# Search for a pattern in any file from the current cwd
+alias contains="grep -rnw . -e"
 
 # Create executable bash script and edit it
 function cmd {
@@ -20,7 +32,7 @@ function cmd {
     chmod +x $NAME
 }
 
-# Start recording the comm
+# Start recording the history and add it to an executable script file
 function reccmd {
     FILE=$1
     if [ -f $FILE ]
@@ -35,10 +47,16 @@ function reccmd {
 alias pip=pip3
 alias python=python3
 alias jn="python -m jupyter notebook"
-function ve { python -m venv ${1:-venv}; }
-function va { source ${1:-*}/bin/activate; }
+alias jl="jupyter notebook list"
+alias ipy=ipython
+alias py=python
+function venv { python -m venv ${1:-venv}; }
+function vactivate { source ${1:-*}/bin/activate; }
+alias va=vactivate
+alias ve=venv
 
 # NOTES
+export NOTES_FILE="$HOME/notes.txt"
 function note() { echo "$@" >> $NOTES_FILE; }
 alias n=note
 alias notes="cat $NOTES_FILE"

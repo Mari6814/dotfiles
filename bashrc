@@ -119,4 +119,4 @@ fi
 
 shopt -s direxpand
 shopt -s globstar
-
+set -o vi

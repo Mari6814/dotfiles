@@ -21,14 +21,10 @@ fi
 # GENERAL SETUP
 export LOCAL="$HOME/.local"
 export CONFIG="$HOME/.config"
-export BROWSER='/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe'
 export PROMPT_DIRTRIM=3
 export NVIMRC="$CONFIG/nvim/init.vim"
 export VIMRC="~/.vimrc"
 export EDITOR="nvim"
-
-# Activate the activate environment file in $LOCAL
-source "$LOCAL/activate"
 
 # FZF enable autocompletion
 source /usr/share/doc/fzf/examples/key-bindings.bash
@@ -39,9 +35,6 @@ source /usr/share/doc/fzf/examples/completion.bash
 export CUDA_HOME="/usr/local/cuda"
 export PATH="$CUDA_HOME/bin:$PATH"
 export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
-
-# File used by my 'note' alias
-export NOTES_FILE="$HOME/notes.txt"
 
 # MASTERARBEIT CLUSTER LME
 export CLUSTER="cluster.i5.informatik.uni-erlangen.de"

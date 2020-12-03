@@ -1,9 +1,17 @@
 set nocompatible
+filetype off
 
 call plug#begin('~/.vim/plugged')
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'SirVer/ultisnips'
+Plug 'easymotion/vim-easymotion'
+Plug 'terryma/vim-multiple-cursors'
+Plug 'vim-airline/vim-airline'
+Plug 'w0rp/ale'
+Plug 'airblade/vim-gitgutter'
 call plug#end()
+
+filetype plugin indent on
 
 " FZF configuration
 nmap <C-p> :FZF<CR>
@@ -46,8 +54,13 @@ set incsearch
 set ignorecase
 set smartcase
 set showmatch
-set listchars=tab:▸\ ,eol:¬
+set listchars=trail:·,nbsp:⎵,eol:¬,tab:▸\ ,extends:>,precedes:<
 set list
 set matchpairs+=<:>
 nmap ; :
 set hidden
+set wildmenu
+set wildignore+=**/node_modules/**
+set wildignore+=*.pyc
+set wildignore+=*.o
+

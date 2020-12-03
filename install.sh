@@ -47,6 +47,7 @@ do
             return 1
         fi
         mv ".$FILE" "$BACKUP_DIR/$FILE" || echo "error: Failed to move $FILE to backup dir $BACKUP_DIR" && return 1
+
         echo "ln -s \".$FILE\" \"$SHELL_HOME/$FILE\""
         ln -s .$FILE "$SHELL_HOME/$FILE" || echo "error: Failed to link file $FILE in $SHELL_HOME/$FILE" && return 1
     fi

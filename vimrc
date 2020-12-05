@@ -38,7 +38,7 @@ set visualbell
 set ruler
 set encoding=utf-8
 set wrap
-set textwidth=128
+set textwidth=0
 set formatoptions=tcqrn1
 set tabstop=4
 set shiftwidth=4
@@ -64,3 +64,4 @@ set wildignore+=**/node_modules/**
 set wildignore+=*.pyc
 set wildignore+=*.o
 
+let g:python3_host_prog = "/usr/local/bin/python3"

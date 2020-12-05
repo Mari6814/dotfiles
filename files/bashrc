@@ -132,4 +132,3 @@ if command -v npm &> /dev/null; then
     fi
 fi
 
-cd

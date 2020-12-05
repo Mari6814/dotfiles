@@ -22,19 +22,6 @@ fi
 
 echo "info: BACKUP_DIR is: $BACKUP_DIR"
 
-function do-backup-files {
-    echo "info: Backing up files in $INSTALL_PREFIX at backup location: $BACKUP_DIR"
-    for FILE in $PROVIDED_FILENAMES; do
-        local ORIGINAL="$INSTALL_PREFIX/.$FILE"
-        local BACKUP="$BACKUP_DIR/$FILE"
-        if [ -f "$ORIGINAL" ]; then
-            mv -v "$ORIGINAL" "$BACKUP"
-        else
-            echo "info: $FILE does not exist: Skipping backup"
-        fi
-    done
-}
-
 function restore-backed-up-files-and-delete-links {
     echo "info: Restoring backed up files in $BACKUP_DIR to $INSTALL_PREFIX"
     for FILE in $PROVIDED_FILENAMES; do
@@ -48,11 +35,43 @@ function restore-backed-up-files-and-delete-links {
             continue
         fi
         if [ -e "$LINK" ]; then
-            mv -v "$BACKUP" "$LINK"
+            echo "error: Unable to restore backed up file '$FILE' because the original location '$LINK' is still in use."
         else
-            echo "error: Unable to restore backed up file $FILE because the original location is still in use: $LINK"
+            mv -v "$BACKUP" "$LINK"
         fi
     done
+    if [  -d "$BACKUP_DIR" ]; then
+        rmdir -v "$BACKUP_DIR"
+        if [ -e "$BACKUP_DIR" ]; then
+            echo "error: Unable to remove old backup dir '$BACKUP_DIR'. Remove manually."
+        fi
+    fi
+}
+
+function do-backup-files {
+    echo "info: Backing up files in $INSTALL_PREFIX at backup location: $BACKUP_DIR"
+    if [ -d "$BACKUP_DIR" ]; then
+        echo "error: The backup directory must not exist prior to backing up files. Choose an empty one or delete the current one: $BACKUP_DIR"
+        exit 1
+    fi
+    if ! mkdir -p "$BACKUP_DIR"; then
+        echo "error: Failed to create empty backup directory: $BACKUP_DIR"
+    fi
+    local DID_DO_RENAME=false
+    for FILE in $PROVIDED_FILENAMES; do
+        local ORIGINAL="$INSTALL_PREFIX/.$FILE"
+        local BACKUP="$BACKUP_DIR/$FILE"
+        if [ -f "$ORIGINAL" ]; then
+            mv -v "$ORIGINAL" "$BACKUP"
+            local DID_DO_RENAME=true
+        else
+            echo "info: $FILE does not exist: Skipping backup"
+        fi
+    done
+    if [ "$DID_DO_RENAME" = false ]; then
+        echo "info: Deleting backup dir because no backups have been made."
+        rmdir -v "$BACKUP_DIR"
+    fi
 }
 
 function link-provided-files {
@@ -65,7 +84,7 @@ function link-provided-files {
             continue
         fi
         if [ -e "$LINK" ]; then
-            echo "error: Unable to link $FILE because the target location $LINK is still in use."
+            echo "error: Unable to link '$FILE' because the target location '$LINK' is still in use."
             continue
         fi
         ln -vs "$SOURCE" "$LINK"

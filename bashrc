@@ -117,6 +117,19 @@ if ! shopt -oq posix; then
   fi
 fi
 
+# General settings
 shopt -s direxpand
 shopt -s globstar
 set -o vi
+
+# Set the npm package install dir
+if command -v npm &> /dev/null; then
+    if [ -z "$LOCAL" ]; then
+        echo "error: npm is installed but variable LOCAL is not set: Unable to set npm install dir."
+    else
+        echo "npm is installed: Setting install directory to $LOCAL"
+        npm config set prefix ~/.local
+    fi
+fi
+
+cd

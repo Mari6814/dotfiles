@@ -3,7 +3,6 @@ filetype off
 
 call plug#begin('~/.vim/plugged')
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-Plug 'SirVer/ultisnips'
 Plug 'easymotion/vim-easymotion'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'vim-airline/vim-airline'
@@ -17,22 +16,22 @@ filetype plugin indent on
 nmap <C-p> :FZF<CR>
 imap <C-p> <C-o>:FZF<CR>
 
-
-" Ultisnipts configuration
-" Trigger configuration. You need to change this to something other than <tab> if you use one of the following:
-" - https://github.com/Valloric/YouCompleteMe
-" - https://github.com/nvim-lua/completion-nvim
-let g:UltiSnipsExpandTrigger="<tab>"
-let g:UltiSnipsJumpForwardTrigger="<c-b>"
-let g:UltiSnipsJumpBackwardTrigger="<c-z>"
-
-" If you want :UltiSnipsEdit to split your window.
-let g:UltiSnipsEditSplit="vertical"
+" Multicursor mapping
+let g:multi_cursor_use_default_mapping=0
+" Default mapping
+let g:multi_cursor_start_word_key      = '<C-n>'
+let g:multi_cursor_select_all_word_key = '<A-n>'
+let g:multi_cursor_start_key           = 'g<C-n>'
+let g:multi_cursor_select_all_key      = 'g<A-n>'
+let g:multi_cursor_next_key            = '<C-n>'
+let g:multi_cursor_prev_key            = '<C-p>'
+let g:multi_cursor_skip_key            = '<C-x>'
+let g:multi_cursor_quit_key            = '<Esc>'
 
 filetype plugin on
 syntax on
 filetype plugin indent on
-set modelines=0
+set modelines=1
 set number
 set visualbell
 set ruler
@@ -65,3 +64,4 @@ set wildignore+=*.pyc
 set wildignore+=*.o
 
 let g:python3_host_prog = "/usr/local/bin/python3"
+

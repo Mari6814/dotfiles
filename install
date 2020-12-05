@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd -v "$(dirname $0)"
+
+. ./functions
+
+restore-backed-up-files-and-delete-links
+do-backup-files
+link-provided-files

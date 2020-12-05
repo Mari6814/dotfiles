@@ -1,0 +1,74 @@
+#!/bin/bash
+
+PROVIDED_FILENAMES="bashrc vimrc bash_aliases profile"
+FILE_DIR="$(pwd)/files"
+
+for FILE in $PROVIDED_FILENAMES; do
+    if [ ! -f "$FILE_DIR/$FILE" ]; then
+        echo "internal error: Provided file $FILE does not exist."
+        exit 1
+    fi
+done
+
+if [ -z "$INSTALL_PREFIX" ]; then
+    INSTALL_PREFIX="$HOME"
+fi
+
+echo "info: INSTALL_PREFIX is: $INSTALL_PREFIX"
+
+if [ -z "$BACKUP_DIR" ]; then
+    BACKUP_DIR="$INSTALL_PREFIX/.shell-backup-dir"
+fi
+
+echo "info: BACKUP_DIR is: $BACKUP_DIR"
+
+function do-backup-files {
+    echo "info: Backing up files in $INSTALL_PREFIX at backup location: $BACKUP_DIR"
+    for FILE in $PROVIDED_FILENAMES; do
+        local ORIGINAL="$INSTALL_PREFIX/.$FILE"
+        local BACKUP="$BACKUP_DIR/$FILE"
+        if [ -f "$ORIGINAL" ]; then
+            mv -v "$ORIGINAL" "$BACKUP"
+        else
+            echo "info: $FILE does not exist: Skipping backup"
+        fi
+    done
+}
+
+function restore-backed-up-files-and-delete-links {
+    echo "info: Restoring backed up files in $BACKUP_DIR to $INSTALL_PREFIX"
+    for FILE in $PROVIDED_FILENAMES; do
+        local LINK="$INSTALL_PREFIX/.$FILE"
+        local BACKUP="$BACKUP_DIR/$FILE"
+        if [ -L "$LINK" ]; then
+            rm -v "$LINK"
+        fi
+        if [ ! -f "$BACKUP" ]; then
+            echo "info: No backup for $FILE found, skipping"
+            continue
+        fi
+        if [ -e "$LINK" ]; then
+            mv -v "$BACKUP" "$LINK"
+        else
+            echo "error: Unable to restore backed up file $FILE because the original location is still in use: $LINK"
+        fi
+    done
+}
+
+function link-provided-files {
+    echo "info: Linking provided files to $INSTALL_PREFIX"
+    for FILE in $PROVIDED_FILENAMES; do
+        local LINK="$INSTALL_PREFIX/.$FILE"
+        local SOURCE="$FILE_DIR/$FILE"
+        if [ ! -f "$SOURCE" ]; then
+            echo "error: Provided file $FILE not found in source repo."
+            continue
+        fi
+        if [ -e "$LINK" ]; then
+            echo "error: Unable to link $FILE because the target location $LINK is still in use."
+            continue
+        fi
+        ln -vs "$SOURCE" "$LINK"
+    done
+}
+

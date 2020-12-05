@@ -128,7 +128,7 @@ if command -v npm &> /dev/null; then
         echo "error: npm is installed but variable LOCAL is not set: Unable to set npm install dir."
     else
         echo "npm is installed: Setting install directory to $LOCAL"
-        npm config set prefix ~/.local
+        npm config set prefix "$LOCAL"
     fi
 fi
 

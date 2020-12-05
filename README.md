@@ -1,14 +1,19 @@
-# shell
+# Description
 My personal shell files.
 
+# Installation
 
-Link the included files from inside the home directory:
+Use the install and uninstall scripts to install and automaticall back up the previously used scripts in $HOME by default.
 
-```
-cd ~
-git clone --depth 1 git@github.com:Marian6814/shell.git
-ln -s shell/profile .profile
-ln -s shell/bashrc .bashrc
-ln -s shell/bash_aliases .bash_aliases
-ln -s shell/vimrc .vimrc
-```
+
+# Parameters
+
+Set `INSTALL_PREFIX` (default is `$HOME`) to specify the directory in which the files will be installed.
+
+Set `BACKUP_DIR` (default is `$INSTALL_PREFIX/.shell-backup-dir`) to control where the old files will be stored.
+
+
+# Uninstall
+
+Use the `uninstall` script to delete the symlinks and restore the previous files from the specified or default `BACKUP_DIR` variable.
+

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-PROVIDED_FILENAMES="bashrc vimrc bash_aliases profile"
 FILE_DIR="$(pwd)/files"
+PROVIDED_FILENAMES="$(find $FILE_DIR/* -printf '%f ')"
 
 for FILE in $PROVIDED_FILENAMES; do
     if [ ! -f "$FILE_DIR/$FILE" ]; then

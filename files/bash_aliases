@@ -68,3 +68,8 @@ alias clrnotes="rm $NOTES_FILE"
 # MASTERARBEIT CLUSTER LME
 alias cluster="ssh $CLUSTER"
 function lme() { ssh -L ${1:-8764}:localhost:${1:-8764} $LME; }
+
+# Source machine local aliases
+if [ -f $LOCAL/bash_aliases ]; then
+    . "$LOCAL/bash_aliases"
+fi

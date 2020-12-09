@@ -136,3 +136,9 @@ fi
 if command -v screen &> /dev/null; then
     screen -ls
 fi
+
+# Source machine local bashrc
+if [ -f $LOCAL/bashrc ]; then
+    . "$LOCAL/bashrc"
+fi
+

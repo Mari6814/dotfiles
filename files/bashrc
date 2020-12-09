@@ -132,3 +132,7 @@ if command -v npm &> /dev/null; then
     fi
 fi
 
+# Print the screen list on startup
+if command -v screen &> /dev/null; then
+    screen -ls
+fi

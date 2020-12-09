@@ -132,3 +132,8 @@ if command -v npm &> /dev/null; then
     fi
 fi
 
+# Source machine local bashrc
+if [ -f $LOCAL/bashrc ]; then
+    . "$LOCAL/bashrc"
+fi
+

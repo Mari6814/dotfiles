@@ -26,11 +26,6 @@ export NVIMRC="$CONFIG/nvim/init.vim"
 export VIMRC="~/.vimrc"
 export EDITOR="nvim"
 
-# FZF enable autocompletion
-source /usr/share/doc/fzf/examples/key-bindings.bash
-source /usr/share/doc/fzf/examples/completion.bash
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
-
 # CUDA tensorflow torch
 export CUDA_HOME="/usr/local/cuda"
 export PATH="$CUDA_HOME/bin:$PATH"

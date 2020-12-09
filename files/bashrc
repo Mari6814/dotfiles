@@ -137,6 +137,17 @@ if command -v screen &> /dev/null; then
     screen -ls
 fi
 
+# FZF enable autocompletion
+if [ -f /usr/share/doc/fzf/examples/key-bindings.bash ]; then
+    . /usr/share/doc/fzf/examples/key-bindings.bash
+fi
+if [ -f /usr/share/doc/fzf/examples/completion.bash ]; then
+    . /usr/share/doc/fzf/examples/completion.bash
+fi
+if [ -f ~/.fzf.bash ]; then
+    . ~/.fzf.bash
+fi
+
 # Source machine local bashrc
 if [ -f $LOCAL/bashrc ]; then
     . "$LOCAL/bashrc"

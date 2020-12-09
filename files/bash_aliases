@@ -17,6 +17,8 @@ alias follow="tail -f"
 alias g="googler --count 3"
 # Search for a pattern in any file from the current cwd
 alias contains="grep -rnw . -e"
+# Youtube dl
+alias youtube-mp3="youtube-dl --extract-audio --audio-format mp3"
 
 # Create executable bash script and edit it
 function cmd {
@@ -52,8 +54,9 @@ alias ipy=ipython
 alias py=python
 function venv { python -m venv ${1:-venv}; }
 function vactivate { source ${1:-*}/bin/activate; }
-alias va=vactivate
 alias ve=venv
+alias va=vactivate
+alias vd=deactivate
 
 # NOTES
 export NOTES_FILE="$HOME/notes.txt"

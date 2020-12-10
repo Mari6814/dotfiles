@@ -1,6 +1,8 @@
 
 # General aliases
-alias e="$EDITOR"
+function e {
+    $EDITOR
+}
 # Edit bashrc
 alias ebash="e ~/.bashrc && source ~/.bashrc"
 # Edit profile

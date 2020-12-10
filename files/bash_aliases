@@ -52,6 +52,10 @@ alias jn="python -m jupyter notebook"
 alias jl="jupyter notebook list"
 alias ipy=ipython
 alias py=python
+alias m3="python3 -m"
+alias m="m3"
+
+# Virtual Env / venv
 function venv { python -m venv ${1:-venv}; }
 function vactivate { source ${1:-*}/bin/activate; }
 alias ve=venv

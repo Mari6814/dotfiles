@@ -9,14 +9,10 @@
 #umask 022
 
 # set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
-fi
+[ -d "$HOME/bin" ] && PATH="$HOME/bin:$PATH"
 
 # set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ] ; then
-    PATH="$HOME/.local/bin:$PATH"
-fi
+[ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
 
 # GENERAL SETUP
 export LOCAL="$HOME/.local"
@@ -60,7 +56,5 @@ fi
 [ -f "~/.fzf.bash" ] && . ~/.fzf.bash
 
 # source machine local profile
-if [ -f $LOCAL/profile ]; then
-    . "$LOCAL/profile"
-fi
+[ -f "$LOCAL/profile" ] && . "$LOCAL/profile"
 

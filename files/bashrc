@@ -128,6 +128,3 @@ command -v screen >/dev/null && screen -ls
 # Source machine local bashrc
 [ -f "$LOCAL/bashrc" ] && . "$LOCAL/bashrc"
 
-git --git-dir "$(dirname $(realpath ~/.bashrc))/../.git" pull >/dev/null &
-
-echo test

@@ -44,6 +44,21 @@ if [ -n "$BASH_VERSION" ]; then
     fi
 fi
 
+# Set the npm package install dir
+if command -v npm &> /dev/null; then
+    if [ -z "$LOCAL" ]; then
+        echo "error: npm is installed but variable LOCAL is not set: Unable to set npm install dir."
+    elif [ ! "$(npm config get prefix)" == "$LOCAL" ]; then
+        echo "npm is installed: Setting install directory to $LOCAL"
+        npm config set prefix "$LOCAL"
+    fi
+fi
+
+# FZF enable autocompletion
+[ -f "/usr/share/doc/fzf/examples/key-bindings.bash" ] && . /usr/share/doc/fzf/examples/key-bindings.bash
+[ -f "/usr/share/doc/fzf/examples/completion.bash" ] && . /usr/share/doc/fzf/examples/completion.bash
+[ -f "~/.fzf.bash" ] && . ~/.fzf.bash
+
 # source machine local profile
 if [ -f $LOCAL/profile ]; then
     . "$LOCAL/profile"

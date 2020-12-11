@@ -22,6 +22,11 @@ alias contains="grep -rnw . -e"
 # Youtube dl
 alias youtube-mp3="youtube-dl --extract-audio --audio-format mp3"
 
+# Git shortcuts
+alias gs="git status"
+alias gp="git push"
+alias gcam="git commit -am"
+
 # Create executable bash script and edit it
 function cmd {
     NAME="${1:?'Usage: cmd <name>'}"

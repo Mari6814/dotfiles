@@ -55,6 +55,11 @@ fi
 [ -f "/usr/share/doc/fzf/examples/completion.bash" ] && . /usr/share/doc/fzf/examples/completion.bash
 [ -f "~/.fzf.bash" ] && . ~/.fzf.bash
 
+# Add Rust to path
+[ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
 # source machine local profile
 [ -f "$LOCAL/profile" ] && . "$LOCAL/profile"
 
+source "$HOME/.cargo/env"

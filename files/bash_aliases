@@ -80,6 +80,16 @@ alias clrnotes="rm $NOTES_FILE"
 alias cluster="ssh $CLUSTER"
 function lme() { ssh -L ${1:-8764}:localhost:${1:-8764} $LME; }
 
+# Secrets
+function encrypt {
+    [ -z "$1" ] && echo "usage: encrypt <outfile>" && return 1
+    [ -e "$1" ] && echo "err: File $1 already exists." && return 1
+    secret=$(openssl aes-256-cbc -e -a -salt -pbkdf2 -iter 100000)
+    echo "#!/bin/sh" >> "$1"
+    echo "echo $secret | openssl aes-256-cbc -d -a -salt -pbkdf2 -iter 100000" >> "$1"
+    chmod +x "$1"
+}
+
 # Source machine local aliases
 if [ -f $LOCAL/bash_aliases ]; then
     . "$LOCAL/bash_aliases"

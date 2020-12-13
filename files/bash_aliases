@@ -86,7 +86,7 @@ function encrypt {
     [ -e "$1" ] && echo "err: File $1 already exists." && return 1
     secret=$(openssl aes-256-cbc -e -a -salt -pbkdf2 -iter 100000)
     echo "#!/bin/sh" >> "$1"
-    echo "echo $secret | openssl aes-256-cbc -d -a -salt -pbkdf2 -iter 100000" >> "$1"
+    echo "echo $secret | openssl aes-256-cbc -d -a -salt -pbkdf2 -iter 100000 \$@" >> "$1"
     chmod +x "$1"
 }
 

@@ -5,7 +5,7 @@
 # If not running interactively, don't do anything
 case $- in
     *i*) echo "sourcing interactive bashrc" >&2 ;;
-      *) echo return;; #"bashrc not sourced: Shell not interactive" && return;;
+      *) return;; #"bashrc not sourced: Shell not interactive" && return;;
 esac
 
 # don't put duplicate lines or lines starting with space in the history.

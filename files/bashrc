@@ -4,7 +4,7 @@
 
 # If not running interactively, don't do anything
 case $- in
-    *i*) echo "sourcing interactive bashrc";;
+    *i*) echo "sourcing interactive bashrc" >&2 ;;
       *) echo return;; #"bashrc not sourced: Shell not interactive" && return;;
 esac
 
@@ -102,7 +102,7 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 
 if [ -f ~/.bash_aliases ]; then
-    echo "bashrc sourcing bash_aliases"
+    echo "bashrc sourcing bash_aliases" >&2
     . ~/.bash_aliases
 fi
 
@@ -123,7 +123,7 @@ shopt -s globstar
 set -o vi
 
 # Print the screen list on startup
-command -v screen >/dev/null && screen -ls
+command -v screen >/dev/null && screen -ls >&2
 
 # Source machine local bashrc
 [ -f "$LOCAL/bashrc" ] && . "$LOCAL/bashrc"

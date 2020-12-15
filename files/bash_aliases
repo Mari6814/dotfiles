@@ -1,4 +1,6 @@
 
+# easy back cd command
+alias ..="cd .."
 # General aliases
 function e {
     $EDITOR $@

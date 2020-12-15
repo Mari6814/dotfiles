@@ -62,4 +62,3 @@ fi
 # source machine local profile
 [ -f "$LOCAL/profile" ] && . "$LOCAL/profile"
 
-source "$HOME/.cargo/env"

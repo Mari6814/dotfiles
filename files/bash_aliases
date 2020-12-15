@@ -32,26 +32,18 @@ alias gcam="git commit -am"
 # Create executable bash script and edit it
 function cmd {
     NAME="${1:?'Usage: cmd <cmdname>'}"
-    if [ -f $NAME ]
-    then
-        echo "Command already exists: $NAME"
-        return 1
-    fi
+    [ -e $NAME ] && echo "Command already exists: $NAME" && return 1
     echo "Creating command: $NAME"
-    echo '#!/bin/bash' >> $NAME
-    e $NAME
-    chmod +x $NAME
+    echo '#!/bin/bash' >> "$NAME"
+    e "$NAME"
+    chmod +x "$NAME"
 }
 
 # Start recording the history and add it to an executable script file
 function reccmd {
     FILE=${1:?'Usage reccmd <cmdname>'}
-    if [ -f $FILE ]
-    then
-        echo "File already exists: $FILE"
-        return 1
-    fi
-    tee "${FILE:?'Usage: reccmd <FILE>'}" | bash
+    [ -e $FILE ] && echo "Command already exists: $FILE" && return 1
+    tee "$FILE" | (bash && chmod +x "$FILE")
 }
 
 # PYTHON

@@ -1,6 +1,22 @@
 
 # easy back cd command
 alias ..="cd .."
+# Virtaul env auto
+function cd {
+    builtin cd $1
+    if [ -z "$VIRTUAL_ENV" ]; then
+        if [ -f ./venv/bin/activate ]; then
+            . ./venv/bin/activate
+        fi
+    else
+        local CURRENT="$(realpath $(pwd))"
+        local ROOT="$(realpath $VIRTUAL_ENV/..)"
+        case $CURRENT/ in
+            $ROOT/*) ;; # Still inside venv
+            *) deactivate;; # Not in venv hierarchy anymore
+        esac
+    fi
+}
 # General aliases
 function e {
     $EDITOR $@

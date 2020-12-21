@@ -22,7 +22,7 @@ function cd {
 }
 # General aliases
 function e {
-    $EDITOR $@
+    "$EDITOR" "$@"
 }
 # Edit bashrc
 alias ebash="e ~/.bashrc && source ~/.bashrc"

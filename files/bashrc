@@ -119,11 +119,13 @@ set -o vi
 
 # Source machine local bashrc
 if [ -f "$LOCAL/bashrc" ]; then
+    echo "bashrc: Sourcing local bashrc"
     . "$LOCAL/bashrc"
 fi
 
 # Source aliases
 if [ -f ~/.bash_aliases ]; then
+    echo "bashrc: Sourcing aliases"
     . ~/.bash_aliases
 fi
 

@@ -14,6 +14,10 @@
 # set PATH so it includes user's private bin if it exists
 [ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
 
+# Mark this as loaded
+export PROFILE="$HOME/.profile"
+case $- in *i*) echo "profile: $PROFILE";; esac
+
 # GENERAL SETUP
 export LOCAL="$HOME/.local"
 export CONFIG="$HOME/.config"
@@ -52,6 +56,5 @@ fi
 
 # source machine local profile
 if [ -f "$LOCAL/profile" ]; then
-    echo "profile: Sourcing local profile"
     . "$LOCAL/profile"
 fi

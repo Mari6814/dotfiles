@@ -1,0 +1,10 @@
+export BASH_PROFILE="$HOME/.bash_profile"
+case $- in *i*) echo "bash_profile: $BASH_PROFILE";; esac
+
+if [ -f ~/.profile ]; then
+    . ~/.profile
+fi
+
+if [ -f ~/.bashrc ]; then
+	. ~/.bashrc
+fi

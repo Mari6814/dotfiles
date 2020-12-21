@@ -4,7 +4,7 @@
 
 # If not running interactively, don't do anything
 case $- in
-    *i*) echo "sourcing interactive bashrc" >&2 ;;
+    *i*) echo "bashrc: Sourced interactively" >&2 ;;
       *) return;; #"bashrc not sourced: Shell not interactive" && return;;
 esac
 
@@ -112,6 +112,10 @@ if ! shopt -oq posix; then
   fi
 fi
 
+# Mark this as loaded
+export BASHRC="$HOME/.bashrc"
+case $- in *i*) echo "bashrc: $BASHRC";; esac
+
 # General settings
 shopt -s direxpand
 shopt -s globstar
@@ -119,13 +123,11 @@ set -o vi
 
 # Source machine local bashrc
 if [ -f "$LOCAL/bashrc" ]; then
-    echo "bashrc: Sourcing local bashrc"
     . "$LOCAL/bashrc"
 fi
 
 # Source aliases
 if [ -f ~/.bash_aliases ]; then
-    echo "bashrc: Sourcing aliases"
     . ~/.bash_aliases
 fi
 

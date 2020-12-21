@@ -1,3 +1,6 @@
+# Mark this as loaded
+export BASH_ALIASES="$HOME/.bash_aliases"
+case $- in *i*) echo "bash_aliases: $BASH_ALIASES";; esac
 
 # easy back cd command
 alias ..="cd .."

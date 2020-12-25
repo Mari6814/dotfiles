@@ -42,6 +42,8 @@ alias g="googler --count 3"
 alias contains="grep -rnw . -e"
 # Youtube dl
 alias youtube-mp3="youtube-dl --extract-audio --audio-format mp3"
+# shortcut for nvidia-smi
+alias smi=nvidia-smi
 
 # Git shortcuts
 alias gs="git status"

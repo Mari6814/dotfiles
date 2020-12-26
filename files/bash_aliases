@@ -70,7 +70,7 @@ function reccmd {
 # PYTHON
 alias pip=pip3
 alias python=python3
-alias jn="python -m jupyter notebook"
+alias jn="jupyter notebook"
 alias jl="jupyter notebook list"
 alias ipy=ipython
 alias py=python
@@ -93,7 +93,10 @@ alias clrnotes="rm $NOTES_FILE"
 
 # MASTERARBEIT CLUSTER LME
 alias cluster="ssh $CLUSTER"
-function lme() { ssh -L ${1:-8764}:localhost:${1:-8764} $LME; }
+function lme() {
+    local cmd="export PORT=${1:-8764}; bash -l"
+    ssh -tL ${1:-8764}:localhost:${1:-8764} "$LME" "$cmd"
+}
 
 # Secrets
 function encrypt {

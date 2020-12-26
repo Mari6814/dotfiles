@@ -94,8 +94,12 @@ alias clrnotes="rm $NOTES_FILE"
 # MASTERARBEIT CLUSTER LME
 alias cluster="ssh $CLUSTER"
 function lme() {
-    local cmd="export PORT=${1:-8080}; bash -l"
-    ssh -tL ${1:-8080}:localhost:${1:-8080} "$LME" "$cmd"
+    if [ -z "$1" ]; then
+        ssh $LME
+    else
+        local cmd="export PORT=$1; bash -l"
+        ssh -tL $1:localhost:$1 "$LME" "$cmd"
+    fi
 }
 
 # Secrets

@@ -70,7 +70,7 @@ function reccmd {
 # PYTHON
 alias pip=pip3
 alias python=python3
-alias jn="jupyter notebook"
+function jn { jupyter notebook --port ${1:-${PORT:-8888}}; }
 alias jl="jupyter notebook list"
 alias ipy=ipython
 alias py=python

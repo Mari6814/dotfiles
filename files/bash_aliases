@@ -78,7 +78,7 @@ alias m3="python3 -m"
 alias m="m3"
 
 # Virtual Env / venv
-function venv { python -m venv ${1:-venv}; }
+function venv { python -m venv ${1:-venv} && vactivate; }
 function vactivate { source ${1:-*}/bin/activate; }
 alias ve=venv
 alias va=vactivate

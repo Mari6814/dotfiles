@@ -1,5 +1,5 @@
 set nocompatible
-filetype off
+filetype plugin on
 
 call plug#begin('~/.vim/plugged')
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
@@ -10,6 +10,7 @@ Plug 'w0rp/ale'
 Plug 'airblade/vim-gitgutter'
 Plug 'tell-k/vim-autopep8'
 Plug 'tpope/vim-fugitive'
+Plug 'rust-lang/rust.vim'
 call plug#end()
 
 filetype plugin indent on

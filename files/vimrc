@@ -68,3 +68,8 @@ set wildignore+=*.o
 
 let g:python3_host_prog = "/usr/local/bin/python3"
 
+" Forces block cursor for some terminals that don't have it already
+let &t_ti.="\e[1 q"
+let &t_SI.="\e[5 q"
+let &t_EI.="\e[1 q"
+let &t_te.="\e[0 q"

@@ -20,6 +20,10 @@ function cd {
         esac
     fi
 }
+# Get used ports
+function get-used-ports {
+    lsof -i tcp -s tcp:listen | awk '$8 == "TCP" { print $9 }'
+}
 # General aliases
 function e {
     "$EDITOR" "$@"

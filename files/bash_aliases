@@ -20,19 +20,29 @@ function cd {
         esac
     fi
 }
-function get-used-ports {
-    lsof -i tcp -s tcp:listen | awk '$8 == "TCP" { split($9,a,":"); print $a[2] }'
+function ports-in-use {
+    lsof -i tcp -s tcp:listen | awk '$8 == "TCP" { split($9,a,":"); print a[2] }'
 }
 function forward-open-ports {
     if [ -z $1 ]; then
         echo err: Missing hostname >&2
         return 1
     fi
-    local REMOTE_COMMAND="$(declare -f get-used-ports); get-used-ports"
+    local REMOTE_COMMAND="$(declare -f ports-in-use); ports-in-use"
     local PORTS="$(ssh -T $1 "$REMOTE_COMMAND")"
     for PORT in $PORTS; do
-        echo Forwarding: $PORT
+        echo http://localhost:$PORT
+        ssh -NfL "$PORT:localhost:$PORT" "$1"
     done
+}
+function forward-port {
+    if [ -z $1 ]; then
+        echo err: Missing hostname:port >&2
+        return 1
+    fi
+    local HOST=$(echo $1 | awk '{ split($1,a,":"); print a[1] }')
+    local PORT=$(echo $1 | awk '{ split($1,a,":"); print a[2] }')
+    ssh -NL "${PORT:-$2}:localhost:$PORT" "$HOST"
 }
 # General aliases
 function e {

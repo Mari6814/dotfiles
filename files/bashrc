@@ -121,13 +121,34 @@ shopt -s direxpand
 shopt -s globstar
 set -o vi
 
-# Source machine local bashrc
-if [ -f "$LOCAL/bashrc" ]; then
-    . "$LOCAL/bashrc"
-fi
+# GENERAL VARIABLES
+export LOCAL="$HOME/.local"
+export CONFIG="$HOME/.config"
+export PROMPT_DIRTRIM=3
+export NVIMRC="$CONFIG/nvim/init.vim"
+export VIMRC="~/.vimrc"
+export EDITOR="nvim"
 
+# MASTERARBEIT CLUSTER LME
+export CLUSTER="cluster.i5.informatik.uni-erlangen.de"
+export LME="lme201.cs.fau.de"
+
+# Set the npm package install dir
+if command -v npm &> /dev/null; then
+    if [ -z "$LOCAL" ]; then
+        echo "error: npm is installed but variable LOCAL is not set: Unable to set npm install dir." >&2
+    elif [ ! "$(npm config get prefix)" == "$LOCAL" ]; then
+        echo "npm is installed: Setting install directory to $LOCAL" >&2
+        npm config set prefix "$LOCAL"
+    fi
+fi
 # Source aliases
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
+fi
+
+# Source machine local bashrc
+if [ -f "$LOCAL/bashrc" ]; then
+    . "$LOCAL/bashrc"
 fi
 

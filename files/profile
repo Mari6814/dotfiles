@@ -16,34 +16,12 @@
 
 # Mark this as loaded
 export PROFILE="$HOME/.profile"
-case $- in *i*) echo "profile: $PROFILE";; esac
-
-# GENERAL SETUP
-export LOCAL="$HOME/.local"
-export CONFIG="$HOME/.config"
-export PROMPT_DIRTRIM=3
-export NVIMRC="$CONFIG/nvim/init.vim"
-export VIMRC="~/.vimrc"
-export EDITOR="nvim"
+case $- in *i*) echo "profile: $PROFILE" >&2;; esac
 
 # CUDA tensorflow torch
 export CUDA_HOME="/usr/local/cuda"
 export PATH="$CUDA_HOME/bin:$PATH"
 export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
-
-# MASTERARBEIT CLUSTER LME
-export CLUSTER="cluster.i5.informatik.uni-erlangen.de"
-export LME="lme201.cs.fau.de"
-
-# Set the npm package install dir
-if command -v npm &> /dev/null; then
-    if [ -z "$LOCAL" ]; then
-        echo "error: npm is installed but variable LOCAL is not set: Unable to set npm install dir." >&2
-    elif [ ! "$(npm config get prefix)" == "$LOCAL" ]; then
-        echo "npm is installed: Setting install directory to $LOCAL" >&2
-        npm config set prefix "$LOCAL"
-    fi
-fi
 
 # FZF enable autocompletion
 [ -f "/usr/share/doc/fzf/examples/key-bindings.bash" ] && . /usr/share/doc/fzf/examples/key-bindings.bash

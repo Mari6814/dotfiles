@@ -1,6 +1,6 @@
 # Mark this as loaded
 export BASH_ALIASES="$HOME/.bash_aliases"
-case $- in *i*) echo "bash_aliases: $BASH_ALIASES";; esac
+case $- in *i*) echo "bash_aliases: $BASH_ALIASES" >&2;; esac
 
 # easy back cd command
 alias ..="cd .."

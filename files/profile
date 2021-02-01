@@ -33,6 +33,6 @@ export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # source machine local profile
-if [ -f "$LOCAL/profile" ]; then
-    . "$LOCAL/profile"
+if [ -f "$HOME/.local/profile" ]; then
+    . "$HOME/.local/profile"
 fi

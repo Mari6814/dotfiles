@@ -139,6 +139,6 @@ function encrypt {
 }
 
 # Source machine local aliases
-if [ -f $LOCAL/bash_aliases ]; then
-    . "$LOCAL/bash_aliases"
+if [ -f $HOME/.local/bash_aliases ]; then
+    . $HOME/.local/bash_aliases
 fi

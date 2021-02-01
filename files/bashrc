@@ -126,7 +126,6 @@ export LOCAL="$HOME/.local"
 export CONFIG="$HOME/.config"
 export PROMPT_DIRTRIM=3
 export NVIMRC="$CONFIG/nvim/init.vim"
-export VIMRC="~/.vimrc"
 export EDITOR="nvim"
 
 # MASTERARBEIT CLUSTER LME

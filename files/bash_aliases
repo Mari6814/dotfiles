@@ -124,7 +124,7 @@ function lme() {
         ssh $LME
     else
         local cmd="export PORT=$1; bash -l"
-        ssh -tL $1:localhost:$1 "$LME" "$cmd"
+        ssh -tL $1:localhost:$1 "${2:-$LME}" "$cmd"
     fi
 }
 
@@ -142,3 +142,6 @@ function encrypt {
 if [ -f $HOME/.local/bash_aliases ]; then
     . $HOME/.local/bash_aliases
 fi
+
+# Used to chain to long commands. Makes bell sound.
+alias bell="tput bel"

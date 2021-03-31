@@ -32,9 +32,11 @@ function mkvdir {
         echo "err: Missing glob output as argument 2.." >&2
         return 1
     fi
-    mkdir "$1"
-    for path in $@; do
-        ln -vs "$path" "$1/$(basename $path)"
+    DIRNAME="$1"
+    shift
+    mkdir "$DIRNAME"
+    for path in "$@"; do
+        ln -vs "$(realpath $path)" "$DIRNAME/$(basename $path)"
     done
 }
 

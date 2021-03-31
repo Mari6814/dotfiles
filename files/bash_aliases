@@ -20,6 +20,24 @@ function cd {
         esac
     fi
 }
+
+# Create a virtual folder out of a glob
+function mkvdir {
+    USAGE="usage:  <dirname> FILE [FILES ...]"
+    if [ -z "$1" ]; then
+        echo $USAGE >&2
+        return 1
+    fi
+    if [ -z "$2" ]; then
+        echo "err: Missing glob output as argument 2.." >&2
+        return 1
+    fi
+    mkdir "$1"
+    for path in $@; do
+        ln -vs "$path" "$1/$(basename $path)"
+    done
+}
+
 function ports-in-use {
     lsof -i tcp -s tcp:listen | awk '$8 == "TCP" { split($9,a,":"); print a[2] }'
 }
@@ -126,6 +144,13 @@ function lme() {
         local cmd="export PORT=$1; bash -l"
         ssh -tL $1:localhost:$1 "${2:-$LME}" "$cmd"
     fi
+}
+function lme-tb() {
+    if [ -z "$1" ]; then
+        echo "err: Missing port" >&2
+        return 1
+    fi
+    ssh -tL $1:localhost:$1 "${2:-$LME}" "cd source/grad-cam && tensorboard --logdir *logs* --port $1"
 }
 
 # Secrets

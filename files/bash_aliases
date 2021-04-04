@@ -116,7 +116,7 @@ alias pip=pip3
 alias python=python3
 alias tb="tensorboard"
 alias tl="tensorboard --logdir *logs*"
-function jn { jupyter notebook --port ${1:-${PORT:-8888}}; }
+function jn { jupyter notebook --no-browser --port ${1:-${PORT:-8888}}; }
 alias jl="jupyter notebook list"
 alias ipy=ipython
 alias py=python

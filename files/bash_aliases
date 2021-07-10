@@ -8,8 +8,8 @@ alias ..="cd .."
 function cd {
     builtin cd $1
     if [ -z "$VIRTUAL_ENV" ]; then
-        if [ -f ./venv/bin/activate ]; then
-            . ./venv/bin/activate
+        if [ -f .venv/bin/activate ]; then
+            . .venv/bin/activate
         fi
     else
         local CURRENT="$(realpath $(pwd))"
@@ -147,13 +147,6 @@ function lme() {
         ssh -tL $1:localhost:$1 "${2:-$LME}" "$cmd"
     fi
 }
-function lme-tb() {
-    if [ -z "$1" ]; then
-        echo "err: Missing port" >&2
-        return 1
-    fi
-    ssh -tL $1:localhost:$1 "${2:-$LME}" "cd source/grad-cam && tensorboard --logdir *logs* --port $1"
-}
 
 # Secrets
 function encrypt {
@@ -169,6 +162,3 @@ function encrypt {
 if [ -f $HOME/.local/bash_aliases ]; then
     . $HOME/.local/bash_aliases
 fi
-
-# Used to chain to long commands. Makes bell sound.
-alias bell="tput bel"

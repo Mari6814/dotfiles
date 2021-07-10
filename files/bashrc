@@ -154,3 +154,5 @@ if [ -f "$LOCAL/bashrc" ]; then
     . "$LOCAL/bashrc"
 fi
 
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash

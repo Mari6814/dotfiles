@@ -2,6 +2,8 @@
 export BASH_ALIASES="$HOME/.bash_aliases"
 case $- in *i*) echo "bash_aliases: $BASH_ALIASES" >&2;; esac
 
+# Shortcut for poetry
+alias p=poetry
 # easy back cd command
 alias ..="cd .."
 # Virtaul env auto
@@ -125,7 +127,7 @@ alias m="m3"
 
 # Virtual Env / venv
 function venv { python -m venv ${1:-venv} && vactivate; }
-function vactivate { source ${1:-*}/bin/activate; }
+function vactivate { source ${1:-?(.)*}/bin/activate; }
 alias ve=venv
 alias va=vactivate
 alias vd=deactivate

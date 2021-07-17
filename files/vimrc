@@ -57,14 +57,11 @@ let &t_SI.="\e[5 q"
 let &t_EI.="\e[1 q"
 let &t_te.="\e[0 q"
 
-" <Space> for mapleader
-let mapleader=" "
-nnoremap <SPACE> <Nop>
-noremap <Leader>b :NERDTree<CR>
-
 imap <C-j> <C-o>j
 imap <C-k> <C-o>k
 imap <C-h> <C-o>h
 imap <C-l> <C-o>l
 nmap ; :
-
+noremap <Leader>b :NERDTree<CR>
+au FileType todo nnoremap<buffer> <Leader>N :VimTodoListsCreateNewItemAbove<CR>
+au FileType todo nnoremap<buffer> <Leader>n :VimTodoListsCreateNewItemBelow<CR>

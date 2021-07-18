@@ -48,7 +48,9 @@ set hidden
 set wildmenu
 set exrc
 set paste
+set ai
 set wildignore+=**/node_modules/**,*.pyc,*.o,
+set switchbuf=split
 " Specify python3 executable for some extension?
 let g:python3_host_prog = "/usr/local/bin/python3"
 " Forces block cursor for some terminals that don't have it already
@@ -70,6 +72,9 @@ nnoremap gb :ls<cr>:b<space>
 au VimLeave * :mksession! ~/.vim/Session.vim
 " Restore session using a command
 nnoremap <Leader>ss :source ~/.vim/Session.vim<CR>
+" Open in tab shortcut
+nnoremap <Leader>o :tabe<Space>
+nnoremap <Leader>n :tabnew<CR>
 
 au FileType todo nnoremap<buffer> <Leader>N :VimTodoListsCreateNewItemAbove<CR>
 au FileType todo nnoremap<buffer> <Leader>n :VimTodoListsCreateNewItemBelow<CR>

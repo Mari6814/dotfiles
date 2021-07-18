@@ -62,6 +62,14 @@ imap <C-k> <C-o>k
 imap <C-h> <C-o>h
 imap <C-l> <C-o>l
 nmap ; :
-noremap <Leader>b :NERDTree<CR>
+" Open nerd tree
+nnoremap <Leader>b :NERDTree<CR>
+" Open :ls and enter :b to start typing searched buffer
+nnoremap gb :ls<cr>:b<space>
+" Automatically save sessions on exit
+au VimLeave * :mksession! /tmp/Session.vim
+" Restore session using a command
+nnoremap <Leader>ss :source /tmp/Session.vim<CR>
+
 au FileType todo nnoremap<buffer> <Leader>N :VimTodoListsCreateNewItemAbove<CR>
 au FileType todo nnoremap<buffer> <Leader>n :VimTodoListsCreateNewItemBelow<CR>

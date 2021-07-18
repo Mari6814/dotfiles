@@ -67,9 +67,9 @@ nnoremap <Leader>b :NERDTree<CR>
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
 " Automatically save sessions on exit
-au VimLeave * :mksession! /tmp/Session.vim
+au VimLeave * :mksession! ~/.vim/Session.vim
 " Restore session using a command
-nnoremap <Leader>ss :source /tmp/Session.vim<CR>
+nnoremap <Leader>ss :source ~/.vim/Session.vim<CR>
 
 au FileType todo nnoremap<buffer> <Leader>N :VimTodoListsCreateNewItemAbove<CR>
 au FileType todo nnoremap<buffer> <Leader>n :VimTodoListsCreateNewItemBelow<CR>

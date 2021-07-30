@@ -47,7 +47,8 @@ set matchpairs+=<:>
 set hidden
 set wildmenu
 set exrc
-set paste
+" Enable this option if pasting text into vim
+" set paste
 set ai
 set wildignore+=**/node_modules/**,*.pyc,*.o,
 set switchbuf=split

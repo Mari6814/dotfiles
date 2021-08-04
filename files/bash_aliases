@@ -23,6 +23,23 @@ function cd {
     fi
 }
 
+# wait for jobs until the number of jobs is lower than the barrier
+function barrier {
+    if [ -z "$1" ]; then
+        echo "Usage: barrier <limit> [intervall=1]" >&2
+        return 1
+    fi
+    local LIMIT="$1"
+    local INTERVALL="${2:-1}"
+    while true; do
+        if [ $(jobs | wc -l) -lt $LIMIT ]; then
+            break
+        fi
+        sleep $INTERVALL
+    done
+}
+
+
 # Create a virtual folder out of a glob
 function mkvdir {
     USAGE="usage:  <dirname> FILE [FILES ...]"

@@ -45,6 +45,8 @@ alias sr="screen -r"
 alias sS="screen -S"
 # shortcut for screen -ls
 alias sl="screen -ls"
+# shortcut for printing with "error:" prefixed red text to stderr
+alias err=">&2 tput setaf 1; echo error:"
 
 # Create a virtual folder out of a glob
 # This function creates a directory called <dirname>

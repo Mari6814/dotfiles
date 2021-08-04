@@ -43,6 +43,8 @@ function barrier {
 alias sr="screen -r"
 # shortcut for screen -S <name>
 alias sS="screen -S"
+# shortcut for screen -ls
+alias sl="screen -ls"
 
 # Create a virtual folder out of a glob
 # This function creates a directory called <dirname>

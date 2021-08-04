@@ -39,8 +39,15 @@ function barrier {
     done
 }
 
+# shortcut for screen -r
+alias sr="screen -r"
+# shortcut for screen -S <name>
+alias sS="screen -S"
 
 # Create a virtual folder out of a glob
+# This function creates a directory called <dirname>
+# and links all files from the rest glob into that
+# directory
 function mkvdir {
     USAGE="usage:  <dirname> FILE [FILES ...]"
     if [ -z "$1" ]; then
@@ -49,6 +56,7 @@ function mkvdir {
     fi
     if [ -z "$2" ]; then
         echo "err: Missing glob output as argument 2.." >&2
+        echo $USAGE >&2
         return 1
     fi
     DIRNAME="$1"

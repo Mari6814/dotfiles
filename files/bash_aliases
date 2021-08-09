@@ -3,8 +3,13 @@ export BASH_ALIASES="$HOME/.bash_aliases"
 
 # Shortcut function to cd into remote directory at argument $1, then open tensorboard --logdir ."
 function tbr {
+    if [ -z "$1" ]; then
+        echo "usage: tbr <directory> [host=$LME]" >&2
+        return 1
+    fi
+    local DIR="$1"
     local PORT="$(shuf -i 2000-65000 -n 1)"
-    local cmd="cd $1 && tensorboard --logdir . --port $PORT;"
+    local cmd="cd $DIR && tensorboard --logdir . --port $PORT;"
     ssh -tL $PORT:localhost:$PORT "${2:-$LME}" "$cmd"
 }
 

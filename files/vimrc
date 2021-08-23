@@ -2,22 +2,24 @@ set nocompatible
 filetyp plugin on
 
 call plug#begin('~/.vim/plugged')
-Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+" Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'junegunn/goyo.vim'
+Plug 'ctrlpvim/ctrlp.vim'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'vim-airline/vim-airline'
 Plug 'w0rp/ale'
 Plug 'airblade/vim-gitgutter'
 Plug 'tell-k/vim-autopep8'
-Plug 'tpope/vim-fugitive'
-Plug 'aserebryakov/vim-todo-lists'
 Plug 'preservim/nerdtree'
+Plug 'unblevable/quick-scope'
+Plug 'easymotion/vim-easymotion'
 call plug#end()
 
 filetype plugin indent on
 
 " FZF configuration
-nmap <C-p> :FZF<CR>
-imap <C-p> <C-o>:FZF<CR>
+" nmap <C-p> :FZF<CR>
+" imap <C-p> <C-o>:FZF<CR>
 
 filetype plugin on
 syntax on
@@ -64,11 +66,15 @@ imap <C-j> <C-o>j
 imap <C-k> <C-o>k
 imap <C-h> <C-o>h
 imap <C-l> <C-o>l
-nmap ; :
+nnoremap <Leader>t :tabe 
+nnoremap <Leader><TAB> :tabnext<CR>
+nnoremap <Leader><S-TAB> :tabprevious<CR>
 " Open nerd tree
 nnoremap <Leader>b :NERDTree<CR>
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
+" Goto any file using ctrl+p behaviour
+nnoremap gp :CtrlP<CR>
 " Automatically save sessions on exit
 au VimLeave * :mksession! ~/.vim/Session.vim
 " Restore session using a command

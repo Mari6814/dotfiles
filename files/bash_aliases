@@ -117,7 +117,15 @@ alias eprofile="e ~/.profile && source ~/.profile"
 # Edit vim config
 alias evim="e ~/.vimrc"
 # Open session in vim/nvim
-alias esess="[ -f ~/.vim/Session.vim ] && e -S ~/.vim/Session.vim || echo No session file exist."
+function erestore {
+    local SESS="${1:-$HOME/.vim/Session.vim}"
+    if [ -f "$SESS" ]; then
+        echo "Loading $SESS"
+        e -S "$SESS"
+    else
+        err No session file exists.
+    fi
+}
 # Edit nvim config
 alias envim="e ~/.config/nvim/init.vim"
 # Edit bash aliases

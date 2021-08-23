@@ -27,6 +27,7 @@ filetype plugin indent on
 colorscheme slate
 set modelines=1
 set number
+set relativenumber
 set visualbell
 set ruler
 set encoding=utf-8
@@ -48,9 +49,11 @@ set list
 set matchpairs+=<:>
 set hidden
 set wildmenu
-set exrc
+set foldmethod=indent
+set foldnestmax=10
+set foldlevel=2
 " Enable this option if pasting text into vim
-" set paste
+set pastetoggle=<F2>
 set ai
 set wildignore+=**/node_modules/**,*.pyc,*.o,
 set switchbuf=split
@@ -62,26 +65,33 @@ let &t_SI.="\e[5 q"
 let &t_EI.="\e[1 q"
 let &t_te.="\e[0 q"
 
-imap <C-j> <C-o>j
-imap <C-k> <C-o>k
-imap <C-h> <C-o>h
-imap <C-l> <C-o>l
-nnoremap <Leader>t :tabe 
-nnoremap <Leader><TAB> :tabnext<CR>
-nnoremap <Leader><S-TAB> :tabprevious<CR>
+" Naviagte windows in normal mode by holding ctrl
+nmap <C-j> <C-w>j
+nmap <C-k> <C-w>k
+nmap <C-h> <C-w>h
+nmap <C-l> <C-w>l
+
+" Toggle folds using space
+nnoremap <space> za
 " Open nerd tree
 nnoremap <Leader>b :NERDTree<CR>
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
 " Goto any file using ctrl+p behaviour
 nnoremap gp :CtrlP<CR>
-" Automatically save sessions on exit
+" Automatically save sessions on exit in working dir
+au VimLeave * :mksession! .vim/Session.vim
+" Automatically save sessions on exit in global dir
 au VimLeave * :mksession! ~/.vim/Session.vim
-" Restore session using a command
-nnoremap <Leader>ss :source ~/.vim/Session.vim<CR>
-" Open in tab shortcut
-nnoremap <Leader>o :tabe<Space>
-nnoremap <Leader>n :tabnew<CR>
+" Restore session using :Restore
+command Restore source .vim/Session.vim
+" Reload vimrc
+command Reload source ~/.vimrc
+" Tab config
+nnoremap <Leader>t :tabnew<CR>
+nnoremap <Leader><TAB> :tabnext<CR>
+nnoremap <Leader><S-TAB> :tabprevious<CR>
+" Splitting
+nnoremap <Leader>h :split<CR>
+nnoremap <Leader>s :vsplit<CR>
 
-au FileType todo nnoremap<buffer> <Leader>N :VimTodoListsCreateNewItemAbove<CR>
-au FileType todo nnoremap<buffer> <Leader>n :VimTodoListsCreateNewItemBelow<CR>

@@ -1,6 +1,10 @@
 # Mark this as loaded
 export BASH_ALIASES="$HOME/.bash_aliases"
 
+# shortcut to cd into tmp folder.
+alias tmp="cd /tmp"
+# Shortcut to start editing temporary file.
+alias etmp="vim $(mktemp)"
 # Shortcut function to cd into remote directory at argument $1, then open tensorboard --logdir ."
 function tbr {
     if [ -z "$1" ]; then

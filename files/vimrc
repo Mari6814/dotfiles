@@ -13,6 +13,7 @@ Plug 'tell-k/vim-autopep8'
 Plug 'preservim/nerdtree'
 Plug 'unblevable/quick-scope'
 Plug 'easymotion/vim-easymotion'
+Plug 'rust-lang/rust.vim'
 call plug#end()
 
 filetype plugin indent on
@@ -56,7 +57,7 @@ set foldlevel=2
 set pastetoggle=<F2>
 set ai
 set wildignore+=**/node_modules/**,*.pyc,*.o,
-set switchbuf=split
+set switchbuf=useopen,vsplit
 " Specify python3 executable for some extension?
 let g:python3_host_prog = "/usr/local/bin/python3"
 " Forces block cursor for some terminals that don't have it already
@@ -73,25 +74,44 @@ nmap <C-l> <C-w>l
 
 " Toggle folds using space
 nnoremap <space> za
+
 " Open nerd tree
 nnoremap <Leader>b :NERDTree<CR>
+
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
 " Goto any file using ctrl+p behaviour
 nnoremap gp :CtrlP<CR>
+
 " Automatically save sessions on exit in working dir
 au VimLeave * :mksession! .vim/Session.vim
 " Automatically save sessions on exit in global dir
 au VimLeave * :mksession! ~/.vim/Session.vim
+
 " Restore session using :Restore
 command Restore source .vim/Session.vim
+" Source current file
+command Source source %
 " Reload vimrc
 command Reload source ~/.vimrc
+
 " Tab config
 nnoremap <Leader>t :tabnew<CR>
 nnoremap <Leader><TAB> :tabnext<CR>
 nnoremap <Leader><S-TAB> :tabprevious<CR>
+
 " Splitting
 nnoremap <Leader>h :split<CR>
 nnoremap <Leader>s :vsplit<CR>
+
+" Remapping F keys
+noremap <F1> :help <C-r><C-w><CR>
+noremap <F4> :execute ':vim /<C-r><C-w>/ **/*.' . expand('%:e')<CR>
+noremap <F9> :Reload<CR>
+
+" Mappings for quickfix motions
+nnoremap [q :cn<CR>
+nnoremap [Q :clast<CR>
+nnoremap ]q :cp<CR>
+nnoremap ]Q :cfirst<CR>
 

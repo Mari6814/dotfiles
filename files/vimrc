@@ -85,15 +85,12 @@ nnoremap gp :CtrlP<CR>
 
 " Automatically save sessions on exit in working dir
 au VimLeave * :mksession! .vim/Session.vim
+"
 " Automatically save sessions on exit in global dir
 au VimLeave * :mksession! ~/.vim/Session.vim
 
 " Restore session using :Restore
 command Restore source .vim/Session.vim
-" Source current file
-command Source source %
-" Reload vimrc
-command Reload source ~/.vimrc
 
 " Tab config
 nnoremap <Leader>t :tabnew<CR>
@@ -107,7 +104,7 @@ nnoremap <Leader>s :vsplit<CR>
 " Remapping F keys
 noremap <F1> :help <C-r><C-w><CR>
 noremap <F4> :execute ':vim /<C-r><C-w>/ **/*.' . expand('%:e')<CR>
-noremap <F9> :Reload<CR>
+noremap <F9> :source %<CR>
 
 " Mappings for quickfix motions
 nnoremap [q :cn<CR>

@@ -1,10 +1,13 @@
+
 # Mark this as loaded
 export BASH_ALIASES="$HOME/.bash_aliases"
 
 # shortcut to cd into tmp folder.
 alias tmp="cd /tmp"
+
 # Shortcut to start editing temporary file.
 alias etmp="vim $(mktemp)"
+
 # Shortcut function to cd into remote directory at argument $1, then open tensorboard --logdir ."
 function tbr {
     if [ -z "$1" ]; then
@@ -19,11 +22,13 @@ function tbr {
 
 # Shortcut for poetry
 alias p=poetry
+
 # easy back cd command
-alias ..="cd .."
+alias ..="Cd .."
+
 # Virtaul env auto
-function cd {
-    builtin cd $1
+function Cd {
+    builtin cd $@
     if [ -z "$VIRTUAL_ENV" ]; then
         if [ -f .venv/bin/activate ]; then
             . .venv/bin/activate
@@ -56,17 +61,18 @@ function barrier {
 
 # shortcut for screen -r
 alias sr="screen -r"
+
 # shortcut for screen -S <name>
 alias sS="screen -S"
+
 # shortcut for screen -ls
 alias sl="screen -ls"
+
 # shortcut for printing with "error:" prefixed red text to stderr
 alias err=">&2 tput setaf 1; echo error:"
 
-# Create a virtual folder out of a glob
-# This function creates a directory called <dirname>
-# and links all files from the rest glob into that
-# directory
+# Create a virtual folder out of a glob This function creates a directory
+# called <dirname> and links all files from the rest glob into that directory
 function mkvdir {
     USAGE="usage:  <dirname> FILE [FILES ...]"
     if [ -z "$1" ]; then
@@ -86,9 +92,12 @@ function mkvdir {
     done
 }
 
+# List ports in use
 function ports-in-use {
     lsof -i tcp -s tcp:listen | awk '$8 == "TCP" { split($9,a,":"); print a[2] }'
 }
+
+# Open all ports that are in the ports-in-use list
 function forward-open-ports {
     if [ -z $1 ]; then
         echo err: Missing hostname >&2
@@ -101,6 +110,8 @@ function forward-open-ports {
         ssh -NfL "$PORT:localhost:$PORT" "$1"
     done
 }
+
+# Forward port given by an input argument in the form "host:port"
 function forward-port {
     if [ -z $1 ]; then
         echo err: Missing hostname:port >&2
@@ -110,17 +121,21 @@ function forward-port {
     local PORT=$(echo $1 | awk '{ split($1,a,":"); print a[2] }')
     ssh -NL "${PORT:-$2}:localhost:$PORT" "$HOST"
 }
-# General aliases
-function e {
-    "$EDITOR" "$@"
-}
+
+# Shortcut for opening the EDITOR variable
+alias e="$EDITOR $@"
+
 # Edit bashrc
 alias ebash="e ~/.bashrc && source ~/.bashrc"
+
 # Edit profile
 alias eprofile="e ~/.profile && source ~/.profile"
+
 # Edit vim config
 alias evim="e ~/.vimrc"
-# Open session in vim/nvim
+
+# Open last session in vim/nvim or specify a specific session file as argument
+# $1
 function erestore {
     local SESS="${1:-$HOME/.vim/Session.vim}"
     if [ -f "$SESS" ]; then
@@ -130,24 +145,35 @@ function erestore {
         err No session file exists.
     fi
 }
+
 # Edit nvim config
 alias envim="e ~/.config/nvim/init.vim"
+
 # Edit bash aliases
 alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
+
 # keep tailing a file
 alias follow="tail -f"
+
 # Google something
 alias g="googler --count 3"
+
 # Search for a pattern in any file from the current cwd
 alias contains="grep -rnw . -e"
-# Youtube dl
+
+# Download youtube audio from link
 alias youtube-mp3="youtube-dl --extract-audio --audio-format mp3"
-# shortcut for nvidia-smi
+
+# Shortcut for nvidia-smi
 alias smi=nvidia-smi
 
-# Git shortcuts
+# Git shortcut for status
 alias gs="git status"
+
+# Git shortcut for push
 alias gp="git push"
+
+# Git shortcut for the common `git commit -am`
 alias gcam="git commit -am"
 
 # Create executable bash script and edit it
@@ -162,39 +188,74 @@ function cmd {
 
 # Start recording the history and add it to an executable script file
 function reccmd {
-    FILE=${1:?'Usage reccmd <cmdname>'}
+    FILE=${1:?'Usage: reccmd <cmdname>'}
     [ -e $FILE ] && echo "Command already exists: $FILE" && return 1
     tee "$FILE" | (bash && chmod +x "$FILE")
 }
 
-# PYTHON
+# Make sure that `pip` points to pip3
 alias pip=pip3
-alias python=python3
-alias tb="tensorboard"
-alias tl="tensorboard --logdir *logs*"
-function jn { jupyter notebook --no-browser --port ${1:-${PORT:-55500}}; }
-alias jl="jupyter notebook list"
-alias ipy=ipython
-alias py=python
-alias m3="python3 -m"
-alias m="m3"
 
-# Virtual Env / venv
-function venv { python -m venv ${1:-venv} && vactivate; }
-function vactivate { source ${1:-?(.)*}/bin/activate; }
-alias ve=venv
+# Make sure that `python` points to python3
+alias python=python3
+
+# Shortcut for using tensorboard with the current dir as logdir
+alias tb="tensorboard --logdir ."
+
+# Shortcut for using tensorboard and automatically select a subdirectory that
+# either starts or ends with 'logs' as the logdir
+alias tl="tensorboard --logdir *logs logs*"
+
+# Shortcut for jupyter notebook starting at default port 55500 that can be
+# overwritten using the first argument or a global variable called `$PORT`
+function jn {
+    local port="$1"
+    shift
+    jupyter notebook --no-browser --port ${port:-${PORT:-55500}} $@
+}
+
+# Shortcut for listing running jupyter notebooks
+alias jl="jupyter notebook list"
+
+# Shortcut for ipython
+alias ipy=ipython
+
+# Shortcut for python
+alias py=python
+
+# Shortcut for using a module with python3
+alias m="python3 -m"
+
+# Shortcut for automatically sourcing a */bin/activate script which usually
+# activates a venv
+function vactivate {
+    source ${1:-?(.)*}/bin/activate;
+}
+
+# Shortcut for activating virtual environments in .venv/bin/activate
 alias va=vactivate
+
+# Shortcut for deactivating a virtual env. Virtual envs add a `deactivate`
+# script to the path that can be triggered to deactivate it
 alias vd=deactivate
 
-# NOTES
+
+# Variable to hold the path to a personal quick notes file
 export NOTES_FILE="$HOME/notes.txt"
-function note() { echo "$@" >> $NOTES_FILE; }
+
+
+# Append all arguments to the notes file at `$NOTES_FILE`
+function note() {
+    echo "$@" >> $NOTES_FILE
+}
+
+# Shortcut for the `note` function
 alias n=note
+
+# List the contents of the `$NOTES_FILE`
 alias notes="cat $NOTES_FILE"
-alias clrnotes="rm $NOTES_FILE"
 
 # MASTERARBEIT CLUSTER LME
-alias cluster="ssh $CLUSTER"
 function lme() {
     if [ -z "$1" ]; then
         ssh $LME
@@ -204,7 +265,7 @@ function lme() {
     fi
 }
 
-# Secrets
+# Encrypt some input
 function encrypt {
     [ -z "$1" ] && echo "usage: encrypt <outfile>" && return 1
     [ -e "$1" ] && echo "err: File $1 already exists." && return 1
@@ -214,7 +275,7 @@ function encrypt {
     chmod +x "$1"
 }
 
-# Source machine local aliases
+# Source machine local aliases inside the `$HOME/.local` directory
 if [ -f $HOME/.local/bash_aliases ]; then
     . $HOME/.local/bash_aliases
 fi

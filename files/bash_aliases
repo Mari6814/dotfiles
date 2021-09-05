@@ -143,6 +143,7 @@ function erestore {
         e -S "$SESS"
     else
         err No session file exists.
+        return 1
     fi
 }
 

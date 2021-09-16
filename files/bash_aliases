@@ -8,18 +8,6 @@ alias tmp="cd /tmp"
 # Shortcut to start editing temporary file.
 alias etmp="vim $(mktemp)"
 
-# Shortcut function to cd into remote directory at argument $1, then open tensorboard --logdir ."
-function tbr {
-    if [ -z "$1" ]; then
-        echo "usage: tbr <directory> [host=$LME]" >&2
-        return 1
-    fi
-    local DIR="$1"
-    local PORT="$(shuf -i 2000-65000 -n 1)"
-    local cmd="cd $DIR && tensorboard --logdir . --port $PORT;"
-    ssh -tL $PORT:localhost:$PORT "${2:-$LME}" "$cmd"
-}
-
 # Shortcut for poetry
 alias p=poetry
 
@@ -255,16 +243,6 @@ alias n=note
 
 # List the contents of the `$NOTES_FILE`
 alias notes="cat $NOTES_FILE"
-
-# MASTERARBEIT CLUSTER LME
-function lme() {
-    if [ -z "$1" ]; then
-        ssh $LME
-    else
-        local cmd="export PORT=$1; bash -l"
-        ssh -tL $1:localhost:$1 "${2:-$LME}" "$cmd"
-    fi
-}
 
 # Encrypt some input
 function encrypt {

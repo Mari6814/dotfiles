@@ -127,13 +127,6 @@ export PROMPT_DIRTRIM=3
 export NVIMRC="$CONFIG/nvim/init.vim"
 export EDITOR="nvim"
 
-# MASTERARBEIT CLUSTER LME
-export CLUSTER="cluster.i5.informatik.uni-erlangen.de"
-export LME7="lme117.cs.fau.de"
-export LME8="lme118.cs.fau.de"
-export LME201="lme201.cs.fau.de"
-export LME="$LME7"
-
 # Set the npm package install dir
 if command -v npm &> /dev/null; then
     if [ -z "$LOCAL" ]; then

@@ -136,14 +136,16 @@ if command -v npm &> /dev/null; then
         npm config set prefix "$LOCAL"
     fi
 fi
-# Source aliases
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
+
 
 # Source machine local bashrc
 if [ -f "$LOCAL/bashrc" ]; then
     . "$LOCAL/bashrc"
+fi
+
+# Source aliases
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
 fi
 
 

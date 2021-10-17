@@ -101,6 +101,10 @@ nnoremap <Leader><S-TAB> :tabprevious<CR>
 nnoremap <Leader>h :split<CR>
 nnoremap <Leader>s :vsplit<CR>
 
+" Replace word under cursor
+nnoremap <Leader>r :s/<C-r><C-w>//g<left><left>
+nnoremap <Leader>R :%s/<C-r><C-w>//g<left><left>
+
 " Remapping F keys
 noremap <F1> :help <C-r><C-w><CR>
 noremap <F4> :execute ':vim /<C-r><C-w>/ **/*.' . expand('%:e')<CR>

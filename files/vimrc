@@ -5,22 +5,21 @@ call plug#begin('~/.vim/plugged')
 " Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/goyo.vim'
 Plug 'ctrlpvim/ctrlp.vim'
-Plug 'terryma/vim-multiple-cursors'
 Plug 'vim-airline/vim-airline'
-Plug 'w0rp/ale'
 Plug 'airblade/vim-gitgutter'
-Plug 'tell-k/vim-autopep8'
 Plug 'preservim/nerdtree'
 Plug 'unblevable/quick-scope'
 Plug 'easymotion/vim-easymotion'
+Plug 'w0rp/ale'
 Plug 'rust-lang/rust.vim'
+Plug 'tell-k/vim-autopep8'
+if has('nvim')
+    Plug 'neovim/nvim-lspconfig'
+    Plug 'williamboman/nvim-lsp-installer'
+endif
 call plug#end()
 
 filetype plugin indent on
-
-" FZF configuration
-" nmap <C-p> :FZF<CR>
-" imap <C-p> <C-o>:FZF<CR>
 
 filetype plugin on
 syntax on
@@ -59,7 +58,7 @@ set ai
 set wildignore+=**/node_modules/**,*.pyc,*.o,
 set switchbuf=useopen,vsplit
 " Specify python3 executable for some extension?
-let g:python3_host_prog = "/usr/local/bin/python3"
+let g:python3_host_prog = "/usr/bin/python3"
 " Forces block cursor for some terminals that don't have it already
 let &t_ti.="\e[1 q"
 let &t_SI.="\e[5 q"
@@ -81,38 +80,47 @@ nnoremap <Leader>b :NERDTree<CR>
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
 " Goto any file using ctrl+p behaviour
-nnoremap gp :CtrlP<CR>
+nnoremap <C-p> :CtrlP<CR>
+" FZF configuration
+" nmap <C-p> :FZF<CR>
+" imap <C-p> <C-o>:FZF<CR>
 
-" Automatically save sessions on exit in working dir
-au VimLeave * :mksession! .vim/Session.vim
-"
-" Automatically save sessions on exit in global dir
-au VimLeave * :mksession! ~/.vim/Session.vim
+augroup sessions
+    au!
+    " Automatically save sessions on exit in working dir
+    au VimLeave * :mksession! .vim/Session.vim
+    " Automatically save sessions on exit in global dir
+    au VimLeave * :mksession! ~/.vim/Session.vim
+augroup end
 
 " Restore session using :Restore
 command Restore source .vim/Session.vim
 
 " Tab config
-nnoremap <Leader>t :tabnew<CR>
+nnoremap <Leader>t :tabnew<CR>:ls<cr>:b<space>
 nnoremap <Leader><TAB> :tabnext<CR>
 nnoremap <Leader><S-TAB> :tabprevious<CR>
 
 " Splitting
-nnoremap <Leader>h :split<CR>
-nnoremap <Leader>s :vsplit<CR>
+nnoremap <Leader>sh :split<CR>
+nnoremap <Leader>sv :vsplit<CR>
 
 " Replace word under cursor
 nnoremap <Leader>r :s/<C-r><C-w>//g<left><left>
+
+" Search and replace the word under the cursor
 nnoremap <Leader>R :%s/<C-r><C-w>//g<left><left>
 
-" Remapping F keys
-noremap <F1> :help <C-r><C-w><CR>
-noremap <F4> :execute ':vim /<C-r><C-w>/ **/*.' . expand('%:e')<CR>
-noremap <F9> :source %<CR>
+" Search and replace incrementally; Use I_n to skip an instance; Use . to
+" replace with same text
+nnoremap <C-n> *Ncgn
 
-" Mappings for quickfix motions
-nnoremap [q :cn<CR>
-nnoremap [Q :clast<CR>
-nnoremap ]q :cp<CR>
-nnoremap ]Q :cfirst<CR>
+" Search the pattern under the cursor in all files with the same extension as this one
+nnoremap <F4> :execute ':vim /<C-r><C-w>/ **/*.' . expand('%:e')<CR>
 
+" Remapping F keys for vimrc files
+augroup vimrc
+    autocmd!
+    autocmd FileType vim noremap <F1> :help <C-r><C-w><CR>
+    autocmd BufWritePost,FileWritePost .vimrc :so $HOME/.vimrc
+augroup end

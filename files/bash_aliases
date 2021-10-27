@@ -1,6 +1,9 @@
 # Mark this as loaded
 export BASH_ALIASES="$HOME/.bash_aliases"
 
+# Shortcut to update and upgrade linux distributions
+alias aptuu="sudo apt -y update && sudo apt -y upgrade"
+
 # Fix permissions of files and directories recursiveley
 function fix-permissions {
     local USAGE="Usage: fix-permissions <directory>"
@@ -48,7 +51,10 @@ function make-local {
 }
 
 # shortcut to cd into tmp folder.
-alias tmp="cd /tmp"
+alias ~tmp="cd /tmp"
+
+# shortcut to $LOCAL directory
+alias ~local="cd $LOCAL"
 
 # Shortcut to start editing temporary file.
 alias etmp="vim $(mktemp)"

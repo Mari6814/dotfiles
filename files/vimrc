@@ -66,10 +66,14 @@ let &t_EI.="\e[1 q"
 let &t_te.="\e[0 q"
 
 " Naviagte windows in normal mode by holding ctrl
-nmap <C-j> <C-w>j
-nmap <C-k> <C-w>k
-nmap <C-h> <C-w>h
-nmap <C-l> <C-w>l
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-h> <C-w>h
+nnoremap <C-l> <C-w>l
+inoremap <C-j> <c-o><C-w>j
+inoremap <C-k> <c-o><C-w>k
+inoremap <C-h> <c-o><C-w>h
+inoremap <C-l> <c-o><C-w>l
 
 " Toggle folds using space
 nnoremap <space> za
@@ -100,10 +104,6 @@ command Restore source .vim/Session.vim
 nnoremap <Leader>t :tabnew<CR>:ls<cr>:b<space>
 nnoremap <Leader><TAB> :tabnext<CR>
 nnoremap <Leader><S-TAB> :tabprevious<CR>
-
-" Splitting
-nnoremap <Leader>sh :split<CR>
-nnoremap <Leader>sv :vsplit<CR>
 
 " Replace word under cursor
 nnoremap <Leader>r :s/<C-r><C-w>//g<left><left>

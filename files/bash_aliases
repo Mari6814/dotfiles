@@ -47,6 +47,14 @@ function make-local {
     [ -f "$DIR/bash_aliases" ] && source "$DIR/bash_aliases"
 }
 
+# Shortcut that creates a git ignore file with the listed files added to it
+function gignore {
+    for file in "$@"; do
+        echo "$file" >> .gitignore
+    done
+    tac .gitignore
+}
+
 # shortcut to cd into tmp folder.
 alias tmp="cd /tmp"
 

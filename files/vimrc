@@ -2,20 +2,18 @@ set nocompatible
 filetyp plugin on
 
 call plug#begin('~/.vim/plugged')
+Plug 'vim-airline/vim-airline'
+" Plug 'tell-k/vim-autopep8'
+" Plug 'rust-lang/rust.vim'
 " Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/goyo.vim'
 Plug 'ctrlpvim/ctrlp.vim'
-Plug 'vim-airline/vim-airline'
 Plug 'airblade/vim-gitgutter'
 Plug 'preservim/nerdtree'
 Plug 'unblevable/quick-scope'
 Plug 'easymotion/vim-easymotion'
-Plug 'w0rp/ale'
-Plug 'rust-lang/rust.vim'
-Plug 'tell-k/vim-autopep8'
 if has('nvim')
     Plug 'neovim/nvim-lspconfig'
-    Plug 'williamboman/nvim-lsp-installer'
 endif
 call plug#end()
 
@@ -124,3 +122,4 @@ augroup vimrc
     autocmd FileType vim noremap <F1> :help <C-r><C-w><CR>
     autocmd BufWritePost,FileWritePost .vimrc :so $HOME/.vimrc
 augroup end
+

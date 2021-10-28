@@ -148,5 +148,7 @@ if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
 
+make-local "$LOCAL"
+
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash

@@ -100,6 +100,9 @@ augroup sessions
     au VimLeave * :mksession! ~/.vim/Session.vim
 augroup end
 
+" Vertically split window for each buffer
+command Vba vert ba
+
 " Restore session using :Restore
 command Restore source .vim/Session.vim
 

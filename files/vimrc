@@ -79,10 +79,15 @@ nnoremap <space> za
 " Open nerd tree
 nnoremap <Leader>b :NERDTree<CR>
 
+" Closes the current buffer
+noremap <leader>w :bd<cr>
+
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
+
 " Goto any file using ctrl+p behaviour
 nnoremap <C-p> :CtrlP<CR>
+
 " FZF configuration
 " nmap <C-p> :FZF<CR>
 " imap <C-p> <C-o>:FZF<CR>
@@ -122,4 +127,3 @@ augroup vimrc
     autocmd FileType vim noremap <F1> :help <C-r><C-w><CR>
     autocmd BufWritePost,FileWritePost .vimrc :so $HOME/.vimrc
 augroup end
-

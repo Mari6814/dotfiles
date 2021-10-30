@@ -61,8 +61,8 @@ function gignore {
 # shortcut to cd into tmp folder.
 alias ~tmp="cd /tmp"
 
-# shortcut to $LOCAL directory
-alias ~local="cd $LOCAL"
+# shortcut to ~/.local directory
+alias ~local="cd ~/.local"
 
 # Shortcut to start editing temporary file.
 alias etmp="vim $(mktemp)"
@@ -121,7 +121,7 @@ alias err=">&2 tput setaf 1; echo error:"
 # Create a virtual folder out of a glob This function creates a directory
 # called <dirname> and links all files from the rest glob into that directory
 function mkvdir {
-    USAGE="usage:  <dirname> FILE [FILES ...]"
+    local USAGE="usage:  <dirname> FILE [FILES ...]"
     if [ -z "$1" ]; then
         echo $USAGE >&2
         return 1
@@ -131,7 +131,7 @@ function mkvdir {
         echo $USAGE >&2
         return 1
     fi
-    DIRNAME="$1"
+    local DIRNAME="$1"
     shift
     mkdir "$DIRNAME"
     for path in "$@"; do
@@ -140,17 +140,17 @@ function mkvdir {
 }
 
 # List ports in use
-function ports-in-use {
+function ls-ports {
     lsof -i tcp -s tcp:listen | awk '$8 == "TCP" { split($9,a,":"); print a[2] }'
 }
 
-# Open all ports that are in the ports-in-use list
-function forward-open-ports {
+# Open all ports that are in the ls-ports list
+function forward-all-ports {
     if [ -z $1 ]; then
         echo err: Missing hostname >&2
         return 1
     fi
-    local REMOTE_COMMAND="$(declare -f ports-in-use); ports-in-use"
+    local REMOTE_COMMAND="$(declare -f ls-ports); ls-ports"
     local PORTS="$(ssh -T $1 "$REMOTE_COMMAND")"
     for PORT in $PORTS; do
         echo http://localhost:$PORT
@@ -159,7 +159,7 @@ function forward-open-ports {
 }
 
 # Forward port given by an input argument in the form "host:port"
-function forward-port {
+function forward-host-port-string {
     if [ -z $1 ]; then
         echo err: Missing hostname:port >&2
         return 1
@@ -226,7 +226,7 @@ alias gcam="git commit -am"
 
 # Create executable bash script and edit it
 function cmd {
-    NAME="${1:?'Usage: cmd <cmdname>'}"
+    local NAME="${1:?'Usage: cmd <cmdname>'}"
     [ -e $NAME ] && echo "Command already exists: $NAME" && return 1
     echo "Creating command: $NAME"
     echo '#!/bin/bash' >> "$NAME"
@@ -235,8 +235,8 @@ function cmd {
 }
 
 # Start recording the history and add it to an executable script file
-function reccmd {
-    FILE=${1:?'Usage: reccmd <cmdname>'}
+function rec {
+    local FILE="${1:?'Usage: reccmd <cmdname>'}"
     [ -e $FILE ] && echo "Command already exists: $FILE" && return 1
     tee "$FILE" | (bash && chmod +x "$FILE")
 }
@@ -257,9 +257,9 @@ alias tl="tensorboard --logdir *logs logs*"
 # Shortcut for jupyter notebook starting at default port 55500 that can be
 # overwritten using the first argument or a global variable called `$PORT`
 function jn {
-    local port="$1"
+    local port="${1:-${PORT:-55500}}"
     shift
-    jupyter notebook --no-browser --port ${port:-${PORT:-55500}} $@
+    jupyter notebook --no-browser --port $port $@
 }
 
 # Shortcut for listing running jupyter notebooks
@@ -307,7 +307,7 @@ alias notes="cat $NOTES_FILE"
 function encrypt {
     [ -z "$1" ] && echo "usage: encrypt <outfile>" && return 1
     [ -e "$1" ] && echo "err: File $1 already exists." && return 1
-    secret=$(openssl aes-256-cbc -e -a -salt -pbkdf2 -iter 100000)
+    local secret=$(openssl aes-256-cbc -e -a -salt -pbkdf2 -iter 100000)
     echo "#!/bin/sh" >> "$1"
     echo "echo \"$secret\" | openssl aes-256-cbc -d -a -salt -pbkdf2 -iter 100000 \$@" >> "$1"
     chmod +x "$1"

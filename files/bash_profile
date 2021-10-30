@@ -1,13 +1,16 @@
 export BASH_PROFILE="$HOME/.bash_profile"
 
+# Load the machine-local .bash_profile
 if [ -f ~/.local/bash_profile ]; then
     . ~/.local/bash_profile
 fi
 
-if [ -f ~/.profile ]; then
-    . ~/.profile
-fi
-
+# Just link the bash profile to .bashrc
 if [ -f ~/.bashrc ]; then
 	. ~/.bashrc
+fi
+
+# In case some non-bash stuff gets added, link .bash_profile to .profile
+if [ -f ~/.profile ]; then
+    . ~/.profile
 fi

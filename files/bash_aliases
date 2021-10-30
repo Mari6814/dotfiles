@@ -11,45 +11,6 @@ function fix-permissions {
     sudo find $1 -type d -exec chmod 0775 {} +
 }
 
-function make-local {
-    local USAGE="usage: make-local [-h|--help] [--dir] <dir>"
-    if [ $# -eq 0 ]; then
-        echo "$USAGE" >&2
-        return 0
-    fi
-    while test $# -gt 0; do
-        case "$1" in
-            -h|--help)
-                echo "$USAGE" >&2
-                return 0
-                ;;
-            -d|--dir)
-                shift
-                DIR="$1"
-                ;;
-            *)
-                DIR="$1"
-        esac
-        shift
-    done
-    if [ -z "$DIR" ]; then
-        echo "$USAGE" >&2
-        return 1
-    fi
-    if [ ! -d "$DIR" ]; then
-        echo "err: $DIR is not a directory" >&2
-        return 1
-    fi
-    [ -d "$DIR/bin" ] && export PATH="$DIR/bin:$PATH"
-    [ -d "$DIR/lib" ] && export LD_LIBRARY_PATH="$DIR/lib:$LD_LIBRARY_PATH"
-    [ -d "$DIR/lib64" ] && export LD_LIBRARY_PATH="$DIR/lib64:$LD_LIBRARY_PATH"
-    [ -d "$DIR/include" ] && export CPATH="$CPATH/include:$CPATH"
-    [ -d "$DIR/man" ] && export MANPATH="$MANPATH/man:$MANPATH"
-    [ -f "$DIR/bashrc" ] && source "$DIR/bashrc"
-    [ -f "$DIR/profile" ] && source "$DIR/profile"
-    [ -f "$DIR/bash_aliases" ] && source "$DIR/bash_aliases"
-}
-
 # Shortcut that creates a git ignore file with the listed files added to it
 function gignore {
     for file in "$@"; do

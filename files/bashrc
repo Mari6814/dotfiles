@@ -115,32 +115,35 @@ fi
 # Mark this as loaded
 export BASHRC="$HOME/.bashrc"
 
-# General settings
+# General settings and important global variables
 shopt -s direxpand
 shopt -s globstar
 set -o vi
-
-# GENERAL VARIABLES
-export LOCAL="$HOME/.local"
-export CONFIG="$HOME/.config"
 export PROMPT_DIRTRIM=3
-export NVIMRC="$CONFIG/nvim/init.vim"
 export EDITOR="nvim"
+export LOCAL="$HOME/.locaL"
+
+# CUDA tensorflow torch
+export CUDA_HOME="/usr/local/cuda"
+export PATH="$CUDA_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
+
+# FZF enable autocompletion
+[ -f "/usr/share/doc/fzf/examples/key-bindings.bash" ] && . /usr/share/doc/fzf/examples/key-bindings.bash
+[ -f "/usr/share/doc/fzf/examples/completion.bash" ] && . /usr/share/doc/fzf/examples/completion.bash
+[ -f "~/.fzf.bash" ] && . ~/.fzf.bash
+
+# Add Rust to path
+[ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # Set the npm package install dir
 if command -v npm &> /dev/null; then
-    if [ -z "$LOCAL" ]; then
-        echo "error: npm is installed but variable LOCAL is not set: Unable to set npm install dir." >&2
-    elif [ ! "$(npm config get prefix)" == "$LOCAL" ]; then
-        echo "npm is installed: Setting install directory to $LOCAL" >&2
-        npm config set prefix "$LOCAL"
+    export NPM_PREFIX="$HOME/.local/npm"
+    if [ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]; then
+        echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
+        npm config set prefix "$NPM_PREFIX"
     fi
-fi
-
-
-# Source machine local bashrc
-if [ -f "$LOCAL/bashrc" ]; then
-    . "$LOCAL/bashrc"
 fi
 
 # Source aliases
@@ -148,7 +151,7 @@ if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
 
-make-local "$LOCAL"
-
-
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+# Source machine local bashrc
+if [ -f "$LOCAL/bashrc" ]; then
+    . "$LOCAL/bashrc"
+fi

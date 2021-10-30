@@ -8,28 +8,8 @@
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
 
-# set PATH so it includes user's private bin if it exists
-[ -d "$HOME/bin" ] && export PATH="$HOME/bin:$PATH"
-
-# set PATH so it includes user's private bin if it exists
-[ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
-
 # Mark this as loaded
 export PROFILE="$HOME/.profile"
-
-# CUDA tensorflow torch
-export CUDA_HOME="/usr/local/cuda"
-export PATH="$CUDA_HOME/bin:$PATH"
-export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
-
-# FZF enable autocompletion
-[ -f "/usr/share/doc/fzf/examples/key-bindings.bash" ] && . /usr/share/doc/fzf/examples/key-bindings.bash
-[ -f "/usr/share/doc/fzf/examples/completion.bash" ] && . /usr/share/doc/fzf/examples/completion.bash
-[ -f "~/.fzf.bash" ] && . ~/.fzf.bash
-
-# Add Rust to path
-[ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
-[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # source machine local profile
 if [ -f "$HOME/.local/profile" ]; then

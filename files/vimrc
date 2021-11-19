@@ -1,11 +1,8 @@
 set nocompatible
-filetyp plugin on
+set t_Co=256
 
 call plug#begin('~/.vim/plugged')
-Plug 'vim-airline/vim-airline'
-" Plug 'tell-k/vim-autopep8'
-" Plug 'rust-lang/rust.vim'
-" Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+" Plug 'vim-airline/vim-airline'
 Plug 'junegunn/goyo.vim'
 Plug 'ctrlpvim/ctrlp.vim'
 Plug 'airblade/vim-gitgutter'
@@ -16,18 +13,17 @@ Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
 if has('nvim')
     Plug 'neovim/nvim-lspconfig'
+    Plug 'nvim-lua/plenary.nvim'
+    Plug 'nvim-telescope/telescope.nvim'
 endif
 call plug#end()
 
-filetype plugin indent on
-
-filetype plugin on
 syntax on
+filetype plugin on
 filetype plugin indent on
 colorscheme slate
-set modelines=1
-set number
 set relativenumber
+set number
 set visualbell
 set ruler
 set encoding=utf-8
@@ -57,8 +53,14 @@ set pastetoggle=<F2>
 set ai
 set wildignore+=**/node_modules/**,*.pyc,*.o,
 set switchbuf=useopen,vsplit
+filetyp plugin on
+
 " Specify python3 executable for some extension?
 let g:python3_host_prog = "/usr/bin/python3"
+
+" Enable paste register crossplattform
+set clipboard^=unnamed,unnamedplus
+
 " Forces block cursor for some terminals that don't have it already
 let &t_ti.="\e[1 q"
 let &t_SI.="\e[5 q"
@@ -102,26 +104,29 @@ augroup sessions
     au VimLeave * :mksession! ~/.vim/Session.vim
 augroup end
 
+" Find files using Telescope command-line sugar.
+nnoremap <leader>ff <cmd>Telescope find_files<cr>
+nnoremap <leader>fg <cmd>Telescope live_grep<cr>
+nnoremap <leader>fb <cmd>Telescope buffers<cr>
+nnoremap <leader>fh <cmd>Telescope help_tags<cr>
+
 " Vertically split window for each buffer
 command Vba vert ba
 
 " Restore session using :Restore
 command Restore source .vim/Session.vim
 
-" Tab config
-nnoremap <Leader>t :tabnew<CR>:ls<cr>:b<space>
-nnoremap <Leader><TAB> :tabnext<CR>
-nnoremap <Leader><S-TAB> :tabprevious<CR>
-
 " Replace word under cursor
-nnoremap <Leader>r :s/<C-r><C-w>//g<left><left>
+nnoremap <leader>r :s/<C-r><C-w>//<left>
 
 " Search and replace the word under the cursor
-nnoremap <Leader>R :%s/<C-r><C-w>//g<left><left>
+nnoremap <leader>R :%s/<C-r><C-w>//g<left><left>
 
-" Search and replace incrementally; Use I_n to skip an instance; Use . to
-" replace with same text
-nnoremap <C-n> *Ncgn
+" Search and replace the current visual selection
+vnoremap <leader>v ygv:s/<c-r>"//<left>
+
+" Shortcut to replace word under cursor and enabling the . command
+nmap cg* *Ncgn
 
 " Search the pattern under the cursor in all files with the same extension as this one
 nnoremap <F4> :execute ':vim /<C-r><C-w>/ **/*.' . expand('%:e')<CR>
@@ -132,3 +137,24 @@ augroup vimrc
     autocmd FileType vim noremap <F1> :help <C-r><C-w><CR>
     autocmd BufWritePost,FileWritePost .vimrc :so $HOME/.vimrc
 augroup end
+
+" Custom statusline section
+function! StatuslineGit()
+  let l:branchname = system("git rev-parse --abbrev-ref HEAD 2>/dev/null | tr -d '\n'")
+  return strlen(l:branchname) > 0?'  '.l:branchname.' ':''
+endfunction
+
+set statusline=
+set statusline+=%#PmenuSel#
+set statusline+=%{StatuslineGit()}
+set statusline+=%#LineNr#
+set statusline+=\ %f\ %m
+set statusline+=\ "
+set statusline+=%=
+set statusline+=%#CursorColumn#
+set statusline+=\ %y
+set statusline+=\ %{&fileencoding?&fileencoding:&encoding}
+set statusline+=\[%{&fileformat}\]
+set statusline+=\ %p%%
+set statusline+=\ %l:%c
+set statusline+=\ "

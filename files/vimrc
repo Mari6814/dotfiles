@@ -126,7 +126,7 @@ nnoremap <leader>R :%s/<C-r><C-w>//g<left><left>
 vnoremap <leader>v ygv:s/<c-r>"//<left>
 
 " Shortcut to replace word under cursor and enabling the . command
-nmap cg* *Ncgn
+nmap g* *Ncgn
 
 " Search the pattern under the cursor in all files with the same extension as this one
 nnoremap <F4> :execute ':vim /<C-r><C-w>/ **/*.' . expand('%:e')<CR>

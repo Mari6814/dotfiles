@@ -91,7 +91,14 @@ nnoremap gb :ls<cr>:b<space>
 " Goto any file using ctrl+p behaviour
 nnoremap <c-p> :Telescope find_files<cr>
 
+" Search string under cursor using Telescope
 nnoremap <s-f> yiw:Telescope grep_string<cr><c-r>0
+
+" Overwrite '0' to go to first character instead of zero column
+nnoremap 0 ^
+
+" Make this line an assignment statement macro
+nnoremap =0 ^i<space>=<space><c-o>^<left>
 
 " Auto for session management
 augroup sessions
@@ -127,9 +134,9 @@ vnoremap <leader>v ygv:s/<c-r>"//<left>
 nmap g* *Ncgn
 
 " Search the pattern under the cursor in all files with the same extension as this one
-nnoremap <F4> :execute ':vim /<C-r><C-w>/ **/*.' . expand('%:e')<CR>
+nnoremap <F4> :execute ':vim /<C-r><C-w>/ **/*'<cr>
 
-" Remapping F keys for vimrc files
+" Auto reload vimrc on save
 augroup vimrc
     autocmd!
     autocmd FileType vim noremap <F1> :help <C-r><C-w><CR>

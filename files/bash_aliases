@@ -141,8 +141,11 @@ alias follow="tail -f"
 # Search for a pattern in any file from the current cwd
 alias contains="grep -rnw . -e"
 
-# Git shortcut for status
+# Git shortcut
 alias gs="git status"
+alias gb="git branch"
+alias gd="git diff"
+alias gdt="git difftool -y"
 
 # Git shortcut for the common `git commit -am`
 alias gcam="git commit -am"
@@ -211,6 +214,9 @@ export NOTES_FILE="$HOME/notes.txt"
 
 # List installed alternatives
 alias altl="update-alternatives --list"
+
+# Configure alternatives
+alias altc="sudo update-alternatives --config"
 
 # Remove alternatives
 alias altrm="sudo update-alternatives --remove"

@@ -2,7 +2,6 @@ set nocompatible
 set t_Co=256
 
 call plug#begin('~/.vim/plugged')
-" Plug 'vim-airline/vim-airline'
 Plug 'junegunn/goyo.vim'
 Plug 'airblade/vim-gitgutter'
 Plug 'preservim/nerdtree'
@@ -14,8 +13,15 @@ if has('nvim')
     Plug 'neovim/nvim-lspconfig'
     Plug 'nvim-lua/plenary.nvim'
     Plug 'nvim-telescope/telescope.nvim'
+    Plug 'hrsh7th/nvim-compe'
+    Plug 'hrsh7th/vim-vsnip'
+    Plug 'hrsh7th/vim-vsnip-integ'
 endif
 call plug#end()
+
+inoremap <silent><expr> <C-Space> compe#complete()
+inoremap <silent><expr> <CR>      compe#confirm('<CR>')
+inoremap <silent><expr> <C-e>     compe#close('<C-e>')
 
 syntax on
 filetype plugin on
@@ -84,6 +90,7 @@ nnoremap <leader>b :NERDTree<cr>
 
 " Shortcut search for beginnig of word
 nnoremap <leader>w /\<
+nnoremap <leader>W ?\<
 
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
@@ -92,10 +99,7 @@ nnoremap gb :ls<cr>:b<space>
 nnoremap <c-p> :Telescope find_files<cr>
 
 " Search string under cursor using Telescope
-nnoremap <s-f> yiw:Telescope grep_string<cr><c-r>0
-
-" Overwrite '0' to go to first character instead of zero column
-nnoremap 0 ^
+nnoremap <leader>f yiw:Telescope grep_string<cr><c-r>0
 
 " Make this line an assignment statement macro
 nnoremap =0 ^i<space>=<space><c-o>^<left>

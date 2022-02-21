@@ -25,6 +25,9 @@ alias etmp="vim $(mktemp)"
 # easy back cd command
 alias ..="Cd .."
 
+# Poetry CLI shortcut
+alias p=poetry
+
 # Virtaul env auto
 Cd() {
     builtin cd $@
@@ -207,7 +210,7 @@ alias vd=deactivate
 export NOTES_FILE="$HOME/notes.txt"
 
 # List installed alternatives
-alias altl=update-alternatives --list
+alias altl="update-alternatives --list"
 
 # Remove alternatives
 alias altrm="sudo update-alternatives --remove"
@@ -216,7 +219,7 @@ alias altrm="sudo update-alternatives --remove"
 alias altrmall="sudo update-alternatives --remove-all"
 
 # Register alternatives in .local/bin
-# alt <name> <path to alternative>
+# alt <name> <path to alternative> [prio=10]
 alt() {
     if [ -z "$1" ] | [ -z "$2" ]; then
         err "Usage: alt <name> <path>"
@@ -228,8 +231,9 @@ alt() {
     fi
     local NAME="$1"
     local APATH="$2"
-    echo "Linking $PATH -> $NAME"
-    sudo update-alternatives --install "$HOME/.local/bin/$NAME" "$NAME" "$PATH"
+    local PRIO="${3:-10}"
+    echo "Linking $APATH -> $NAME"
+    sudo update-alternatives --install "$HOME/.local/bin/$NAME" "$NAME" "$APATH" "$PRIO"
 }
 
 # Append all arguments to the notes file at `$NOTES_FILE`

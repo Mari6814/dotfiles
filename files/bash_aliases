@@ -19,17 +19,8 @@ function gignore {
     tac .gitignore
 }
 
-# shortcut to cd into tmp folder.
-alias ~tmp="cd /tmp"
-
-# shortcut to ~/.local directory
-alias ~local="cd ~/.local"
-
 # Shortcut to start editing temporary file.
 alias etmp="vim $(mktemp)"
-
-# Shortcut for poetry
-alias p=poetry
 
 # easy back cd command
 alias ..="Cd .."
@@ -67,22 +58,13 @@ function barrier {
     done
 }
 
-# shortcut for screen -r
-alias sr="screen -r"
-
-# shortcut for screen -S <name>
-alias sS="screen -S"
-
-# shortcut for screen -ls
-alias sl="screen -ls"
-
 # shortcut for printing with "error:" prefixed red text to stderr
 alias err=">&2 tput setaf 1; echo error:"
 
 # Create a virtual folder out of a glob This function creates a directory
 # called <dirname> and links all files from the rest glob into that directory
 function mkvdir {
-    local USAGE="usage:  <dirname> FILE [FILES ...]"
+    local USAGE="usage: <dirname> FILE [FILES ...]"
     if [ -z "$1" ]; then
         echo $USAGE >&2
         return 1
@@ -105,24 +87,10 @@ function ls-ports {
     lsof -i tcp -s tcp:listen | awk '$8 == "TCP" { split($9,a,":"); print a[2] }'
 }
 
-# Open all ports that are in the ls-ports list
-function forward-all-ports {
-    if [ -z $1 ]; then
-        echo err: Missing hostname >&2
-        return 1
-    fi
-    local REMOTE_COMMAND="$(declare -f ls-ports); ls-ports"
-    local PORTS="$(ssh -T $1 "$REMOTE_COMMAND")"
-    for PORT in $PORTS; do
-        echo http://localhost:$PORT
-        ssh -NfL "$PORT:localhost:$PORT" "$1"
-    done
-}
-
 # Forward port given by an input argument in the form "host:port"
-function forward-host-port-string {
+function forward-host-port {
     if [ -z $1 ]; then
-        echo err: Missing hostname:port >&2
+        err "Missing argument <hostname:port>"
         return 1
     fi
     local HOST=$(echo $1 | awk '{ split($1,a,":"); print a[1] }')
@@ -136,8 +104,14 @@ alias e="$EDITOR $@"
 # Edit bashrc
 alias ebash="e ~/.bashrc && source ~/.bashrc"
 
+# Edit bash_profile
+alias ebashprofile="e ~/.bash_profile && source ~/.bash_profile"
+
 # Edit profile
 alias eprofile="e ~/.profile && source ~/.profile"
+
+# Edit bash aliases
+alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
 
 # Edit vim config
 alias evim="e ~/.vimrc"
@@ -158,34 +132,20 @@ function erestore {
 # Edit nvim config
 alias envim="e ~/.config/nvim/init.vim"
 
-# Edit bash aliases
-alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
-
 # keep tailing a file
 alias follow="tail -f"
-
-# Google something
-alias g="googler --count 3"
 
 # Search for a pattern in any file from the current cwd
 alias contains="grep -rnw . -e"
 
-# Download youtube audio from link
-alias youtube-mp3="youtube-dl --extract-audio --audio-format mp3"
-
-# Shortcut for nvidia-smi
-alias smi=nvidia-smi
-
 # Git shortcut for status
 alias gs="git status"
-
-# Git shortcut for push
-alias gp="git push"
 
 # Git shortcut for the common `git commit -am`
 alias gcam="git commit -am"
 
 # Create executable bash script and edit it
+# The first argument as the path to the script file that will be created
 function cmd {
     local NAME="${1:?'Usage: cmd <cmdname>'}"
     [ -e $NAME ] && echo "Command already exists: $NAME" && return 1
@@ -196,24 +156,15 @@ function cmd {
 }
 
 # Start recording the history and add it to an executable script file
+# The first argument as the file that will be saved
 function rec {
     local FILE="${1:?'Usage: reccmd <cmdname>'}"
     [ -e $FILE ] && echo "Command already exists: $FILE" && return 1
     tee "$FILE" | (bash && chmod +x "$FILE")
 }
 
-# Make sure that `pip` points to pip3
-alias pip=pip3
-
-# Make sure that `python` points to python3
-alias python=python3
-
 # Shortcut for using tensorboard with the current dir as logdir
 alias tb="tensorboard --logdir ."
-
-# Shortcut for using tensorboard and automatically select a subdirectory that
-# either starts or ends with 'logs' as the logdir
-alias tl="tensorboard --logdir *logs logs*"
 
 # Shortcut for jupyter notebook starting at default port 55500 that can be
 # overwritten using the first argument or a global variable called `$PORT`
@@ -230,7 +181,7 @@ alias jl="jupyter notebook list"
 alias ipy=ipython
 
 # Shortcut for python
-alias py=python
+alias py=python3
 
 # Shortcut for using a module with python3
 alias m="python3 -m"

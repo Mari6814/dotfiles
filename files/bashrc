@@ -115,12 +115,15 @@ fi
 # Mark this as loaded
 export BASHRC="$HOME/.bashrc"
 
+# Autocmd: Enables typing dirname instead of using cd
+shopt -s autocd
+
 # Source aliases
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
 
 # Source machine local bashrc
-if [ -f "$LOCAL/bashrc" ]; then
-    . "$LOCAL/bashrc"
+if [ -f "$HOME/.local/bashrc" ]; then
+    . "$HOME/.local/bashrc"
 fi

@@ -203,6 +203,31 @@ alias vd=deactivate
 # Variable to hold the path to a personal quick notes file
 export NOTES_FILE="$HOME/notes.txt"
 
+# List installed alternatives
+alias altl=update-alternatives --list
+
+# Remove alternatives
+alias altrm="sudo update-alternatives --remove"
+
+# Remove all alternatives
+alias altrmall="sudo update-alternatives --remove-all"
+
+# Register alternatives in .local/bin
+# alt <name> <path to alternative>
+alt() {
+    if [ -z "$1" ] | [ -z "$2" ]; then
+        err "Usage: alt <name> <path>"
+        return 1
+    fi
+    if [ ! -f "$2" ]; then
+        err "The <path> argument must point to an executable file."
+        return 1
+    fi
+    local NAME="$1"
+    local APATH="$2"
+    echo "Linking $PATH -> $NAME"
+    sudo update-alternatives --install "$HOME/.local/bin/$NAME" "$NAME" "$PATH"
+}
 
 # Append all arguments to the notes file at `$NOTES_FILE`
 function note() {

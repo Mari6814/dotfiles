@@ -5,14 +5,14 @@ export BASH_ALIASES="$HOME/.bash_aliases"
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"
 
 # Fix permissions of files and directories recursiveley
-function fix-permissions {
+fix-permissions() {
     local USAGE="Usage: fix-permissions <directory>"
     sudo find ${1:?$USAGE} -type f -exec chmod 0664 {} +
     sudo find $1 -type d -exec chmod 0775 {} +
 }
 
 # Shortcut that creates a git ignore file with the listed files added to it
-function gignore {
+gignore() {
     for file in "$@"; do
         echo "$file" >> .gitignore
     done
@@ -26,7 +26,7 @@ alias etmp="vim $(mktemp)"
 alias ..="Cd .."
 
 # Virtaul env auto
-function Cd {
+Cd() {
     builtin cd $@
     if [ -z "$VIRTUAL_ENV" ]; then
         if [ -f .venv/bin/activate ]; then
@@ -43,7 +43,7 @@ function Cd {
 }
 
 # wait for jobs until the number of jobs is lower than the barrier
-function barrier {
+barrier() {
     if [ -z "$1" ]; then
         echo "Usage: barrier <limit> [intervall=1]" >&2
         return 1
@@ -63,7 +63,7 @@ alias err=">&2 tput setaf 1; echo error:"
 
 # Create a virtual folder out of a glob This function creates a directory
 # called <dirname> and links all files from the rest glob into that directory
-function mkvdir {
+mkvdir() {
     local USAGE="usage: <dirname> FILE [FILES ...]"
     if [ -z "$1" ]; then
         echo $USAGE >&2
@@ -83,12 +83,12 @@ function mkvdir {
 }
 
 # List ports in use
-function ls-ports {
+ls-ports() {
     lsof -i tcp -s tcp:listen | awk '$8 == "TCP" { split($9,a,":"); print a[2] }'
 }
 
 # Forward port given by an input argument in the form "host:port"
-function forward-host-port {
+forward-host-port() {
     if [ -z $1 ]; then
         err "Missing argument <hostname:port>"
         return 1
@@ -118,7 +118,7 @@ alias evim="e ~/.vimrc"
 
 # Open last session in vim/nvim or specify a specific session file as argument
 # $1
-function erestore {
+erestore() {
     local SESS="${1:-$HOME/.vim/Session.vim}"
     if [ -f "$SESS" ]; then
         echo "Loading $SESS"
@@ -146,7 +146,7 @@ alias gcam="git commit -am"
 
 # Create executable bash script and edit it
 # The first argument as the path to the script file that will be created
-function cmd {
+cmd() {
     local NAME="${1:?'Usage: cmd <cmdname>'}"
     [ -e $NAME ] && echo "Command already exists: $NAME" && return 1
     echo "Creating command: $NAME"
@@ -157,7 +157,7 @@ function cmd {
 
 # Start recording the history and add it to an executable script file
 # The first argument as the file that will be saved
-function rec {
+rec() {
     local FILE="${1:?'Usage: reccmd <cmdname>'}"
     [ -e $FILE ] && echo "Command already exists: $FILE" && return 1
     tee "$FILE" | (bash && chmod +x "$FILE")
@@ -168,11 +168,17 @@ alias tb="tensorboard --logdir ."
 
 # Shortcut for jupyter notebook starting at default port 55500 that can be
 # overwritten using the first argument or a global variable called `$PORT`
-function jn {
+jn() {
     local port="${1:-${PORT:-55500}}"
     shift
     jupyter notebook --no-browser --port $port $@
 }
+
+# Use python = python3
+alias python=python3
+
+# Shortcut for python
+alias py=python3
 
 # Shortcut for listing running jupyter notebooks
 alias jl="jupyter notebook list"
@@ -180,15 +186,12 @@ alias jl="jupyter notebook list"
 # Shortcut for ipython
 alias ipy=ipython
 
-# Shortcut for python
-alias py=python3
-
 # Shortcut for using a module with python3
 alias m="python3 -m"
 
 # Shortcut for automatically sourcing a */bin/activate script which usually
 # activates a venv
-function vactivate {
+vactivate() {
     source ${1:-?(.)*}/bin/activate;
 }
 
@@ -230,7 +233,7 @@ alt() {
 }
 
 # Append all arguments to the notes file at `$NOTES_FILE`
-function note() {
+note() {
     echo "$@" >> $NOTES_FILE
 }
 
@@ -241,7 +244,7 @@ alias n=note
 alias notes="cat $NOTES_FILE"
 
 # Encrypt some input
-function encrypt {
+encrypt() {
     [ -z "$1" ] && echo "usage: encrypt <outfile>" && return 1
     [ -e "$1" ] && echo "err: File $1 already exists." && return 1
     local secret=$(openssl aes-256-cbc -e -a -salt -pbkdf2 -iter 100000)

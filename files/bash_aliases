@@ -180,9 +180,6 @@ jn() {
     jupyter notebook --no-browser --port $port $@
 }
 
-# Use python = python3
-alias python=python3
-
 # Shortcut for python
 alias py=python3
 

@@ -144,6 +144,7 @@ alias contains="grep -rnw . -e"
 # Git shortcut
 alias gs="git status"
 alias gb="git branch"
+alias gr="git remote -v"
 alias gd="git diff"
 alias gdt="git difftool -y"
 
@@ -225,7 +226,7 @@ alias altrmall="sudo update-alternatives --remove-all"
 # alt <name> <path to alternative> [prio=10]
 alt() {
     if [ -z "$1" ] | [ -z "$2" ]; then
-        err "Usage: alt <name> <path>"
+        err "Usage: alt <name> <path> [priority = 10]"
         return 1
     fi
     if [ ! -f "$2" ]; then

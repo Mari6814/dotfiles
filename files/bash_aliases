@@ -4,6 +4,10 @@ export BASH_ALIASES="$HOME/.bash_aliases"
 # Shortcut to update and upgrade linux distributions
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"
 
+# Start recording to the usual database
+alias r="script $HOME/.bash_database"
+
+# Remove all ansi sequences from a stored file.
 remove-ansi-sequences() {
     cat "$1" | perl -pe '
 s/\e\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]//g;

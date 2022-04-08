@@ -10,7 +10,7 @@ for-each() {
 }
 
 # Start recording to the usual database
-alias r="script $HOME/.bash_database"
+alias r="script -a $HOME/.bash_database"
 
 # Remove all ansi sequences from a stored file.
 remove-ansi-sequences() {

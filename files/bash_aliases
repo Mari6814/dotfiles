@@ -4,6 +4,11 @@ export BASH_ALIASES="$HOME/.bash_aliases"
 # Shortcut to update and upgrade linux distributions
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"
 
+# Execute command for-each directory
+for-each() {
+    ls -d */ | xargs -I {} bash -c "cd '{}' && $1"
+}
+
 # Fix permissions of files and directories recursiveley
 fix-permissions() {
     local USAGE="Usage: fix-permissions <directory>"

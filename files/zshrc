@@ -1,0 +1,67 @@
+# Mark zshrc as source
+export ZSHRC="${(%):-%x}:$ZSHRC"
+export SOURCED="${(%):-%x}:$SOURCED"
+
+# Check if zplug is installed
+if [[ ! -d ~/.zplug ]]; then
+  git clone https://github.com/zplug/zplug ~/.zplug
+  source ~/.zplug/init.zsh && zplug update --self
+fi
+
+# Essential
+source ~/.zplug/init.zsh
+
+# Make sure to use double quotes to prevent shell expansion
+# zplug "zsh-users/zsh-completions"
+zplug "zsh-users/zsh-syntax-highlighting"
+zplug "zsh-users/zsh-autosuggestions"
+zplug "dracula/zsh", as:theme
+zplug "wting/autojump", as:command
+zplug "rupa/z", as:command
+zplug "unixorn/fzf-zsh-plugin"
+
+# Install packages that have not been installed yet
+if ! zplug check --verbose; then
+    printf "Install? [y/N]: "
+    if read -q; then
+        echo; zplug install
+    else
+        echo
+    fi
+fi
+
+zplug load
+
+# Accept autosuggestion provided by the zplugin zsh-autosuggestions
+bindkey '^F' autosuggest-accept
+# ZSH default ^D behaviour is list-choices for some reason...
+bindkey '^D' vi-kill-line
+
+alias ls="ls -FG --color=auto"
+alias l=ls
+alias la="ls -a"
+alias ll="ls -alF"
+alias c=clear
+alias gs="git status"
+alias gv="git remote -v"
+alias gd="git diff"
+alias gcam="git commit -am"
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+[ ! -z "$EDITOR" ] && alias e="$EDITOR"
+alias vim=nvim
+__ez() { e "$1" && source "$1"; }
+alias ezp="__ez ~/.zprofile"
+alias ezr="__ez ~/.zshrc"
+alias eze="__ez ~/.zshenv"
+alias mkdir="mkdir -pv"
+alias ports="netstat -tulanp"
+alias follow="tail -f"
+alias aptuu="sudo apt-get update && sudo apt-get upgrade"
+
+
+if [ -d "$LOCAL/zshrc" ]; then
+    source "$LOCAL/zshrc"
+fi

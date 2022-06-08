@@ -1,0 +1,13 @@
+eval "$(/opt/homebrew/bin/brew shellenv)"
+export ZPROFILE="${(%):-%x}:$ZPROFILE"
+export SOURCED="${(%):-%x}:$SOURCED"
+
+if [ -d "$LOCAL/bin" ]; then
+    export PATH="$LOCAL/bin:$PATH"
+fi
+
+export EDITOR=nvim
+
+if [ -d "$LOCAL/zprofile" ]; then
+    source "$LOCAL/zprofile"
+fi

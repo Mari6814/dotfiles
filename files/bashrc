@@ -1,3 +1,7 @@
+# Mark this as loaded
+export BASHRC="$BASH_SOURCE:$BASHRC"
+export SOURCED="$BASH_SOURCE:$SOURCED"
+
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
@@ -112,10 +116,7 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# Mark this as loaded
-export BASHRC="$HOME/.bashrc"
-
-# Autocmd: Enables typing dirname instead of using cd
+# Autocd: Enables typing dirname instead of using cd
 shopt -s autocd
 
 # Source aliases

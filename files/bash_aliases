@@ -1,5 +1,6 @@
 # Mark this as loaded
-export BASH_ALIASES="$HOME/.bash_aliases"
+export BASH_ALIASES="$BASH_SOURCE:$BASH_ALIASES"
+export SOURCED="$BASH_SOURCE:$SOURCED"
 
 # Shortcut to update and upgrade linux distributions
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"

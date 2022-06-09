@@ -40,7 +40,8 @@ bindkey '^D' vi-kill-line
 alias ls="ls -FG --color=auto"
 alias l=ls
 alias la="ls -a"
-alias ll="ls -alF"
+alias ll="ls -lF"
+alias lla="ls -alF"
 alias c=clear
 alias gs="git status"
 alias gv="git remote -v"
@@ -52,11 +53,13 @@ alias ....="cd ../../.."
 alias .....="cd ../../../.."
 [ ! -z "$EDITOR" ] && alias e="$EDITOR"
 alias vim=nvim
-__ez() { e "$1" && source "$1"; }
-alias ezp="__ez ~/.zprofile"
-alias ezr="__ez ~/.zshrc"
-alias eze="__ez ~/.zshenv"
+_sourceedit() { e "$1" && source "$1"; }
+alias eprofile="_sourceedit ~/.zprofile"
+alias erc="_sourceedit ~/.zshrc"
+alias eenv="_sourceedit ~/.zshenv"
 alias mkdir="mkdir -pv"
+mkcdir() { mkdir -pv "$1" && cd "$1"; }
+alias evim="e ~/.vimrc"
 alias ports="netstat -tulanp"
 alias follow="tail -f"
 alias aptuu="sudo apt-get update && sudo apt-get upgrade"

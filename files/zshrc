@@ -39,9 +39,9 @@ bindkey '^D' vi-kill-line
 
 alias ls="ls -FG --color=auto"
 alias l=ls
-alias la="ls -a"
-alias ll="ls -lF"
-alias lla="ls -alF"
+alias la="ls -A"
+alias ll="ls -Flh"
+alias lla="ls -AFGlh"
 alias c=clear
 alias gs="git status"
 alias gv="git remote -v"
@@ -63,6 +63,8 @@ alias evim="e ~/.vimrc"
 alias ports="netstat -tulanp"
 alias follow="tail -f"
 alias aptuu="sudo apt-get update && sudo apt-get upgrade"
+alias m="python -m"
+alias p="poetry"
 
 
 if [ -d "$LOCAL/zshrc" ]; then

@@ -12,13 +12,8 @@ fi
 source ~/.zplug/init.zsh
 
 # Make sure to use double quotes to prevent shell expansion
-# zplug "zsh-users/zsh-completions"
-zplug "zsh-users/zsh-syntax-highlighting"
+# zplug "zsh-users/zsh-syntax-highlighting"
 zplug "zsh-users/zsh-autosuggestions"
-zplug "dracula/zsh", as:theme
-zplug "wting/autojump", as:command
-zplug "rupa/z", as:command
-zplug "unixorn/fzf-zsh-plugin"
 
 # Install packages that have not been installed yet
 if ! zplug check --verbose; then
@@ -35,7 +30,7 @@ zplug load
 # Accept autosuggestion provided by the zplugin zsh-autosuggestions
 bindkey '^F' autosuggest-accept
 # ZSH default ^D behaviour is list-choices for some reason...
-bindkey '^D' vi-kill-line
+# bindkey '^D' vi-kill-line
 
 alias ls="ls -FG --color=auto"
 alias l=ls
@@ -66,6 +61,7 @@ alias aptuu="sudo apt-get update && sudo apt-get upgrade"
 alias m="python -m"
 alias p="poetry"
 
+export PROMPT="%F{blue}%n%F{green}:%F{cyan}%~%F{green}$ %F{reset}"
 
 if [ -d "$LOCAL/zshrc" ]; then
     source "$LOCAL/zshrc"

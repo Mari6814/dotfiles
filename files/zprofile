@@ -1,6 +1,9 @@
-eval "$(/opt/homebrew/bin/brew shellenv)"
 export ZPROFILE="${(%):-%x}:$ZPROFILE"
 export SOURCED="${(%):-%x}:$SOURCED"
+
+[ -f '/opt/homebrew/bin/brew' ] && eval "$(/opt/homebrew/bin/brew shellenv)"
+
+export LOCAL="$HOME/.local"
 
 if [ -d "$LOCAL/bin" ]; then
     export PATH="$LOCAL/bin:$PATH"

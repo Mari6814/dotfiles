@@ -61,6 +61,7 @@ alias aptuu="sudo apt-get update && sudo apt-get upgrade"
 alias m="python -m"
 alias p="poetry"
 alias va="source .venv/bin/activate"
+alias jn="jupyter notebook"
 
 export PROMPT="%F{blue}%n%F{green}:%F{cyan}%~%F{green}$ %F{reset}"
 

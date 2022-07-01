@@ -10,11 +10,9 @@ fi
 
 # Essential
 source ~/.zplug/init.zsh
-
 # Make sure to use double quotes to prevent shell expansion
 # zplug "zsh-users/zsh-syntax-highlighting"
 zplug "zsh-users/zsh-autosuggestions"
-
 # Install packages that have not been installed yet
 if ! zplug check --verbose; then
     printf "Install? [y/N]: "
@@ -24,7 +22,6 @@ if ! zplug check --verbose; then
         echo
     fi
 fi
-
 zplug load
 
 # Accept autosuggestion provided by the zplugin zsh-autosuggestions
@@ -53,7 +50,7 @@ alias eprofile="_sourceedit ~/.zprofile"
 alias erc="_sourceedit ~/.zshrc"
 alias eenv="_sourceedit ~/.zshenv"
 alias mkdir="mkdir -pv"
-mkcdir() { mkdir -pv "$1" && cd "$1"; }
+mkcdir() { mkdir "$1" && cd "$1"; }
 alias evim="e ~/.vimrc"
 alias ports="netstat -tulanp"
 alias follow="tail -f"
@@ -62,8 +59,18 @@ alias m="python -m"
 alias p="poetry"
 alias va="source .venv/bin/activate"
 alias jn="jupyter notebook"
+#
+# Set the npm package install dir
+if command -v npm &> /dev/null; then
+    export NPM_PREFIX="$HOME/.local/npm"
+    if [[ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]]; then
+        echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
+        npm config set prefix "$NPM_PREFIX"
+    fi
+    export PATH="$(npm config get prefix)/bin:$PATH"
+    export PATH="./npm_modules/bin:$PATH"
+fi
 
-export PROMPT="%F{blue}%n%F{green}:%F{cyan}%~%F{green}$ %F{reset}"
 
 if [ -d "$LOCAL/zshrc" ]; then
     source "$LOCAL/zshrc"

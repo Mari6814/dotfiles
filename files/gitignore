@@ -1,11 +1,11 @@
 .*
 _*/
-
 !.git*
 .git/
-
 node_modules/
 build/
+dst/
+dest/
 temp/
 tmp/
 logs/
@@ -14,6 +14,11 @@ checkpoints/
 
 *.log
 *.tmp
+*.temp
+temp_*
+tmp_*
+*.bck
+*.back
 *.temp
 *.bck
 *.pyc
@@ -26,4 +31,9 @@ checkpoints/
 *.JPEG
 *.bmp
 *.BMP
-
+*.sqlite
+*.sql
+*.mov
+*.mp3
+*.mp4
+*.webm

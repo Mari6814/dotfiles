@@ -2,6 +2,15 @@
 export ZSHENV="${(%):-%x}:$ZSHENV"
 export SOURCED="${(%):-%x}:$SOURCED"
 
+setopt auto_cd
+setopt append_history
+setopt hist_save_no_dups
+export HISTFILE=~/.zsh_history
+export HISTSIZE=10000
+export SAVEHIST=10000
+export LOCAL="$HOME/.local"
+export PROMPT="%F{blue}%n%F{green}:%F{cyan}%~%F{green}$ %F{reset}"
+
 if [ -d "$LOCAL/zshenv" ]; then
     source "$LOCAL/zshenv"
 fi

@@ -1,10 +1,21 @@
 export ZPROFILE="${(%):-%x}:$ZPROFILE"
 export SOURCED="${(%):-%x}:$SOURCED"
 
+# Setup some brew stuff
 [ -f '/opt/homebrew/bin/brew' ] && eval "$(/opt/homebrew/bin/brew shellenv)"
 
-export LOCAL="$HOME/.local"
-export EDITOR=nvim
+# NPM setup
+if command -v npm &> /dev/null; then
+    export NPM_PREFIX="$HOME/.local/npm"
+    if [[ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]]; then
+        echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
+        npm config set prefix "$NPM_PREFIX"
+    fi
+    # Add globally installed packages to PATH
+    export PATH="$(npm config get prefix)/bin:$PATH"
+    # Also add all npm_modules executables to path
+    export PATH="./npm_modules/bin:$PATH"
+fi
 
 if [ -d "$LOCAL/bin" ]; then
     export PATH="$LOCAL/bin:$PATH"

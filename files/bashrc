@@ -116,6 +116,21 @@ if ! shopt -oq posix; then
   fi
 fi
 
+export LOCAL="$HOME/.local"
+export EDITOR=nvim
+
+# Set the npm package install dir
+if command -v npm &> /dev/null; then
+    export NPM_PREFIX="$HOME/.local/npm"
+    if [ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]; then
+        echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
+        npm config set prefix "$NPM_PREFIX"
+    fi
+    export PATH="$(npm config get prefix)/bin:$PATH"
+    export PATH="./npm_modules/bin:$PATH"
+fi
+
+
 # Autocd: Enables typing dirname instead of using cd
 shopt -s autocd
 

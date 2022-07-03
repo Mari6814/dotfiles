@@ -29,6 +29,12 @@ bindkey '^F' autosuggest-accept
 # ZSH default ^D behaviour is list-choices for some reason...
 # bindkey '^D' vi-kill-line
 
+
+setopt auto_cd
+setopt append_history
+
+export PROMPT="%F{blue}%n%F{green}:%F{cyan}%~%F{green}$ %F{reset}"
+
 alias ls="ls -FG --color=auto"
 alias l=ls
 alias la="ls -A"
@@ -59,18 +65,19 @@ alias m="python -m"
 alias p="poetry"
 alias va="source .venv/bin/activate"
 alias jn="jupyter notebook"
-#
-# Set the npm package install dir
+
+# NPM setup
 if command -v npm &> /dev/null; then
     export NPM_PREFIX="$HOME/.local/npm"
     if [[ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]]; then
         echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
         npm config set prefix "$NPM_PREFIX"
     fi
+    # Add globally installed packages to PATH
     export PATH="$(npm config get prefix)/bin:$PATH"
+    # Also add all npm_modules executables to path
     export PATH="./npm_modules/bin:$PATH"
 fi
-
 
 if [ -d "$LOCAL/zshrc" ]; then
     source "$LOCAL/zshrc"

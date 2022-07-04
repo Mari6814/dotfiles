@@ -59,10 +59,8 @@ set ai
 set wildignore+=**/node_modules/**,*.pyc,*.o,
 set switchbuf=useopen,vsplit
 filetyp plugin on
-
 " Specify python3 executable for some extension?
 let g:python3_host_prog = "/usr/bin/python3"
-
 " Enable paste register crossplattform
 set clipboard^=unnamed,unnamedplus
 
@@ -89,28 +87,31 @@ nnoremap <space> za
 nnoremap <leader>b :NERDTree<cr>
 
 " Shortcut search for beginnig of word
-nnoremap <leader>w /\<
-nnoremap <leader>W ?\<
+nnoremap gw /\<
+nnoremap gW ?\<
 
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
 
-" Goto any file using ctrl+p behaviour
-nnoremap <c-p> :Telescope find_files<cr>
-
-" Search string under cursor using Telescope
-nnoremap <leader>f yiw:Telescope grep_string<cr><c-r>0
-
-" Make this line an assignment statement macro
-nnoremap =0 ^i<space>=<space><c-o>^<left>
-
 " Auto for session management
 augroup sessions
     au!
-    " Automatically save sessions on exit in working dir
-    au VimLeave * :mksession! .vim/Session.vim
-    " Automatically save sessions on exit in global dir
-    au VimLeave * :mksession! ~/.vim/Session.vim
+    " Automatically save sessions when something changed (leave or new buf)
+    au BufEnter,VimLeave * :mksession! .vim/session.vim
+    " Automatically save sessions on exit only in global dir
+    au VimLeave * :mksession! ~/.vim/session.vim
+    " Automatically load session if it exists (only working dir)
+    au VimEnter * :source ~/.vim/session.vim
+augroup end
+" Open last global session that was saved
+command Restore source ~/.vim/session.vim
+
+" Add syntax highlighting to zsh/bash and generic .aliases files
+augroup aliases
+    au!
+    au BufReadPost .aliases set syntax=bash
+    au BufReadPost .zsh_aliases set syntax=zsh
+    au BufReadPost .bash_aliases set syntax=bash
 augroup end
 
 " Find files using Telescope command-line sugar.
@@ -118,27 +119,21 @@ nnoremap <leader>ff <cmd>Telescope find_files<cr>
 nnoremap <leader>fg <cmd>Telescope live_grep<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
-
-" Vertically split window for each buffer
-command Vba vert ba
-
-" Restore session using :Restore
-command Restore source .vim/Session.vim
+" Goto any file using ctrl+p behaviour
+nnoremap <c-p> :Telescope find_files<cr>
+" Search string under cursor using Telescope
+nnoremap <leader>f yiw:Telescope grep_string<cr><c-r>0
 
 " Replace word under cursor
 nnoremap <leader>r :s/<C-r><C-w>//<left>
-
 " Search and replace the word under the cursor
 nnoremap <leader>R :%s/<C-r><C-w>//g<left><left>
-
 " Search and replace the current visual selection
 vnoremap <leader>v ygv:s/<c-r>"//<left>
-
-" Shortcut to replace word under cursor and enabling the . command
-nmap g* *Ncgn
-
 " Search the pattern under the cursor in all files with the same extension as this one
 nnoremap <F4> :execute ':vim /<C-r><C-w>/ **/*'<cr>
+" Shortcut to replace word under cursor and enabling the . command
+nmap g* *Ncgn
 
 " Auto reload vimrc on save
 augroup vimrc
@@ -147,15 +142,9 @@ augroup vimrc
     autocmd BufWritePost,FileWritePost .vimrc :so $HOME/.vimrc
 augroup end
 
-" Custom statusline section
-function! StatuslineGit()
-  let l:branchname = system("git rev-parse --abbrev-ref HEAD 2>/dev/null | tr -d '\n'")
-  return strlen(l:branchname) > 0?'  '.l:branchname.' ':''
-endfunction
-
+" In the event, that a large file was loaded, set some options to reduce lag
 augroup LargeFile
         let g:large_file = 2621440 " 2.5MB
-
         " Set options:
         "   eventignore+=FileType (no syntax highlighting etc
         "   assumes FileType always on)
@@ -171,8 +160,13 @@ augroup LargeFile
                 \ else |
                         \ set eventignore-=FileType |
                 \ endif
-augroup END
+augroup end
 
+" Custom statusline section
+function! StatuslineGit()
+  let l:branchname = system("git rev-parse --abbrev-ref HEAD 2>/dev/null | tr -d '\n'")
+  return strlen(l:branchname) > 0?'  '.l:branchname.' ':''
+endfunction
 set statusline=
 set statusline+=%#PmenuSel#
 set statusline+=%{StatuslineGit()}

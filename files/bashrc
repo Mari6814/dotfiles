@@ -134,12 +134,16 @@ fi
 # Autocd: Enables typing dirname instead of using cd
 shopt -s autocd
 
+if [ -f ~/.aliases ]; then
+    source ~/.aliases
+fi
+
 # Source aliases
 if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
+    source ~/.bash_aliases
 fi
 
 # Source machine local bashrc
-if [ -f "$HOME/.local/bashrc" ]; then
-    . "$HOME/.local/bashrc"
+if [ -f "$LOCAL/bashrc" ]; then
+    source "$LOCAL/bashrc"
 fi

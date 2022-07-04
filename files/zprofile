@@ -8,6 +8,6 @@ if [ -d "$LOCAL/bin" ]; then
     export PATH="$LOCAL/bin:$PATH"
 fi
 
-if [ -d "$LOCAL/zprofile" ]; then
+if [ -f "$LOCAL/zprofile" ]; then
     source "$LOCAL/zprofile"
 fi

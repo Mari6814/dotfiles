@@ -43,11 +43,11 @@ if command -v npm &> /dev/null; then
     export PATH="./npm_modules/bin:$PATH"
 fi
 
-if [ -f "~/.zsh_aliases" ]; then
+if [ -f ~/.zsh_aliases ]; then
     source ~/.zsh_aliases
 fi
 
-if [ -f "~/.aliases" ]; then
+if [ -f ~/.aliases ]; then
     source ~/.aliases
 fi
 

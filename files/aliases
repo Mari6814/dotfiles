@@ -1,0 +1,251 @@
+if [ '/bin/bash' = "$SHELL" ]; then
+    export ALIASES="$BASH_SOURCE:$ALIASES"
+    export SOURCED="$BASH_SOURCE:$SOURCED"
+elif [ '/bin/zsh' = "$SHELL" ]; then
+    export ALIASES="${(%):-%x}:$ALIASES"
+    export SOURCED="${(%):-%x}:$SOURCED"
+else
+    export SOURCED=".aliases:$SOURCED"
+fi
+
+# Shortcut to update and upgrade linux distributions
+alias aptuu="sudo apt -y update && sudo apt -y upgrade"
+
+# Start recording to the usual database
+alias r="script -a $HOME/.bash_database"
+# Shortcut to start editing temporary file.
+alias etmp="vim $(mktemp)"
+
+alias err=">&2 tput setaf 1; echo error:"
+alias e="$EDITOR"
+alias ls="ls -FG --color=auto"
+alias l=ls
+alias la="ls -A"
+alias ll="ls -Flh"
+alias lla="ls -AFGlh"
+alias c=clear
+alias vim=nvim
+alias mkdir="mkdir -pv"
+alias evim="e ~/.vimrc"
+alias ports="netstat -tulanp"
+alias follow="tail -f"
+# keep tailing a file
+alias follow="tail -f"
+# Search for a pattern in any file from the current cwd
+alias contains="grep -rnw . -e"
+
+# Shortcuts to editing and sourcsing shell files
+_edit_then_source() { e "$1" && source "$1"; }
+alias eprofile="_edit_then_source ~/.profile"
+alias ealias="_edit_then_source ~/.aliases"
+# Shortcuts to edit zsh files
+alias ezrc="_edit_then_source ~/.zshrc"
+alias ezenv="_edit_then_source ~/.zshenv"
+alias ezprofile="_edit_then_source ~/.zprofile"
+alias ezalias="_edit_then_source ~/.zsh_aliases"
+# Edit bash Files
+alias ebash="_edit_then_source ~/.bashrc"
+alias ebprofile="_edit_then_source ~/.bash_profile"
+alias ebalias="_edit_then_source ~/.bash_aliases"
+# Edit vim config
+alias evim="e ~/.vimrc"
+alias envim="e ~/.config/nvim/init.vim"
+
+# Git shortcut
+alias gs="git status"
+alias gv="git remote -v"
+alias gb="git branch"
+alias gd="git diff"
+alias gcam="git commit -am"
+
+# Shortcut for using tensorboard with the current dir as logdir
+alias tb="tensorboard --logdir ."
+# Shortcut for python
+alias py=python3
+# Shortcut for ipython
+alias ipy=ipython
+# Shortcut for using a module with python3
+alias m="python3 -m"
+# Poetry shortcut
+alias p="poetry"
+# Venv activate shortcut
+alias va="source .venv/bin/activate"
+# Open jupyter notebook
+alias jn="jupyter notebook"
+
+# Create executable bash script and edit it
+# The first argument as the path to the script file that will be created
+cmd() {
+    local NAME="${1:?'Usage: cmd <cmdname>'}"
+    [ -e "$NAME" ] && err "Command already exists: $NAME" && return 1
+    echo "Creating command: $NAME"
+    echo '#!/bin/bash' >> "$NAME"
+    e "$NAME"
+    chmod +x "$NAME"
+}
+
+# Start recording the history and add it to an executable script file
+# The first argument as the file that will be saved
+rec() {
+    local NAME="${1:?'Usage: rec <cmdname>'}"
+    [ -e "$NAME" ] && err "Command already exists: $NAME" && return 1
+    tee "$NAME" | ($SHELL && chmod +x "$NAME")
+}
+
+# Encrypt some input
+encrypt() {
+    [ -z "$1" ] && echo "usage: encrypt <outfile>" && return 1
+    [ -e "$1" ] && echo "err: File $1 already exists." && return 1
+    local secret=$(openssl aes-256-cbc -e -a -salt -pbkdf2 -iter 100000)
+    echo "#!/bin/sh" >> "$1"
+    echo "echo \"$secret\" | openssl aes-256-cbc -d -a -salt -pbkdf2 -iter 100000 \$@" >> "$1"
+    chmod +x "$1"
+}
+
+# A helper function that makes a new "local" directory.
+# Adds subdirectories to appropiate paths
+function make-local {
+    local USAGE="usage: make-local [-h|--help] [--dir] <dir>"
+    if [ $# -eq 0 ]; then
+        echo "$USAGE" >&2
+        return 0
+    fi
+    while test $# -gt 0; do
+        case "$1" in
+            -h|--help)
+                echo "$USAGE" >&2
+                return 0
+                ;;
+            -d|--dir)
+                shift
+                DIR="$1"
+                ;;
+            *)
+                DIR="$1"
+        esac
+        shift
+    done
+    if [ -z "$DIR" ]; then
+        echo "$USAGE" >&2
+        return 1
+    fi
+    if [ ! -d "$DIR" ]; then
+        echo "err: $DIR is not a directory" >&2
+        return 1
+    fi
+    [ -d "$DIR/bin" ] && export PATH="$DIR/bin:$PATH"
+    [ -d "$DIR/lib" ] && export LD_LIBRARY_PATH="$DIR/lib:$LD_LIBRARY_PATH"
+    [ -d "$DIR/lib64" ] && export LD_LIBRARY_PATH="$DIR/lib64:$LD_LIBRARY_PATH"
+    [ -d "$DIR/include" ] && export CPATH="$CPATH/include:$CPATH"
+    [ -d "$DIR/man" ] && export MANPATH="$MANPATH/man:$MANPATH"
+}
+
+# Create a virtual folder out of a glob. This function creates a directory
+# called <dirname> and links all files from the provided globs into that directory
+mkvirtual() {
+    local USAGE="usage: <dirname> FILE [FILES ...]"
+    if [ -z "$1" ]; then
+        echo $USAGE >&2
+        return 1
+    fi
+    if [ -z "$2" ]; then
+        echo "err: Missing glob output as argument 2.." >&2
+        echo $USAGE >&2
+        return 1
+    fi
+    local DIRNAME="$1"
+    shift
+    mkdir "$DIRNAME"
+    for path in "$@"; do
+        ln -vs "$(realpath $path)" "$DIRNAME/$(basename $path)"
+    done
+}
+
+# List ports in use
+ls-ports() {
+    lsof -i tcp -s tcp:listen | awk '$8 == "TCP" { split($9,a,":"); print a[2] }'
+}
+
+# Forward port given by an input argument in the form "host:port"
+forward-host-port() {
+    if [ -z $1 ]; then
+        err "Missing argument <hostname:port>"
+        return 1
+    fi
+    local HOST=$(echo $1 | awk '{ split($1,a,":"); print a[1] }')
+    local PORT=$(echo $1 | awk '{ split($1,a,":"); print a[2] }')
+    ssh -NL "${PORT:-$2}:localhost:$PORT" "$HOST"
+}
+
+# Execute command for-each directory
+for-each() {
+    ls -d */ | xargs -I {} bash -c "cd '{}' && $1"
+}
+
+# Remove all ansi sequences from a stored file.
+remove-ansi-sequences() {
+    cat "$1" | perl -pe '
+s/\e\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]//g;
+s/\e[PX^_].*?\e\\//g;
+s/\e\][^\a]*(?:\a|\e\\)//g;
+s/\e[\[\]A-Z\\^_@]//g;'
+}
+
+# Fix permissions of files and directories recursiveley
+fix-permissions() {
+    local USAGE="Usage: fix-permissions <directory>"
+    sudo find ${1:?$USAGE} -type f -exec chmod 0664 {} +
+    sudo find $1 -type d -exec chmod 0775 {} +
+}
+
+# Shortcut that creates a git ignore file with the listed patterns added to it
+gignore() {
+    for pattern in "$@"; do
+        echo "$pattern" >> .gitignore
+    done
+    tac .gitignore
+}
+
+# Virtaul env auto
+Cd() {
+    builtin cd $@
+    if [ -z "$VIRTUAL_ENV" ]; then
+        if [ -f .venv/bin/activate ]; then
+            . .venv/bin/activate
+        fi
+    else
+        local CURRENT="$(realpath $(pwd))"
+        local ROOT="$(realpath $VIRTUAL_ENV/..)"
+        case $CURRENT/ in
+            $ROOT/*) ;; # Still inside venv
+            *) deactivate;; # Not in venv hierarchy anymore
+        esac
+    fi
+}
+
+# wait for jobs until the number of jobs is lower than the barrier
+barrier() {
+    if [ -z "$1" ]; then
+        echo "Usage: barrier <limit> [intervall=1]" >&2
+        return 1
+    fi
+    local LIMIT="$1"
+    local INTERVALL="${2:-1}"
+    while true; do
+        if [ $(jobs | wc -l) -lt $LIMIT ]; then
+            break
+        fi
+        sleep $INTERVALL
+    done
+}
+
+# Source machine local aliases inside the `$HOME/.local` directory
+if [ -f "$LOCAL/bash_aliases" ] && [ '/bin/bash' = "$SHELL" ]; then
+    source "$LOCAL/bash_aliases"
+elif [ -f "$LOCAL/zsh_aliases" ] && [ '/bin/zsh' = "$SHELL" ]; then
+    source "$LOCAL/zsh_aliases"
+fi
+if [ -f "$LOCAL/aliases" ]; then
+    source "$LOCAL/aliases"
+fi
+

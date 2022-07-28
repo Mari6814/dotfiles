@@ -19,10 +19,6 @@ if has('nvim')
 endif
 call plug#end()
 
-inoremap <silent><expr> <C-Space> compe#complete()
-" inoremap <silent><expr> <CR>      compe#confirm('<CR>')
-inoremap <silent><expr> <C-e>     compe#close('<C-e>')
-
 syntax on
 filetype plugin on
 filetype plugin indent on
@@ -79,40 +75,18 @@ inoremap <C-j> <c-o><C-w>j
 inoremap <C-k> <c-o><C-w>k
 inoremap <C-h> <c-o><C-w>h
 inoremap <C-l> <c-o><C-w>l
-
 " Toggle folds using space
 nnoremap <space> za
-"
 " Open nerd tree
 nnoremap <leader>b :NERDTree<cr>
-
 " Shortcut search for beginnig of word
 nnoremap gw /\<
 nnoremap gW ?\<
-
+inoremap <silent><expr> <C-Space> compe#complete()
+" inoremap <silent><expr> <CR>      compe#confirm('<CR>')
+inoremap <silent><expr> <C-e>     compe#close('<C-e>')
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
-
-" Auto for session management
-augroup sessions
-    au!
-    " Automatically save sessions when something changed (leave or new buf)
-    au BufEnter,VimLeave * :mksession! .vim/session.vim
-    " Automatically save sessions on exit only in global dir
-    au VimLeave * :mksession! ~/.vim/session.vim
-    " Automatically load session if it exists (only working dir)
-    au VimEnter * :source ~/.vim/session.vim
-augroup end
-" Open last global session that was saved
-command Restore source ~/.vim/session.vim
-
-" Add syntax highlighting to zsh/bash and generic .aliases files
-augroup aliases
-    au!
-    au BufReadPost .aliases set syntax=bash
-    au BufReadPost .zsh_aliases set syntax=zsh
-    au BufReadPost .bash_aliases set syntax=bash
-augroup end
 
 " Find files using Telescope command-line sugar.
 nnoremap <leader>ff <cmd>Telescope find_files<cr>
@@ -134,6 +108,23 @@ vnoremap <leader>v ygv:s/<c-r>"//<left>
 nnoremap <F4> :execute ':vim /<C-r><C-w>/ **/*'<cr>
 " Shortcut to replace word under cursor and enabling the . command
 nmap g* *Ncgn
+
+" Auto for session management
+augroup sessions
+    au!
+    " Automatically save sessions on exit only in global dir
+    au VimLeave * :mksession! ~/.vim/Session.vim
+augroup end
+" Open last global session that was saved
+command Restore source ~/.vim/Session.vim
+
+" Add syntax highlighting to zsh/bash and generic .aliases files
+augroup aliases
+    au!
+    au BufReadPost .aliases set syntax=bash
+    au BufReadPost .zsh_aliases set syntax=zsh
+    au BufReadPost .bash_aliases set syntax=bash
+augroup end
 
 " Auto reload vimrc on save
 augroup vimrc
@@ -167,6 +158,7 @@ function! StatuslineGit()
   let l:branchname = system("git rev-parse --abbrev-ref HEAD 2>/dev/null | tr -d '\n'")
   return strlen(l:branchname) > 0?'  '.l:branchname.' ':''
 endfunction
+
 set statusline=
 set statusline+=%#PmenuSel#
 set statusline+=%{StatuslineGit()}
@@ -181,3 +173,4 @@ set statusline+=\[%{&fileformat}\]
 set statusline+=\ %p%%
 set statusline+=\ %l:%c
 set statusline+=\ "
+

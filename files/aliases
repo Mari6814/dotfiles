@@ -1,12 +1,5 @@
-if [ '/bin/bash' = "$SHELL" ]; then
-    export ALIASES="$BASH_SOURCE:$ALIASES"
-    export SOURCED="$BASH_SOURCE:$SOURCED"
-elif [ '/bin/zsh' = "$SHELL" ]; then
-    export ALIASES="${(%):-%x}:$ALIASES"
-    export SOURCED="${(%):-%x}:$SOURCED"
-else
-    export SOURCED=".aliases:$SOURCED"
-fi
+export ALIASES=".aliases:$ALIASES"
+export SOURCED=".aliases:$SOURCED"
 
 # Shortcut to update and upgrade linux distributions
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"
@@ -15,38 +8,38 @@ alias aptuu="sudo apt -y update && sudo apt -y upgrade"
 alias r="script -a $HOME/.bash_database"
 # Shortcut to start editing temporary file.
 alias etmp="vim $(mktemp)"
-
 alias err=">&2 tput setaf 1; echo error:"
 alias e="$EDITOR"
-alias ls="ls -FG --color=auto"
-alias l=ls
-alias la="ls -A"
-alias ll="ls -Flh"
-alias lla="ls -AFGlh"
+alias ls="ls -CFG --color=auto"
+alias ll='ls -alFh'
+alias la='ls -A'
+alias l='ls -CF'
 alias c=clear
 alias vim=nvim
 alias mkdir="mkdir -pv"
 alias evim="e ~/.vimrc"
 alias ports="netstat -tulanp"
 alias follow="tail -f"
-# keep tailing a file
-alias follow="tail -f"
-# Search for a pattern in any file from the current cwd
 alias contains="grep -rnw . -e"
 
 # Shortcuts to editing and sourcsing shell files
 _edit_then_source() { e "$1" && source "$1"; }
-alias eprofile="_edit_then_source ~/.profile"
-alias ealias="_edit_then_source ~/.aliases"
-# Shortcuts to edit zsh files
-alias ezrc="_edit_then_source ~/.zshrc"
-alias ezenv="_edit_then_source ~/.zshenv"
-alias ezprofile="_edit_then_source ~/.zprofile"
-alias ezalias="_edit_then_source ~/.zsh_aliases"
-# Edit bash Files
-alias ebash="_edit_then_source ~/.bashrc"
-alias ebprofile="_edit_then_source ~/.bash_profile"
-alias ebalias="_edit_then_source ~/.bash_aliases"
+
+if [ "$SHELL" = "/bin/bash" ]; then
+    # Bash specific settings files
+    alias erc="_edit_then_source ~/.bashrc"
+    alias ealias="_edit_then_source ~/.bash_aliases"
+    alias eprofile="_edit_then_source ~/.bash_profile"
+    alias ehist="e ~/.bash_history"
+elif [ "$SHELL" = "/bin/zsh" ]; then
+    # Zsh specific settings files
+    alias erc="_edit_then_source ~/.zshrc"
+    alias eenv="_edit_then_source ~/.zshenv"
+    alias eprofile="_edit_then_source ~/.zprofile"
+    alias ealias="_edit_then_source ~/.zsh_aliases"
+    alias ehist="e ~/.zsh_history"
+fi
+
 # Edit vim config
 alias evim="e ~/.vimrc"
 alias envim="e ~/.config/nvim/init.vim"
@@ -61,9 +54,9 @@ alias gcam="git commit -am"
 # Shortcut for using tensorboard with the current dir as logdir
 alias tb="tensorboard --logdir ."
 # Shortcut for python
-alias py=python3
+alias py="python3"
 # Shortcut for ipython
-alias ipy=ipython
+alias ipy="ipython"
 # Shortcut for using a module with python3
 alias m="python3 -m"
 # Poetry shortcut

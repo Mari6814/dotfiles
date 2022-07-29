@@ -3,24 +3,30 @@ export SOURCED=".aliases:$SOURCED"
 
 # Shortcut to update and upgrade linux distributions
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"
-
-# Start recording to the usual database
-alias r="script -a $HOME/.bash_database"
 # Shortcut to start editing temporary file.
 alias etmp="vim $(mktemp)"
+# print something in red to stderr
 alias err=">&2 tput setaf 1; echo error:"
+# Shortcut for opening the default editor
 alias e="$EDITOR"
+# Clear shortcut
+alias c=clear
+# Default vim to nvim
+alias vim=nvim
+# Makedir always verbose and full path
+alias mkdir="mkdir -pv"
+# List used ports?
+alias ports="netstat -tulanp"
+# Follow a file's output
+alias follow="tail -f"
+# Search for an expression in directory and children
+alias contains="grep -rnw . -e"
+
+# Important 'ls' shortcuts
 alias ls="ls -CFG --color=auto"
 alias ll='ls -alFh'
 alias la='ls -A'
 alias l='ls -CF'
-alias c=clear
-alias vim=nvim
-alias mkdir="mkdir -pv"
-alias evim="e ~/.vimrc"
-alias ports="netstat -tulanp"
-alias follow="tail -f"
-alias contains="grep -rnw . -e"
 
 # Shortcuts to editing and sourcsing shell files
 _edit_then_source() { e "$1" && source "$1"; }
@@ -173,15 +179,6 @@ forward-host-port() {
 # Execute command for-each directory
 for-each() {
     ls -d */ | xargs -I {} bash -c "cd '{}' && $1"
-}
-
-# Remove all ansi sequences from a stored file.
-remove-ansi-sequences() {
-    cat "$1" | perl -pe '
-s/\e\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]//g;
-s/\e[PX^_].*?\e\\//g;
-s/\e\][^\a]*(?:\a|\e\\)//g;
-s/\e[\[\]A-Z\\^_@]//g;'
 }
 
 # Fix permissions of files and directories recursiveley

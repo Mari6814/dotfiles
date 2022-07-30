@@ -1,5 +1,8 @@
-export ALIASES=".aliases:$ALIASES"
 export SOURCED=".aliases:$SOURCED"
+
+# Modify the default values for builtins
+alias grep="grep --color=auto"
+alias ls="ls -CFG --color=auto"
 
 # Shortcut to update and upgrade linux distributions
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"
@@ -21,9 +24,7 @@ alias ports="netstat -tulanp"
 alias follow="tail -f"
 # Search for an expression in directory and children
 alias contains="grep -rnw . -e"
-
 # Important 'ls' shortcuts
-alias ls="ls -CFG --color=auto"
 alias ll='ls -alFh'
 alias la='ls -A'
 alias l='ls -CF'
@@ -34,6 +35,7 @@ _edit_then_source() { e "$1" && source "$1"; }
 if [ "$SHELL" = "/bin/bash" ]; then
     # Bash specific settings files
     alias erc="_edit_then_source ~/.bashrc"
+    alias eenv="_edit_then_source ~/.bash_env"
     alias ealias="_edit_then_source ~/.bash_aliases"
     alias eprofile="_edit_then_source ~/.bash_profile"
     alias ehist="e ~/.bash_history"
@@ -94,7 +96,7 @@ rec() {
 # Encrypt some input
 encrypt() {
     [ -z "$1" ] && echo "usage: encrypt <outfile>" && return 1
-    [ -e "$1" ] && echo "err: File $1 already exists." && return 1
+    [ -e "$1" ] && err "File $1 already exists." && return 1
     local secret=$(openssl aes-256-cbc -e -a -salt -pbkdf2 -iter 100000)
     echo "#!/bin/sh" >> "$1"
     echo "echo \"$secret\" | openssl aes-256-cbc -d -a -salt -pbkdf2 -iter 100000 \$@" >> "$1"
@@ -129,7 +131,7 @@ function make-local {
         return 1
     fi
     if [ ! -d "$DIR" ]; then
-        echo "err: $DIR is not a directory" >&2
+        err "$DIR is not a directory"
         return 1
     fi
     [ -d "$DIR/bin" ] && export PATH="$DIR/bin:$PATH"
@@ -144,12 +146,13 @@ function make-local {
 mkvirtual() {
     local USAGE="usage: <dirname> FILE [FILES ...]"
     if [ -z "$1" ]; then
-        echo $USAGE >&2
+        err "Missing first argument <dirname>"
+        echo $USAGE
         return 1
     fi
     if [ -z "$2" ]; then
-        echo "err: Missing glob output as argument 2.." >&2
-        echo $USAGE >&2
+        err "Missing 2nd argument [FILE ...]"
+        echo $USAGE
         return 1
     fi
     local DIRNAME="$1"
@@ -177,15 +180,8 @@ forward-host-port() {
 }
 
 # Execute command for-each directory
-for-each() {
+for-each-directory() {
     ls -d */ | xargs -I {} bash -c "cd '{}' && $1"
-}
-
-# Fix permissions of files and directories recursiveley
-fix-permissions() {
-    local USAGE="Usage: fix-permissions <directory>"
-    sudo find ${1:?$USAGE} -type f -exec chmod 0664 {} +
-    sudo find $1 -type d -exec chmod 0775 {} +
 }
 
 # Shortcut that creates a git ignore file with the listed patterns added to it
@@ -215,7 +211,7 @@ Cd() {
 
 # wait for jobs until the number of jobs is lower than the barrier
 barrier() {
-    if [ -z "$1" ]; then
+    if [ -z "$1" || "$1" = "-h" || "$1" = "--help" ]; then
         echo "Usage: barrier <limit> [intervall=1]" >&2
         return 1
     fi

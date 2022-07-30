@@ -1,4 +1,4 @@
-export ZSHRC="${(%):-%x}:$ZSHRC"
+# ~/.zshrc: executed by zsh(1) for non-login shells.
 export SOURCED="${(%):-%x}:$SOURCED"
 
 # Check if zplug is installed
@@ -25,23 +25,11 @@ zplug load
 bindkey '^F' autosuggest-accept
 bindkey '^R' history-incremental-search-backward
 
-setopt auto_cd
+HISTFILE=~/.zsh_history
+HISTSIZE=2000
+SAVEHIST=1000
 setopt append_history
-
-export PROMPT="%F{blue}%n%F{green}:%F{cyan}%~%F{green}$ %F{reset}"
-
-# NPM setup
-if command -v npm &> /dev/null; then
-    export NPM_PREFIX="$HOME/.local/npm"
-    if [[ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]]; then
-        echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
-        npm config set prefix "$NPM_PREFIX"
-    fi
-    # Add globally installed packages to PATH
-    export PATH="$(npm config get prefix)/bin:$PATH"
-    # Also add all npm_modules executables to path
-    export PATH="./npm_modules/bin:$PATH"
-fi
+setopt auto_cd
 
 if [ -f ~/.zsh_aliases ]; then
     source ~/.zsh_aliases

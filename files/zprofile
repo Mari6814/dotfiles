@@ -4,10 +4,7 @@ export SOURCED="${(%):-%x}:$SOURCED"
 export PROMPT="%F{blue}%n%F{green}:%F{cyan}%~%F{green}$ %F{reset}"
 export LOCAL="$HOME/.local"
 export EDITOR=nvim
-
-if [ -d "$LOCAL/bin" ]; then
-    export PATH="$LOCAL/bin:$PATH"
-fi
+[ -d "$LOCAL/bin" ] && export PATH="$LOCAL/bin:$PATH"
 
 # Setup some brew stuff
 [ -f '/opt/homebrew/bin/brew' ] && eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -26,6 +23,6 @@ if command -v npm &> /dev/null; then
 fi
 
 
-if [ -f "$LOCAL/zprofile" ]; then
-    source "$LOCAL/zprofile"
-fi
+[ -f "$LOCAL/zprofile" ] && source "$LOCAL/zprofile"
+[ -f "~/.zshrc" ] && source "~/.zshrc"
+

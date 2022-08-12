@@ -27,6 +27,7 @@ shopt -s autocd
 shopt -s histappend
 shopt -s checkwinsize
 shopt -s globstar
+shopt -s direxpand
 
 source /etc/bash_completion.d/git-prompt
 [ -f "$HOME/.aliases" ] && source "$HOME/.aliases";

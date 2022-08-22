@@ -3,11 +3,26 @@
 # Mark this as loaded
 export SOURCED="$BASH_SOURCE:$SOURCED"
 
+# Shortcut to .local dir
 export LOCAL="$HOME/.local"
+
+# Add user local bin dir to path
 [ -d "$LOCAL/bin" ] && export PATH="$LOCAL/bin:$PATH"
+
+# Default editor
 export EDITOR=nvim
-# export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
+
+# Load rust
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+
+# Enable git current branch for bash prompts
+[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt
+
+# Prompt only shows current directory and git branch
 export PS1='\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
+
+# Prompt that also shows user and machine name
+# export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
 
 # Set the npm package install dir
 if command -v npm &> /dev/null; then
@@ -20,6 +35,7 @@ if command -v npm &> /dev/null; then
     export PATH="./npm_modules/bin:$PATH"
 fi
 
+# Bash settings
 HISTCONTROL=ignoreboth
 HISTSIZE=1000
 HISTFILESIZE=2000
@@ -29,15 +45,6 @@ shopt -s histappend
 shopt -s checkwinsize
 shopt -s globstar
 shopt -s direxpand
-
-# Load rust
-[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
-
-# Load golang
-[ -d "/usr/local/go/bin" ] && export PATH="$PATH:/usr/local/go/bin/"
-
-# Enable git current branch for bash prompts
-[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt
 
 [ -f "$HOME/.aliases" ] && source "$HOME/.aliases";
 [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"

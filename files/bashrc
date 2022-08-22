@@ -6,7 +6,8 @@ export SOURCED="$BASH_SOURCE:$SOURCED"
 export LOCAL="$HOME/.local"
 [ -d "$LOCAL/bin" ] && export PATH="$LOCAL/bin:$PATH"
 export EDITOR=nvim
-export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
+# export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
+export PS1='\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
 
 # Set the npm package install dir
 if command -v npm &> /dev/null; then
@@ -29,7 +30,16 @@ shopt -s checkwinsize
 shopt -s globstar
 shopt -s direxpand
 
-source /etc/bash_completion.d/git-prompt
+# Load rust
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+
+# Load golang
+[ -d "/usr/local/go/bin" ] && export PATH="$PATH:/usr/local/go/bin/"
+
+# Enable git current branch for bash prompts
+[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt
+
 [ -f "$HOME/.aliases" ] && source "$HOME/.aliases";
 [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
 [ -f "$LOCAL/bashrc" ] && source "$LOCAL/bashrc"
+

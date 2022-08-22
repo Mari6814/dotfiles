@@ -3,6 +3,12 @@
 # Mark bash profile as sourced
 export SOURCED="$BASH_SOURCE:$SOURCED"
 
+# Load golang
+[ -d "/usr/local/go/bin" ] && export PATH="$PATH:/usr/local/go/bin/"
+
+# Load nodejs and npm
+[ -d "/usr/local/node/bin" ] && export PATH="$PATH:/usr/local/node/bin/"
+
 # Set the npm package install dir
 if command -v npm &> /dev/null; then
     export NPM_PREFIX="$HOME/.local/npm"

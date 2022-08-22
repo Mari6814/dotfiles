@@ -8,7 +8,4 @@ export SOURCED="$BASH_SOURCE:$SOURCED"
 # the files are located in the bash-doc package.
 
 # source machine local profile
-if [ -f "$HOME/.local/profile" ]; then
-    . "$HOME/.local/profile"
-fi
-
+[ -f "$HOME/.local/profile" ] && source "$HOME/.local/profile"

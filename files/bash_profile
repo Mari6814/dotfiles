@@ -22,10 +22,6 @@ fi
 
 [ -d "$LOCAL/bin" ] && export PATH="$LOCAL/bin:$PATH"
 
-# In case some non-bash stuff gets added, link .bash_profile to .profile
-# Load .profile first, because it is basically an alias for .bash_profile
-[ -f ~/.profile ] && source ~/.profile
-
 # Load the machine-local .bash_profile
 # Load local .bash_profile last because neither of the other two should depend on anything in here
 [ -f "$LOCAL/bash_profile" ] && source "$LOCAL/bash_profile"

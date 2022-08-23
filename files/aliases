@@ -28,6 +28,10 @@ alias contains="grep -rnw . -e"
 alias ll='ls -alFh'
 alias la='ls -A'
 alias l='ls -CF'
+# Shortcut to make new dir and cd into it
+md() {
+    mkdir -p "$@" && cd "$@"
+}
 
 # Shortcuts to editing and sourcsing shell files
 _edit_then_source() { e "$1" && source "$1"; }

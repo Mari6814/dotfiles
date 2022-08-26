@@ -166,6 +166,14 @@ augroup LargeFile
                 \ endif
 augroup end
 
+" Git-gutter shortcuts
+nnoremap ]h <Plug>(GitGutterNextHunk)
+nnoremap [h <Plug>(GitGutterPrevHunk)
+nnoremap ghs <Plug>(GitGutterStageHunk)
+nnoremap ghu <Plug>(GitGutterUndoHunk)
+nnoremap ghp <Plug>(GitGutterPreviewHunk)
+
+
 " Custom statusline section
 function! StatuslineGit()
   let l:branchname = system("git rev-parse --abbrev-ref HEAD 2>/dev/null | tr -d '\n'")

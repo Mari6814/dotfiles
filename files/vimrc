@@ -29,37 +29,31 @@ colorscheme gruvbox
 set cursorline
 set number
 set visualbell
-set ruler
 set encoding=utf-8
 set wrap
-set textwidth=0
 set formatoptions=tcqrn1
 set tabstop=4
 set shiftwidth=4
 set expandtab
-set showmode
-set showcmd
 set hlsearch
 set incsearch
 set ignorecase
 set smartcase
 set showmatch
-set listchars=trail:·,nbsp:⎵,eol:¬,tab:▸\ ,extends:>,precedes:<
+set listchars=trail:·,nbsp:⎵,eol:¬,tab:▸\ ,extends:>,precedes:<,nbsp:·
 set list
 set matchpairs+=<:>
 set hidden
 set wildmenu
 set foldmethod=indent
-set foldnestmax=10
-set foldlevel=2
+set foldlevel=4
 " Enable this option if pasting text into vim
-set pastetoggle=<F2>
-set ai
 set wildignore+=**/node_modules/**,*.pyc,*.o,
 set switchbuf=useopen,vsplit
 filetyp plugin on
 " Specify python3 executable for some extension?
 let g:python3_host_prog = "/usr/bin/python3"
+
 " Enable paste register crossplattform
 set clipboard^=unnamed,unnamedplus
 set completeopt=menu,menuone,noselect
@@ -83,12 +77,11 @@ inoremap <C-l> <c-o><C-w>l
 nnoremap <space> za
 " Open nerd tree
 nnoremap <leader>b :vs `pwd`<cr>
+
 " Shortcut search for beginnig of word
 nnoremap gw /\<
 nnoremap gW ?\<
-inoremap <silent><expr> <C-Space> compe#complete()
-" inoremap <silent><expr> <CR>      compe#confirm('<CR>')
-inoremap <silent><expr> <C-e>     compe#close('<C-e>')
+
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
 
@@ -194,67 +187,3 @@ set statusline+=\[%{&fileformat}\]
 set statusline+=\ %p%%
 set statusline+=\ %l:%c
 set statusline+=\ "
-
-lua <<EOF
-  -- Setup nvim-cmp.
-  local cmp = require'cmp'
-
-  cmp.setup({
-    snippet = {
-      -- REQUIRED - you must specify a snippet engine
-      expand = function(args)
-        vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
-        -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
-        -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
-        -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
-      end,
-    },
-    window = {
-      -- completion = cmp.config.window.bordered(),
-      -- documentation = cmp.config.window.bordered(),
-    },
-    mapping = cmp.mapping.preset.insert({
-      ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-      ['<C-f>'] = cmp.mapping.scroll_docs(4),
-      ['<C-Space>'] = cmp.mapping.complete(),
-      ['<C-e>'] = cmp.mapping.abort(),
-      ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
-    }),
-    sources = cmp.config.sources({
-      { name = 'nvim_lsp' },
-      { name = 'vsnip' }, -- For vsnip users.
-      -- { name = 'luasnip' }, -- For luasnip users.
-      -- { name = 'ultisnips' }, -- For ultisnips users.
-      -- { name = 'snippy' }, -- For snippy users.
-    }, {
-      { name = 'buffer' },
-    })
-  })
-
-  -- Set configuration for specific filetype.
-  cmp.setup.filetype('gitcommit', {
-    sources = cmp.config.sources({
-      { name = 'cmp_git' }, -- You can specify the `cmp_git` source if you were installed it.
-    }, {
-      { name = 'buffer' },
-    })
-  })
-
-  -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
-  cmp.setup.cmdline('/', {
-    mapping = cmp.mapping.preset.cmdline(),
-    sources = {
-      { name = 'buffer' }
-    }
-  })
-
-  -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
-  cmp.setup.cmdline(':', {
-    mapping = cmp.mapping.preset.cmdline(),
-    sources = cmp.config.sources({
-      { name = 'path' }
-    }, {
-      { name = 'cmdline' }
-    })
-  })
-EOF

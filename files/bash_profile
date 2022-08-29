@@ -3,11 +3,13 @@
 # Mark bash profile as sourced
 export SOURCED="$BASH_SOURCE:$SOURCED"
 
-# Load golang
-[ -d "/usr/local/go/bin" ] && export PATH="$PATH:/usr/local/go/bin/"
+# Add /bin inside of $LOCAL to path
+[ -d "$LOCAL/bin" ] && export PATH="$LOCAL/bin:$PATH"
 
-# Load nodejs and npm
-[ -d "/usr/local/node/bin" ] && export PATH="$PATH:/usr/local/node/bin/"
+# Load local python, node, neovim, go installations
+for dirname in python node nvim go; do
+    [ -d "$LOCAL/$dirname/bin" ] && export PATH="$PATH:$LOCAL/$dirname/bin/"
+done
 
 # Set the npm package install dir
 if command -v npm &> /dev/null; then
@@ -19,8 +21,6 @@ if command -v npm &> /dev/null; then
     export PATH="$(npm config get prefix)/bin:$PATH"
     export PATH="./npm_modules/bin:$PATH"
 fi
-
-[ -d "$LOCAL/bin" ] && export PATH="$LOCAL/bin:$PATH"
 
 # Load the machine-local .bash_profile
 # Load local .bash_profile last because neither of the other two should depend on anything in here

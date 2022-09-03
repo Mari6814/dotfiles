@@ -2,6 +2,7 @@ set nocompatible
 set t_Co=256
 
 call plug#begin('~/.vim/plugged')
+Plug 'github/copilot.vim'
 Plug 'junegunn/goyo.vim'
 Plug 'airblade/vim-gitgutter'
 " Plug 'preservim/nerdtree'
@@ -16,7 +17,6 @@ if has('nvim')
     Plug 'hrsh7th/nvim-cmp'
     Plug 'nvim-lua/plenary.nvim'
     Plug 'nvim-telescope/telescope.nvim'
-    Plug 'github/copilot.vim'
     Plug 'hrsh7th/cmp-vsnip'
     Plug 'hrsh7th/vim-vsnip'
 endif

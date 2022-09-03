@@ -1,5 +1,11 @@
 # ~/.bash_profile: executed by bash(1) for login shells.
 
+# Shortcut to .local dir
+export LOCAL="$HOME/.local"
+
+# Exit if $LOCAL not set
+[ -z "$LOCAL" ] && echo "LOCAL not set in bash_profile" >&2
+
 # Mark bash profile as sourced
 export SOURCED="$BASH_SOURCE:$SOURCED"
 
@@ -8,12 +14,12 @@ export SOURCED="$BASH_SOURCE:$SOURCED"
 
 # Load local python, node, neovim, go installations
 for dirname in python node nvim go; do
-    [ -d "$LOCAL/$dirname/bin" ] && export PATH="$PATH:$LOCAL/$dirname/bin/"
+    [ -d "$LOCAL/$dirname/bin" ] && export PATH="$LOCAL/$dirname/bin:$PATH"
 done
 
 # Set the npm package install dir
 if command -v npm &> /dev/null; then
-    export NPM_PREFIX="$HOME/.local/npm"
+    export NPM_PREFIX="$LOCAL/npm"
     if [ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]; then
         echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
         npm config set prefix "$NPM_PREFIX"

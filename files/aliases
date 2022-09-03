@@ -82,7 +82,10 @@ alias jn="jupyter notebook"
 # The first argument as the path to the script file that will be created
 cmd() {
     local NAME="${1:?'Usage: cmd <cmdname>'}"
-    [ -e "$NAME" ] && err "Command already exists: $NAME" && return 1
+    if [ -e "$NAME" ]; then
+        err "Command already exists: $NAME"
+        return 1
+    fi
     echo "Creating command: $NAME"
     echo '#!/bin/bash' >> "$NAME"
     e "$NAME"

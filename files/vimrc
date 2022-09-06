@@ -1,12 +1,17 @@
 set nocompatible
 set t_Co=256
+" Specify python3 executable for some extension?
+let g:python3_host_prog = "/usr/bin/python3"
+" Forces block cursor for some terminals that don't have it already
+let &t_ti.="\e[1 q"
+let &t_SI.="\e[5 q"
+let &t_EI.="\e[1 q"
+let &t_te.="\e[0 q"
 
 call plug#begin('~/.vim/plugged')
 Plug 'github/copilot.vim'
 Plug 'junegunn/goyo.vim'
 Plug 'airblade/vim-gitgutter'
-" Plug 'preservim/nerdtree'
-" Plug 'tpope/vim-surround'
 Plug 'morhetz/gruvbox'
 if has('nvim')
     Plug 'neovim/nvim-lspconfig'
@@ -43,25 +48,13 @@ set hidden
 set wildmenu
 set foldmethod=indent
 set foldlevel=4
-" Enable this option if pasting text into vim
 set wildignore+=**/node_modules/**,*.pyc,*.o,
 set switchbuf=useopen,vsplit
-filetyp plugin on
-" Specify python3 executable for some extension?
-let g:python3_host_prog = "/usr/bin/python3"
-
-" Shortcut to run terminal commands by using ! instead of :
-nnoremap ! :!
-
-" Enable paste register crossplattform
 set clipboard^=unnamed,unnamedplus
 set completeopt=menu,menuone,noselect
 
-" Forces block cursor for some terminals that don't have it already
-let &t_ti.="\e[1 q"
-let &t_SI.="\e[5 q"
-let &t_EI.="\e[1 q"
-let &t_te.="\e[0 q"
+" Shortcut to run terminal commands by using ! instead of :
+nnoremap ! :!
 
 " Naviagte windows in normal mode by holding ctrl
 nnoremap <C-j> <C-w>j
@@ -164,25 +157,3 @@ nnoremap [h <Plug>(GitGutterPrevHunk)
 nnoremap ghs <Plug>(GitGutterStageHunk)
 nnoremap ghu <Plug>(GitGutterUndoHunk)
 nnoremap ghp <Plug>(GitGutterPreviewHunk)
-
-
-" Custom statusline section
-function! StatuslineGit()
-  let l:branchname = system("git rev-parse --abbrev-ref HEAD 2>/dev/null | tr -d '\n'")
-  return strlen(l:branchname) > 0?'  '.l:branchname.' ':''
-endfunction
-
-set statusline=
-set statusline+=%#PmenuSel#
-set statusline+=%{StatuslineGit()}
-set statusline+=%#LineNr#
-set statusline+=\ %f\ %m
-set statusline+=\ "
-set statusline+=%=
-set statusline+=%#CursorColumn#
-set statusline+=\ %y
-set statusline+=\ %{&fileencoding?&fileencoding:&encoding}
-set statusline+=\[%{&fileformat}\]
-set statusline+=\ %p%%
-set statusline+=\ %l:%c
-set statusline+=\ "

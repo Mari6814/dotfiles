@@ -84,10 +84,6 @@ nnoremap <leader>ff <cmd>Telescope find_files<cr>
 nnoremap <leader>fg <cmd>Telescope live_grep<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
-" Goto any file using ctrl+p behaviour
-nnoremap <c-p> :Telescope find_files<cr>
-" Search string under cursor using Telescope
-nnoremap <leader>f yiw:Telescope grep_string<cr><c-r>0
 
 " Replace word under cursor
 nnoremap <leader>r :s/<C-r><C-w>//<left>

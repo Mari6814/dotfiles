@@ -6,10 +6,10 @@ alias ls="ls -CFG --color=auto"
 
 # Shortcut to update and upgrade linux distributions
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"
-# Shortcut to start editing temporary file.
-alias etmp="vim $(mktemp)"
+# Shortcut to start editing temporary file. First argument is the file extension
+etmp() { nvim "$(mktemp)$1"; }
 # print something in red to stderr
-alias err=">&2 tput setaf 1; echo error:"
+err() { tput setaf 1; echo error: "$@" 1>&2; }
 # Shortcut for opening the default editor
 alias e="$EDITOR"
 # Clear shortcut

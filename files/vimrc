@@ -146,6 +146,12 @@ augroup LargeFile
                         \ set eventignore-=FileType |
                 \ endif
 augroup end
+"
+" Immediately enter insert mode for :term
+augroup term
+    au!
+    autocmd TermOpen * startinsert
+augroup end
 
 " Git-gutter shortcuts
 nnoremap ]h <Plug>(GitGutterNextHunk)

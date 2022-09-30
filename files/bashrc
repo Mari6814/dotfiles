@@ -25,6 +25,9 @@ fi
 # Enable git current branch for bash prompts
 [ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt
 
+# Load Haskell
+[ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env"
+
 # Set the npm package install dir
 if command -v npm &> /dev/null; then
     export NPM_PREFIX="$HOME/.local/npm"
@@ -50,4 +53,3 @@ shopt -s direxpand
 [ -f "$HOME/.aliases" ] && source "$HOME/.aliases";
 [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
 [ -f "$LOCAL/bashrc" ] && source "$LOCAL/bashrc"
-

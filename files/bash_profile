@@ -3,9 +3,6 @@
 # Shortcut to .local dir
 export LOCAL="$HOME/.local"
 
-# Exit if $LOCAL not set
-[ -z "$LOCAL" ] && echo "LOCAL not set in bash_profile" >&2
-
 # Mark bash profile as sourced
 export SOURCED="$BASH_SOURCE:$SOURCED"
 
@@ -15,6 +12,7 @@ export SOURCED="$BASH_SOURCE:$SOURCED"
 # Load local python, node, neovim, go installations
 for dirname in python node nvim go; do
     [ -d "$LOCAL/$dirname/bin" ] && export PATH="$LOCAL/$dirname/bin:$PATH"
+    [ -d "/usr/local/$dirname/bin" ] && export PATH="/usr/local/$dirname/bin:$PATH"
 done
 
 # Set the npm package install dir

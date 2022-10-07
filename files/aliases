@@ -29,9 +29,7 @@ alias ll='ls -alFh'
 alias la='ls -A'
 alias l='ls -CF'
 # Shortcut to make new dir and cd into it
-md() {
-    mkdir -p "$@" && cd "$@"
-}
+md() { mkdir -p "$@" && cd "$@"; }
 
 # Shortcuts to editing and sourcsing shell files
 _edit_then_source() { e "$1" && source "$1"; }
@@ -54,7 +52,8 @@ fi
 
 # Edit vim config
 alias evim="e ~/.vimrc"
-alias envim="e ~/.config/nvim/init.vim"
+alias envim="e ~/.init.vim"
+alias einit="envim"
 
 # Git shortcut
 alias gs="git status"

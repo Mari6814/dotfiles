@@ -18,6 +18,8 @@ if has('nvim')
     Plug 'hrsh7th/nvim-cmp'
     Plug 'hrsh7th/cmp-nvim-lsp'
     Plug 'hrsh7th/cmp-buffer'
+    Plug 'hrsh7th/cmp-path'
+    Plug 'hrsh7th/cmp-cmdline'
     Plug 'nvim-lua/plenary.nvim'
     Plug 'nvim-telescope/telescope.nvim'
 endif
@@ -115,17 +117,10 @@ augroup end
 
 " Auto reload vimrc on save
 augroup vimrc
-    autocmd!
+    au!
     autocmd FileType vim noremap <F1> :help <C-r><C-w><CR>
     autocmd BufWritePost,FileWritePost .vimrc :so $HOME/.vimrc
 augroup end
-
-" Only highlight search while in command line mode
-augroup vimrc-incsearch-highlight
-    autocmd!
-    autocmd CmdlineEnter /,\? :set hlsearch
-    autocmd CmdlineLeave /,\? :set nohlsearch
-augroup END
 
 " In the event, that a large file was loaded, set some options to reduce lag
 augroup LargeFile

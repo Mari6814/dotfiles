@@ -1,5 +1,8 @@
 export SOURCED=".aliases:$SOURCED"
 
+# Dump clipboard contents to stdout
+alias paste="xclip -selection clipboard -o"
+
 # Modify the default values for builtins
 alias grep="grep --color=auto"
 alias ls="ls -CFG --color=auto"

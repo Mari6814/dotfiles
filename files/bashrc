@@ -20,14 +20,14 @@ else
     export EDITOR=vi
 fi
 
+# Load python3.10
+[ -d "$LOCAL/python3.10" ] && export PATH="$LOCAL/python3.10/bin:$PATH"
+
 # Load rust
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 
 # Enable git current branch for bash prompts
 [ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt
-
-# Load Haskell
-[ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env"
 
 # Set the npm package install dir
 if command -v npm &> /dev/null; then

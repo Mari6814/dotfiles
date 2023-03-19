@@ -31,6 +31,7 @@ filetype plugin indent on
 colorscheme gruvbox
 set cursorline
 set number
+set relativenumber
 set visualbell
 set encoding=utf-8
 set wrap
@@ -53,7 +54,7 @@ set foldlevel=4
 set wildignore+=**/node_modules/**,*.pyc,*.o,
 set switchbuf=useopen,vsplit
 set clipboard^=unnamed,unnamedplus
-set completeopt=menu,menuone,noselect
+set completeopt=menu,menuone,preview
 
 " Shortcut to run terminal commands by using ! instead of :
 nnoremap ! :!
@@ -119,7 +120,9 @@ augroup end
 augroup vimrc
     au!
     autocmd FileType vim noremap <F1> :help <C-r><C-w><CR>
-    autocmd BufWritePost,FileWritePost .vimrc :so $HOME/.vimrc
+    autocmd BufWritePost,FileWritePost .vimrc :so %
+    autocmd BufWritePost,FileWritePost .init.vim :so %
+    autocmd BufWritePost,FileWritePost init.vim :so %
 augroup end
 
 " In the event, that a large file was loaded, set some options to reduce lag
@@ -142,12 +145,6 @@ augroup LargeFile
                 \ endif
 augroup end
 "
-" Immediately enter insert mode for :term
-augroup term
-    au!
-    autocmd TermOpen * startinsert
-augroup end
-
 " Git-gutter shortcuts
 nnoremap ]h <Plug>(GitGutterNextHunk)
 nnoremap [h <Plug>(GitGutterPrevHunk)

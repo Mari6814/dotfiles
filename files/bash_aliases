@@ -1,0 +1,22 @@
+
+note() {
+    # If ~/notes.txt last modified day was yesterday, append a clear separator with the date before appending the note's content
+
+    if [ $(date -r ~/notes.txt +%Y%m%d) -eq $(date -d "yesterday" +%Y%m%d) ]; then
+        echo -e "
+
+$(date +%Y-%m-%d)
+
+" >> ~/notes.txt
+    fi
+    echo "$@" >> ~/notes.txt
+}
+
+notes() {
+    cat ~/notes.txt
+}
+
+taildate() {
+    tail -f "$1" | xargs -IL date +"%Y-%m-%d %H:%M:%S L"
+}
+

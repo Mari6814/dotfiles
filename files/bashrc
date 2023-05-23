@@ -3,6 +3,17 @@
 # Assert LOCAL is set
 [ -z "$LOCAL" ] && echo "LOCAL not set in bashrc" >&2
 
+# Bash settings
+HISTCONTROL=ignoreboth
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+shopt -s autocd
+shopt -s histappend
+shopt -s checkwinsize
+shopt -s globstar
+shopt -s direxpand
+
 # Mark this as loaded
 export SOURCED="$BASH_SOURCE:$SOURCED"
 
@@ -19,9 +30,6 @@ then
 else
     export EDITOR=vi
 fi
-
-# Load python3.10
-[ -d "$LOCAL/python3.10" ] && export PATH="$LOCAL/python3.10/bin:$PATH"
 
 # Load rust
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
@@ -40,17 +48,14 @@ if command -v npm &> /dev/null; then
     export PATH="./npm_modules/bin:$PATH"
 fi
 
-# Bash settings
-HISTCONTROL=ignoreboth
-HISTSIZE=1000
-HISTFILESIZE=2000
+# Enable pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+if command -v pyenv &> /dev/null; then
+    eval "$(pyenv init -)"
+fi
 
-shopt -s autocd
-shopt -s histappend
-shopt -s checkwinsize
-shopt -s globstar
-shopt -s direxpand
-
+# These must always come last
 [ -f "$HOME/.aliases" ] && source "$HOME/.aliases";
 [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
 [ -f "$LOCAL/bashrc" ] && source "$LOCAL/bashrc"

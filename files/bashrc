@@ -1,12 +1,15 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 
+# Mark this as loaded
+export SOURCED="$BASH_SOURCE:$SOURCED"
+
 # Assert LOCAL is set
 [ -z "$LOCAL" ] && echo "LOCAL not set in bashrc" >&2
 
 # Bash settings
-HISTCONTROL=ignoreboth
-HISTSIZE=1000
-HISTFILESIZE=2000
+export HISTCONTROL=ignoreboth
+export HISTSIZE=1000
+export HISTFILESIZE=2000
 
 shopt -s autocd
 shopt -s histappend
@@ -14,14 +17,8 @@ shopt -s checkwinsize
 shopt -s globstar
 shopt -s direxpand
 
-# Mark this as loaded
-export SOURCED="$BASH_SOURCE:$SOURCED"
-
 # Prompt only shows current directory and git branch
 export PS1='\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
-
-# Prompt that also shows user and machine name
-# export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
 
 # Default editor
 if command -v nvim &> /dev/null

@@ -1,12 +1,11 @@
 export SOURCED=".aliases:$SOURCED"
 
-# Dump clipboard contents to stdout
-alias paste="xclip -selection clipboard -o"
-
 # Modify the default values for builtins
 alias grep="grep --color=auto"
 alias ls="ls -CFG --color=auto"
 
+# Dump clipboard contents to stdout
+alias paste="xclip -selection clipboard -o"
 # Shortcut to update and upgrade linux distributions
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"
 # Shortcut to start editing temporary file. First argument is the file extension
@@ -37,25 +36,16 @@ md() { mkdir -p "$@" && cd "$@"; }
 # Shortcuts to editing and sourcsing shell files
 _edit_then_source() { e "$1" && source "$1"; }
 
-if [ "$SHELL" = "/bin/bash" ]; then
-    # Bash specific settings files
-    alias erc="_edit_then_source ~/.bashrc"
-    alias eenv="_edit_then_source ~/.bash_env"
-    alias ealias="_edit_then_source ~/.bash_aliases"
-    alias eprofile="_edit_then_source ~/.bash_profile"
-    alias ehist="e ~/.bash_history"
-elif [ "$SHELL" = "/bin/zsh" ]; then
-    # Zsh specific settings files
-    alias erc="_edit_then_source ~/.zshrc"
-    alias eenv="_edit_then_source ~/.zshenv"
-    alias eprofile="_edit_then_source ~/.zprofile"
-    alias ealias="_edit_then_source ~/.zsh_aliases"
-    alias ehist="e ~/.zsh_history"
-fi
+# Bash and sourcing specific scripts
+alias erc="_edit_then_source ~/.bashrc"
+alias eenv="_edit_then_source ~/.bash_env"
+alias ealias="_edit_then_source ~/.bash_aliases"
+alias eprofile="_edit_then_source ~/.bash_profile"
+alias ehist="e ~/.bash_history"
 
 # Edit vim config
 alias evim="e ~/.vimrc"
-alias envim="e ~/.init.vim"
+alias envim="e ~/.config/nvim/init.lua"
 alias einit="envim"
 
 # Git shortcut
@@ -92,24 +82,6 @@ cmd() {
     echo '#!/bin/bash' >> "$NAME"
     e "$NAME"
     chmod +x "$NAME"
-}
-
-# Start recording the history and add it to an executable script file
-# The first argument as the file that will be saved
-rec() {
-    local NAME="${1:?'Usage: rec <cmdname>'}"
-    [ -e "$NAME" ] && err "Command already exists: $NAME" && return 1
-    tee "$NAME" | ($SHELL && chmod +x "$NAME")
-}
-
-# Encrypt some input
-encrypt() {
-    [ -z "$1" ] && echo "usage: encrypt <outfile>" && return 1
-    [ -e "$1" ] && err "File $1 already exists." && return 1
-    local secret=$(openssl aes-256-cbc -e -a -salt -pbkdf2 -iter 100000)
-    echo "#!/bin/sh" >> "$1"
-    echo "echo \"$secret\" | openssl aes-256-cbc -d -a -salt -pbkdf2 -iter 100000 \$@" >> "$1"
-    chmod +x "$1"
 }
 
 # A helper function that makes a new "local" directory.
@@ -172,75 +144,25 @@ mkvirtual() {
     done
 }
 
-# List ports in use
-ls-ports() {
-    lsof -i tcp -s tcp:listen | awk '$8 == "TCP" { split($9,a,":"); print a[2] }'
-}
+note() {
+    # If ~/notes.txt last modified day was yesterday, append a clear separator with the date before appending the note's content
 
-# Forward port given by an input argument in the form "host:port"
-forward-host-port() {
-    if [ -z $1 ]; then
-        err "Missing argument <hostname:port>"
-        return 1
+    if [ $(date -r ~/notes.txt +%Y%m%d) -eq $(date -d "yesterday" +%Y%m%d) ]; then
+        echo -e "
+
+$(date +%Y-%m-%d)
+
+" >> ~/notes.txt
     fi
-    local HOST=$(echo $1 | awk '{ split($1,a,":"); print a[1] }')
-    local PORT=$(echo $1 | awk '{ split($1,a,":"); print a[2] }')
-    ssh -NL "${PORT:-$2}:localhost:$PORT" "$HOST"
+    echo "$@" >> ~/notes.txt
 }
 
-# Execute command for-each directory
-for-each-directory() {
-    ls -d */ | xargs -I {} bash -c "cd '{}' && $1"
+notes() {
+    cat ~/notes.txt
 }
 
-# Shortcut that creates a git ignore file with the listed patterns added to it
-gignore() {
-    for pattern in "$@"; do
-        echo "$pattern" >> .gitignore
-    done
-    tac .gitignore
+taildate() {
+    tail -f "$1" | xargs -IL date +"%Y-%m-%d %H:%M:%S L"
 }
 
-# Virtaul env auto
-Cd() {
-    builtin cd $@
-    if [ -z "$VIRTUAL_ENV" ]; then
-        if [ -f .venv/bin/activate ]; then
-            . .venv/bin/activate
-        fi
-    else
-        local CURRENT="$(realpath $(pwd))"
-        local ROOT="$(realpath $VIRTUAL_ENV/..)"
-        case $CURRENT/ in
-            $ROOT/*) ;; # Still inside venv
-            *) deactivate;; # Not in venv hierarchy anymore
-        esac
-    fi
-}
-
-# wait for jobs until the number of jobs is lower than the barrier
-barrier() {
-    if [ -z "$1" || "$1" = "-h" || "$1" = "--help" ]; then
-        echo "Usage: barrier <limit> [intervall=1]" >&2
-        return 1
-    fi
-    local LIMIT="$1"
-    local INTERVALL="${2:-1}"
-    while true; do
-        if [ $(jobs | wc -l) -lt $LIMIT ]; then
-            break
-        fi
-        sleep $INTERVALL
-    done
-}
-
-# Source machine local aliases inside the `$HOME/.local` directory
-if [ -f "$LOCAL/bash_aliases" ] && [ '/bin/bash' = "$SHELL" ]; then
-    source "$LOCAL/bash_aliases"
-elif [ -f "$LOCAL/zsh_aliases" ] && [ '/bin/zsh' = "$SHELL" ]; then
-    source "$LOCAL/zsh_aliases"
-fi
-if [ -f "$LOCAL/aliases" ]; then
-    source "$LOCAL/aliases"
-fi
-
+[ -f "$LOCAL/aliases" ] && source "$LOCAL/aliases"

@@ -7,3 +7,4 @@ cd "$(dirname $0)"
 restore-backed-up-files-and-delete-links
 do-backup-files
 link-provided-files
+. ./post-install

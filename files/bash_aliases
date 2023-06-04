@@ -1,0 +1,132 @@
+export SOURCED=".bash_aliases:$SOURCED"
+
+# Modify the default values for builtins
+alias grep="grep --color=auto"
+alias ls="ls -CFG --color=auto"
+alias mkdir="mkdir -pv"
+alias ll='ls -alFh'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Dump clipboard contents to stdout
+alias paste="xclip -selection clipboard -o"
+
+# Shortcut to update and upgrade linux distributions
+alias aptuu="sudo apt -y update && sudo apt -y upgrade"
+
+# Search for an expression in directory and children
+alias contains="grep -rnw . -e"
+
+# Shortcut to start editing temporary file. First argument is the file extension
+etmp() { e "$(mktemp)$1"; }
+# Shortcut for opening the default editor
+alias e="$EDITOR"
+# Default vim to nvim
+alias vim=nvim
+
+# Shortcuts to edit specific files
+alias evim="e ~/.vimrc"
+alias envim="e ~/.config/nvim/init.vim"
+alias erc="e ~/.bashrc && source ~/.bashrc"
+alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
+
+# Git shortcut
+alias gs="git status"
+alias gv="git remote -v"
+alias gb="git branch"
+alias gd="git diff"
+alias gcam="git commit -am"
+
+# Shortcuts for specific programs
+alias py="python3"
+alias ipy="ipython"
+alias m="python3 -m"
+alias p="poetry"
+alias jn="jupyter notebook"
+alias tb="tensorboard --logdir ."
+
+# Venv activate shortcut
+alias va="source .venv/bin/activate"
+
+# print something in red to stderr
+err() { tput setaf 1; echo error: "$@" 1>&2; }
+
+# Shortcut to make new dir and cd into it
+md() {
+    mkdir -p "$@" && cd "$@";
+}
+
+# Create executable bash script and edit it
+# The first argument as the path to the script file that will be created
+cmd() {
+    local NAME="${1:?'Usage: cmd <cmdname>'}"
+    if [ -e "$NAME" ]; then
+        echo "Command already exists: $NAME" >&2
+        return 1
+    fi
+    echo "Creating command: $NAME"
+    echo '#!/bin/bash' >> "$NAME"
+    vim "$NAME"
+    chmod +x "$NAME"
+}
+
+# A helper function that makes a new "local" directory.
+# Adds subdirectories to appropiate paths
+function make-local {
+    local DIR="${1:?'Usage: make-local <dir>'}"
+    [ -d "$DIR/bin" ] && export PATH="$DIR/bin:$PATH"
+    [ -d "$DIR/lib" ] && export LD_LIBRARY_PATH="$DIR/lib:$LD_LIBRARY_PATH"
+    [ -d "$DIR/lib64" ] && export LD_LIBRARY_PATH="$DIR/lib64:$LD_LIBRARY_PATH"
+    [ -d "$DIR/include" ] && export CPATH="$CPATH/include:$CPATH"
+    [ -d "$DIR/include" ] && export CXXPATH="$CXXPATH/include:$CXXPATH"
+    [ -d "$DIR/include" ] && export CPPPATH="$CPPPATH/include:$CPPPATH"
+    [ -d "$DIR/man" ] && export MANPATH="$MANPATH/man:$MANPATH"
+}
+
+# Create a virtual folder out of a glob. This function creates a directory
+# called <dirname> and links all files from the provided globs into that directory
+mkvirtual() {
+    local USAGE="usage: <dirname> FILE [FILES ...]"
+    if [ -z "$1" ]; then
+        err "Missing first argument <dirname>"
+        echo $USAGE
+        return 1
+    fi
+    if [ -z "$2" ]; then
+        err "Missing 2nd argument [FILE ...]"
+        echo $USAGE
+        return 1
+    fi
+    local DIRNAME="$1"
+    shift
+    mkdir "$DIRNAME"
+    for path in "$@"; do
+        ln -vs "$(realpath $path)" "$DIRNAME/$(basename $path)"
+    done
+}
+
+# Append a new note to the notes file
+note() {
+    # If ~/notes.txt last modified day was yesterday, append a clear separator with the date before appending the note's content
+
+    if [ $(date -r ~/notes.txt +%Y%m%d) -eq $(date -d "yesterday" +%Y%m%d) ]; then
+        echo -e "
+
+$(date +%Y-%m-%d)
+
+" >> ~/notes.txt
+    fi
+    echo "$@" >> ~/notes.txt
+}
+
+# Open the notes file
+notes() {
+    cat ~/notes.txt
+}
+
+# Tail a file and log the changes by prefixing them with the date of the change
+taildate() {
+    tail -f "$1" | xargs -IL date +"%Y-%m-%d %H:%M:%S L"
+}
+
+[ -f "$LOCAL/bash_aliases" ] && source "$LOCAL/bash_aliases"

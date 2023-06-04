@@ -17,3 +17,5 @@ lg2 = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(
 lg = !"git lg1"
 [pull]
 	rebase = false
+[difftool]
+	prompt = false

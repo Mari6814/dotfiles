@@ -1,4 +1,6 @@
-vim.cmd('source ~/.vimrc')
+source ~/.vimrc
+
+lua << EOF
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -11,11 +13,10 @@ if not vim.loop.fs_stat(lazypath) then
   })
 end
 vim.opt.rtp:prepend(lazypath)
-
 vim.g.mapleader = ","
-
 require("lazy").setup({
     { 'nvim-telescope/telescope.nvim', tag = '0.1.1', dependencies = { 'nvim-lua/plenary.nvim' } },
+    { 'github/copilot.vim' },
 })
 
 local builtin = require('telescope.builtin')
@@ -23,4 +24,4 @@ vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
 vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
-
+EOF

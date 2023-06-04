@@ -3,8 +3,10 @@
 # Mark this as loaded
 export SOURCED="$BASH_SOURCE:$SOURCED"
 
-# Assert LOCAL is set
-[ -z "$LOCAL" ] && echo "LOCAL not set in bashrc" >&2
+# Shortcut to .local dir
+export LOCAL="$HOME/.local"
+
+[ -d "$LOCAL/bin" ] && export PATH="$LOCAL/bin:$PATH"
 
 # Bash settings
 export HISTCONTROL=ignoreboth
@@ -52,7 +54,5 @@ if command -v pyenv &> /dev/null; then
     eval "$(pyenv init -)"
 fi
 
-# These must always come last
-[ -f "$HOME/.aliases" ] && source "$HOME/.aliases";
 [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
 [ -f "$LOCAL/bashrc" ] && source "$LOCAL/bashrc"

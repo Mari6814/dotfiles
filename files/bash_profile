@@ -1,11 +1,2 @@
-# ~/.bash_profile: executed by bash(1) for login shells.
+export SOURCED=".bash_profile:$SOURCED"
 
-# Mark bash profile as sourced
-export SOURCED="$BASH_SOURCE:$SOURCED"
-
-# Shortcut to .local dir
-export LOCAL="$HOME/.local"
-
-[ -d "$LOCAL/bin" ] && export PATH="$LOCAL/bin:$PATH"
-[ -f "$LOCAL/bash_profile" ] && source "$LOCAL/bash_profile"
-[ -f ~/.bashrc ] && source ~/.bashrc

@@ -3,11 +3,7 @@ filetype plugin on
 filetype plugin indent on
 colorscheme slate
 
-" Load Copilot
-set runtimepath^=~/.vim/bundle/copilot.vim
-
 set nocompatible
-set t_Co=256
 set cursorline
 set number
 set relativenumber
@@ -31,7 +27,6 @@ set wildmenu
 set foldmethod=indent
 set foldlevel=4
 set wildignore+=**/node_modules/**,*.pyc,*.o,
-set switchbuf=useopen,vsplit
 set clipboard^=unnamed,unnamedplus
 set completeopt=menu,menuone,preview
 
@@ -67,17 +62,13 @@ inoremap <C-k> <c-o><C-w>k
 inoremap <C-h> <c-o><C-w>h
 inoremap <C-l> <c-o><C-w>l
 
-" Toggle folds using space
-nnoremap <space> za
-" Open file explorer
-nnoremap <leader>b :vs `pwd`<cr>
-
+" Open file explorer and set explorer size to 40 characters
+nnoremap <leader>b :vs `pwd`<cr>40<c-w>|
 " Shortcut search for beginnig of word
 nnoremap gw /\<
 nnoremap gW ?\<
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
-
 " Replace word under cursor
 nnoremap <leader>r :s/<C-r><C-w>//<left>
 " Search and replace the word under the cursor

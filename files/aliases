@@ -1,2 +1,0 @@
-export SOURCED=".aliases:$SOURCED"
-

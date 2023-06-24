@@ -21,9 +21,6 @@ alias contains="grep -rnw . -e"
 etmp() { e "$(mktemp)$1"; }
 # Shortcut for opening the default editor
 alias e="$EDITOR"
-# Default vim to nvim
-alias vim=nvim
-
 # Shortcuts to edit specific files
 alias evim="e ~/.vimrc"
 alias envim="e ~/.config/nvim/init.vim"
@@ -81,6 +78,14 @@ function make-local {
     [ -d "$DIR/include" ] && export CXXPATH="$CXXPATH/include:$CXXPATH"
     [ -d "$DIR/include" ] && export CPPPATH="$CPPPATH/include:$CPPPATH"
     [ -d "$DIR/man" ] && export MANPATH="$MANPATH/man:$MANPATH"
+}
+
+# Installs the contents of the specified directory into the target directory
+# by mirroring the contained file structure using symlinks. Any pre-existing files
+# Are backed up in the target directory under the same name as the directory as a dotfile with *.bak
+function install-local {
+   local DIR="${1:?'Usage: install-local <dir>'}"
+   local files=$(ls -1 $DIR/**)
 }
 
 # Create a virtual folder out of a glob. This function creates a directory

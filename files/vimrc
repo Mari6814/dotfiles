@@ -29,6 +29,7 @@ set foldlevel=4
 set wildignore+=**/node_modules/**,*.pyc,*.o,
 set clipboard^=unnamed,unnamedplus
 set completeopt=menu,menuone,preview
+set novisualbell
 
 " Forces block cursor for some terminals that don't have it already
 let &t_ti.="\e[1 q"

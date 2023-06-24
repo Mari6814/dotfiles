@@ -23,7 +23,7 @@ etmp() { e "$(mktemp)$1"; }
 alias e="$EDITOR"
 # Shortcuts to edit specific files
 alias evim="e ~/.vimrc"
-alias envim="e ~/.config/nvim/init.vim"
+alias envim="e ~/.config/nvim/init.lua"
 alias erc="e ~/.bashrc && source ~/.bashrc"
 alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
 

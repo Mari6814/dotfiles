@@ -2,6 +2,9 @@ syntax on
 filetype plugin on
 filetype plugin indent on
 colorscheme slate
+hi MatchParen cterm=none ctermbg=darkgray ctermfg=blue
+
+let mapleader=' '
 
 set nocompatible
 set cursorline
@@ -45,14 +48,6 @@ augroup aliases
     au BufReadPost .bash_aliases set syntax=bash
 augroup end
 
-" Auto reload vimrc on save
-augroup vimrc
-    au!
-    autocmd BufWritePost,FileWritePost .vimrc :so %
-    autocmd BufWritePost,FileWritePost .init.vim :so %
-    autocmd BufWritePost,FileWritePost init.vim :so %
-augroup end
-
 " Naviagte windows in normal mode by holding ctrl
 nnoremap <C-j> <C-w>j
 nnoremap <C-k> <C-w>k
@@ -71,11 +66,15 @@ nnoremap gW ?\<
 " Open :ls and enter :b to start typing searched buffer
 nnoremap gb :ls<cr>:b<space>
 " Replace word under cursor
-nnoremap <leader>r :s/<C-r><C-w>//<left>
+nnoremap <leader>r g*Ncgn
 " Search and replace the word under the cursor
 nnoremap <leader>R :%s/<C-r><C-w>//g<left><left>
 " Search and replace the current visual selection
-vnoremap <leader>v ygv:s/<c-r>"//<left>
+vnoremap <leader>r ygv:s/<c-r>"//<left>
+
+nnoremap <S-s> :w<cr>
+nnoremap <S-q> :q<cr>
+nnoremap <S-w> :bd<cr>
 
 " Abbreviation to save and close current buffer
 cnorea wd w\|bd

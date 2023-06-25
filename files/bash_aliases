@@ -113,8 +113,8 @@ mkvirtual() {
 # Append a new note to the notes file
 note() {
     # If ~/notes.txt last modified day was yesterday, append a clear separator with the date before appending the note's content
-
-    if [ $(date -r ~/notes.txt +%Y%m%d) -eq $(date -d "yesterday" +%Y%m%d) ]; then
+    touch ~/notes.txt
+    if [ $(date -r ~/notes.txt +%Y%m%d) -e $(date -d "yesterday" +%Y%m%d) ]; then
         echo -e "
 
 $(date +%Y-%m-%d)

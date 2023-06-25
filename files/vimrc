@@ -77,10 +77,11 @@ vnoremap <leader>r ygv:s/<c-r>"//<left>
 nnoremap <c-s> :w<cr>
 inoremap <c-s> <c-o>:w<cr>
 " Close window
-nnoremap <c-q> :q<cr>
-inoremap <c-q> <c-o>:q<cr>
+nnoremap <c-q><c-q> :q<cr>
+nnoremap <c-q><c-a> :qa<cr>
+inoremap <c-q><c-q> <c-o>:q<cr>
 " Delete buffer
-nnoremap <c-w> :bd<cr>
+nnoremap <c-w><c-w> :bd<cr>
 
 " Split the window
 nnoremap \ :vsplit<cr>

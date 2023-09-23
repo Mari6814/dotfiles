@@ -1,25 +1,18 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
-
-# Mark this as loaded
 export SOURCED="$BASH_SOURCE:$SOURCED"
-
-# Shortcut to .local dir
-export LOCAL="$HOME/.local"
-
-[ -d "$LOCAL/bin" ] && export PATH="$LOCAL/bin:$PATH"
 
 # Bash settings
 export HISTCONTROL=ignoreboth
 export HISTSIZE=1000
 export HISTFILESIZE=2000
-
 shopt -s autocd
 shopt -s histappend
 shopt -s checkwinsize
 shopt -s globstar
 shopt -s direxpand
 
-# Prompt only shows current directory and git branch
+# Git
+[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt
 export PS1='\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
 
 # Default editor
@@ -30,24 +23,20 @@ else
     export EDITOR=vi
 fi
 
-# Load rust
+# Rust
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
-
-# Enable git current branch for bash prompts
-[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt
 
 # Set the npm package install dir
 if command -v npm &> /dev/null; then
-    export NPM_PREFIX="$HOME/.local/npm"
+    export NPM_PREFIX="$HOME/.npm"
     if [ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]; then
         echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
         npm config set prefix "$NPM_PREFIX"
     fi
     export PATH="$(npm config get prefix)/bin:$PATH"
-    export PATH="./npm_modules/bin:$PATH"
 fi
 
-# Enable pyenv
+# Pyenv
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 if command -v pyenv &> /dev/null; then
@@ -55,4 +44,3 @@ if command -v pyenv &> /dev/null; then
 fi
 
 [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
-[ -f "$LOCAL/bashrc" ] && source "$LOCAL/bashrc"

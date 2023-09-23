@@ -3,11 +3,8 @@ filetype plugin on
 filetype plugin indent on
 colorscheme slate
 hi MatchParen cterm=none ctermbg=darkgray ctermfg=blue
-
 let mapleader=' '
-
 set nocompatible
-set cursorline
 set number
 set relativenumber
 set visualbell
@@ -33,12 +30,6 @@ set wildignore+=**/node_modules/**,*.pyc,*.o,
 set clipboard^=unnamed,unnamedplus
 set completeopt=menu,menuone,preview
 set novisualbell
-
-" Forces block cursor for some terminals that don't have it already
-let &t_ti.="\e[1 q"
-let &t_SI.="\e[5 q"
-let &t_EI.="\e[1 q"
-let &t_te.="\e[0 q"
 
 " Add syntax highlighting to zsh/bash and generic .aliases files
 augroup aliases
@@ -72,36 +63,3 @@ nnoremap <leader>r g*Ncgn
 nnoremap <leader>R :%s/<C-r><C-w>//g<left><left>
 " Search and replace the current visual selection
 vnoremap <leader>r ygv:s/<c-r>"//<left>
-
-" Save file
-nnoremap <c-s> :w<cr>
-inoremap <c-s> <c-o>:w<cr>
-" Close window
-nnoremap <c-q><c-q> :q<cr>
-nnoremap <c-q><c-a> :qa<cr>
-inoremap <c-q><c-q> <c-o>:q<cr>
-" Delete buffer
-nnoremap <c-w><c-w> :bd<cr>
-
-" Split the window
-nnoremap \ :vsplit<cr>
-" Split the window vertically
-nnoremap \| :split<cr>
-" Open terminal in current window
-nnoremap <leader>t :terminal<cr>
-" Open terminal in new window
-nnoremap <leader>T :vsplit<cr>:terminal<cr>
-" Open a new tab
-nnoremap <leader>n :tabnew<cr>
-" Open a new tab with the current buffer
-nnoremap <leader>N :tabedit %<cr>
-" Close the current tab
-nnoremap <leader>x :tabclose<cr>
-" Directly go to a tab
-nnoremap <m-1> 1gt
-nnoremap <m-2> 2gt
-nnoremap <m-3> 3gt
-nnoremap <m-4> 4gt
-
-" Abbreviation to save and close current buffer
-cnorea wd w\|bd

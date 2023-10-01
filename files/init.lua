@@ -41,8 +41,8 @@ vim.keymap.set('n', '[t', ':tabprevious<CR>', {})
 
 -- Navigate the quickfix list
 vim.keymap.set('n', '<leader>c', ':copen<CR>', {})
-vim.keymap.set('n', ']]', ':cnext<CR>', {})
-vim.keymap.set('n', '[[', ':cprevious<CR>', {})
+vim.keymap.set('n', ']c', ':cnext<CR>', {})
+vim.keymap.set('n', '[c', ':cprevious<CR>', {})
 
 -- Find beginning of word
 vim.keymap.set('n', 'gw', '/\\<', {})

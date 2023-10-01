@@ -2,12 +2,12 @@ syntax on
 filetype plugin on
 filetype plugin indent on
 colorscheme slate
+" Adjust color of matching braces to be more visible
 hi MatchParen cterm=none ctermbg=darkgray ctermfg=blue
 let mapleader=' '
 set nocompatible
 set number
 set relativenumber
-set visualbell
 set encoding=utf-8
 set wrap
 set formatoptions=tcqrn1
@@ -58,7 +58,7 @@ nnoremap gb :ls<cr>:b<space>
 nnoremap gw /\<
 nnoremap gW ?\<
 " Replace word under cursor
-nnoremap <leader>r g*Ncgn
+nnoremap <leader>r *Ncgn
 " Search and replace the word under the cursor
 nnoremap <leader>R :%s/<C-r><C-w>//g<left><left>
 " Search and replace the current visual selection

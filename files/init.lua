@@ -23,21 +23,26 @@ vim.keymap.set('n', '<C-j>', '<C-w>j', {})
 vim.keymap.set('n', '<C-k>', '<C-w>k', {})
 vim.keymap.set('n', '<C-l>', '<C-w>l', {})
 
+-- Close & save shortcuts
+vim.keymap.set('n', '<leader>q', ':q<CR>', {})
+vim.keymap.set('n', '<leader>Q', ':qa<CR>', {})
+vim.keymap.set('n', '<leader>x', ':x<CR>', {})
+vim.keymap.set('n', '<leader>X', ':xa<CR>', {})
+
 -- Navigate buffers
-vim.keymap.set('n', '<leader>ls', ':ls<CR>:b ', {})
+vim.keymap.set('n', '<leader>b', ':ls<CR>:b ', {})
 vim.keymap.set('n', ']b', ':bnext<CR>', {})
 vim.keymap.set('n', '[b', ':bprevious<CR>', {})
 
 -- Tab shortcuts
-vim.keymap.set('n', '<leader>tt', ':tabnew %<CR>', {})
-vim.keymap.set('n', '<leader>tq', ':tabclose<CR>', {})
+vim.keymap.set('n', '<leader>t', ':tabnew %<CR>', {})
 vim.keymap.set('n', ']t', ':tabnext<CR>', {})
 vim.keymap.set('n', '[t', ':tabprevious<CR>', {})
 
 -- Navigate the quickfix list
-vim.keymap.set('n', '<leader>co', ':copen<CR>', {})
-vim.keymap.set('n', ']q', ':cnext<CR>', {})
-vim.keymap.set('n', '[q', ':cprevious<CR>', {})
+vim.keymap.set('n', '<leader>c', ':copen<CR>', {})
+vim.keymap.set('n', ']c', ':cnext<CR>', {})
+vim.keymap.set('n', '[c', ':cprevious<CR>', {})
 
 -- Find beginning of word
 vim.keymap.set('n', 'gw', '/\\<', {})

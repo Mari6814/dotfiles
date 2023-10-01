@@ -78,3 +78,17 @@ vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
 vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
+
+-- Create inser mode abbrevs for vimwiki: [] to create todo, # to create headings, etc.
+vim.api.nvim_create_autocmd('FileType', {
+    desc='vimwiki',
+    pattern='vimwiki',
+    callback=function(opts)
+        -- Headings
+        vim.api.nvim_command('iabbrev <buffer> # = =<left><left>')
+        -- Todo
+        vim.api.nvim_command('iabbrev <buffer> [] - [ ]')
+        vim.api.nvim_command('iabbrev <buffer> [x] - [x]')
+        vim.api.nvim_command('iabbrev <buffer> [X] - [X]')
+    end,
+})

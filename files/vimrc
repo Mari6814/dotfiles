@@ -63,8 +63,8 @@ nnoremap [t :tabprevious<CR>
 
 " Quickfix navigation
 nnoremap <leader>c :copen<CR>
-nnoremap ]] :cnext<CR>
-nnoremap [[ :cprevious<CR>
+nnoremap ]c :cnext<CR>
+nnoremap [c :cprevious<CR>
 
 " Shortcut search for beginnig of word
 nnoremap gw /\<

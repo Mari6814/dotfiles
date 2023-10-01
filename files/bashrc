@@ -44,3 +44,10 @@ if command -v pyenv &> /dev/null; then
 fi
 
 [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
+
+if [ $TERM != "screen" ]; then
+    if command -v tmux &> /dev/null; then
+        exec tmux
+    fi
+fi
+

@@ -41,8 +41,8 @@ vim.keymap.set('n', '[t', ':tabprevious<CR>', {})
 
 -- Navigate the quickfix list
 vim.keymap.set('n', '<leader>c', ':copen<CR>', {})
-vim.keymap.set('n', ']c', ':cnext<CR>', {})
-vim.keymap.set('n', '[c', ':cprevious<CR>', {})
+vim.keymap.set('n', ']]', ':cnext<CR>', {})
+vim.keymap.set('n', '[[', ':cprevious<CR>', {})
 
 -- Find beginning of word
 vim.keymap.set('n', 'gw', '/\\<', {})
@@ -69,7 +69,8 @@ require("lazy").setup({
     { 'nvim-telescope/telescope.nvim', tag = '0.1.1', dependencies = { 'nvim-lua/plenary.nvim' } },
     { 'github/copilot.vim', lazy = false },
     { 'neovim/nvim-lspconfig', lazy = false},
-    { 'tpope/vim-fugitive', lazy = false},
+    { 'tpope/vim-fugitive' },
+    { 'vimwiki/vimwiki' },
 })
 
 local builtin = require('telescope.builtin')

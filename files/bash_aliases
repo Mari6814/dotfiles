@@ -5,15 +5,14 @@ alias s=screen
 alias sl="s -ls"
 alias ss="s -S"
 alias sr="s -r"
-alias sR="s -D -R"
 
 # Modify the default values for builtins
 alias grep="grep --color=auto"
-alias ls="ls -CFG --color=auto"
 alias mkdir="mkdir -pv"
+alias ls="ls CFG --color=auto"
 alias ll='ls -alFh'
 alias la='ls -A'
-alias l='ls -CF'
+alias l='ls'
 
 # Dump clipboard contents to stdout
 alias paste="xclip -selection clipboard -o"
@@ -31,14 +30,25 @@ alias evim="e ~/.vimrc"
 alias envim="e ~/.config/nvim/init.lua"
 alias erc="e ~/.bashrc && source ~/.bashrc"
 alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
+alias etmux="e ~/.tmux.conf"
+
 etmp() { e "$(mktemp)$1"; }
 
 # Git shortcut
+alias g="git"
+alias commit="git commit"
+alias stash="git stash"
+alias unstash="stash pop"
+alias checkout="git checkout"
+alias status="git status"
+alias branch="git branch"
 alias gs="git status"
 alias gv="git remote -v"
-alias gb="git branch"
 alias gd="git diff"
-alias gcam="git commit -am"
+alias gb="git branch"
+alias cam="git commit -am"
+alias gc="git commit"
+alias glog="git log --graph --decorate --oneline --all"
 
 # Python
 alias py="python3"

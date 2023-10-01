@@ -9,8 +9,8 @@ alias sr="s -r"
 # Modify the default values for builtins
 alias grep="grep --color=auto"
 alias mkdir="mkdir -pv"
-alias ls="ls CFG --color=auto"
-alias ll='ls -alFh'
+alias ls="ls -CFGh --color=auto"
+alias ll='ls -lA'
 alias la='ls -A'
 alias l='ls'
 

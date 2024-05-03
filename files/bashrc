@@ -23,10 +23,14 @@ else
     export EDITOR=vi
 fi
 
+export LOCAL="$HOME/.local"
+[ -d "$LOCAL/bin" ] && export PATH=$PATH:$LOCAL/bin
+[ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
+
 # Rust
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 
-# Set the npm package install dir
+# NPM
 if command -v npm &> /dev/null; then
     export NPM_PREFIX="$HOME/.npm"
     if [ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]; then
@@ -43,4 +47,13 @@ if command -v pyenv &> /dev/null; then
     eval "$(pyenv init -)"
 fi
 
-[ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
+# Zoxide
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init bash)"
+fi
+
+# FZF
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+
+# Golang
+[ -d "$LOCAL/go/bin" ] && export PATH=$PATH:$LOCAL/go/bin

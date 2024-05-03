@@ -19,3 +19,7 @@ lg = !"git lg1"
 	rebase = false
 [difftool]
 	prompt = false
+[init]
+	defaultBranch = main
+[push]
+	default = current

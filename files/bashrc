@@ -27,6 +27,8 @@ export LOCAL="$HOME/.local"
 [ -d "$LOCAL/bin" ] && export PATH=$PATH:$LOCAL/bin
 [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
 
+source /usr/share/bash-completion/completions/git
+
 # Rust
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 

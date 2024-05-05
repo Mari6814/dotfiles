@@ -94,14 +94,14 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 local lspconfig = require('lspconfig')
+-- npm i -g bash-language-server
+lspconfig.bashls.setup{}
+-- pip install pyright
 lspconfig.pyright.setup {}
+-- npm install -g typescript typescript-language-server
 lspconfig.tsserver.setup {}
-lspconfig.rust_analyzer.setup {
-  -- Server-specific settings. See `:help lspconfig-setup`
-  settings = {
-    ['rust-analyzer'] = {},
-  },
-}
+-- installed with rust
+lspconfig.rust_analyzer.setup{}
 
 
 -- Global mappings.

@@ -1,7 +1,9 @@
 export SOURCED=".bash_aliases:$SOURCED"
 
-# Shortcut to make new dir and cd into it
+# Navigation
+alias zz="cd -" # Go back to the last directory
 md() {
+    # Create a directory and move into it
     mkdir -p "$@" && cd "$@";
 }
 

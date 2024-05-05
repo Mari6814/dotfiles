@@ -1,5 +1,10 @@
 export SOURCED=".bash_aliases:$SOURCED"
 
+# Shortcut to make new dir and cd into it
+md() {
+    mkdir -p "$@" && cd "$@";
+}
+
 # Screen shortcuts
 alias s=screen
 alias sl="s -ls"
@@ -193,11 +198,6 @@ alias p="poetry"
 alias jn="jupyter notebook"
 alias tb="tensorboard --logdir ."
 alias va="source .venv/bin/activate"
-
-# Shortcut to make new dir and cd into it
-md() {
-    mkdir -p "$@" && cd "$@";
-}
 
 # Create executable bash script and edit it
 # The first argument as the path to the script file that will be created

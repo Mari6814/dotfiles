@@ -2,7 +2,7 @@
 export SOURCED="$BASH_SOURCE:$SOURCED"
 
 # Bash settings
-export HISTCONTROL=ignoreboth
+export HISTCONTROL=erasedups
 export HISTSIZE=1000
 export HISTFILESIZE=2000
 shopt -s autocd

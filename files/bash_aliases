@@ -1,8 +1,45 @@
 export SOURCED=".bash_aliases:$SOURCED"
 
+tworkspace() {
+    # Create a new directory with symlinks of often used files.
+    # This reduces fragmantation of the workspace and increases colocation
+    # of commonly used files we need right now. The effect reduces
+    # the amount of cd, ls, etc.
+    local INDEX_FILE="$HOME/.config/tworkspaces/workspaces";
+    if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
+        echo "USAGE: tworkspace [--help] [-l|--list] <target1> [target2] ...";
+        echo "DESCRIPTION: Links a list of files or directories into this directory and marks is as a 'workspace'.";
+        echo "  --help, -h: Show this help message";
+        echo "  --list, -l: List all workspaces. To clear the least, delete the file at '$INDEX_FILE'";
+        return 1;
+    fi
+    if [[ "$1" == "-l" || "$1" == "--list" ]]; then
+        cat "$INDEX_FILE";
+        return 0;
+    fi
+    # Mark this directory as a workspace
+    mkdir -p ".tworkspace";
+    # Initialize global workspace index
+    mkdir -p "$(dirname $INDEX_FILE)";
+    # Add the current workspace to the index
+    pwd >> $INDEX_FILE;
+    awk '!NF || !seen[$0]++' $INDEX_FILE > $INDEX_FILE.tmp;
+    mv "$INDEX_FILE.tmp" "$INDEX_FILE";
+    # Link the files into the workspace
+    for file in $@; do
+        [ -e "$file" ] && ln -s "$file"
+    done
+}
+alias ws=tworkspace
+
+watch-files() {
+    # Exists if the watched files are touched
+    watch -gt "ls -lR --full-time $@ | md5sum"
+}
+
 # Navigation
 alias zz="cd -" # Go back to the last directory
-md() {
+mddir() {
     # Create a directory and move into it
     mkdir -p "$@" && cd "$@";
 }
@@ -16,10 +53,10 @@ alias sr="s -r"
 # Modify the default values for builtins
 alias grep="grep --color=auto"
 alias mkdir="mkdir -pv"
-alias ls="ls -CFGh --color=auto"
-alias ll='ls -lA'
-alias la='ls -A'
-alias l='ls'
+alias ls="ls -CFh --color=auto" # Subsequent ls calls will have colors
+alias ll='ls -al' # List all files *with details*, including dotfiles
+alias la='ls -A' # List all file *names* except . and .., including dotfiles
+alias l='ls' # shorthand for ls
 
 # Dump clipboard contents to stdout
 alias paste="xclip -selection clipboard -o"

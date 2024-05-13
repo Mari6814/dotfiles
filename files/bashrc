@@ -1,6 +1,9 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 export SOURCED="$BASH_SOURCE:$SOURCED"
 
+# Default editor
+export EDITOR=vim
+
 # append to the history file, don't overwrite it
 shopt -s histappend
 
@@ -116,17 +119,12 @@ fi
 export PS1='\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
 source /usr/share/bash-completion/completions/git
 
-# Default editor
-if command -v nvim &> /dev/null
-then
-    export EDITOR=nvim
-else
-    export EDITOR=vi
-fi
-
 # Set up the user's "local" directory
 export LOCAL="$HOME/.local"
-[ -d "$LOCAL/bin" ] && export PATH=$PATH:$LOCAL/bin
+[ -d "$LOCAL/bin" ] && export PATH="$PATH:$LOCAL/bin"
+
+# Neovim from source
+[ -x "$LOCAL/nvim/bin/nvim" ] && export PATH="$LOCAL/nvim/bin:$PATH"
 
 # Rust
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"

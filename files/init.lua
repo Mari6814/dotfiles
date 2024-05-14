@@ -66,11 +66,15 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-    { 'nvim-telescope/telescope.nvim', tag = '0.1.1', dependencies = { 'nvim-lua/plenary.nvim' } },
+    -- Telescope requires fzf, ripgrep and fd
+    -- $ sudo apt install ripgrep fd-find
+    -- $ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
+    { 'nvim-telescope/telescope.nvim', dependencies = { 'nvim-lua/plenary.nvim' } },
     { 'github/copilot.vim', lazy = false },
-    { 'neovim/nvim-lspconfig', lazy = false},
+    { 'neovim/nvim-lspconfig', lazy = false },
     { 'tpope/vim-fugitive' },
     { 'vimwiki/vimwiki' },
+    { 'tpope/vim-dadbod' },
 })
 
 local builtin = require('telescope.builtin')

@@ -1,5 +1,5 @@
 -- Vim settings
-vim.g.mapleader = " "
+vim.g.mapleader = ","
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.tabstop = 4
@@ -66,36 +66,53 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-    -- Telescope requires fzf, ripgrep and fd
     -- $ sudo apt install ripgrep fd-find
     -- $ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
-    { 'nvim-telescope/telescope.nvim', dependencies = { 'nvim-lua/plenary.nvim' } },
-    { 'github/copilot.vim', lazy = false },
-    { 'neovim/nvim-lspconfig', lazy = false },
+    { 'nvim-telescope/telescope.nvim',
+        dependencies = { 'nvim-lua/plenary.nvim' },
+        build="git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install",
+        init = function ()
+            local builtin = require('telescope.builtin')
+            vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
+            vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
+            vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
+            vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
+        end
+    },
+    { 'github/copilot.vim', event="InsertEnter" },
+    { 'neovim/nvim-lspconfig' },
     { 'tpope/vim-fugitive' },
-    { 'vimwiki/vimwiki' },
-    { 'tpope/vim-dadbod' },
+    { 'vimwiki/vimwiki', init = function (plug)
+        -- Create inser mode abbrevs for vimwiki: [] to create todo, # to create headings, etc.
+        vim.api.nvim_create_autocmd('FileType', {
+            desc='vimwiki',
+            pattern='vimwiki',
+            callback=function(opts)
+                -- Headings
+                vim.api.nvim_command('iabbrev <buffer> # = =<left><left>')
+                -- Todo
+                vim.api.nvim_command('iabbrev <buffer> [] - [ ]')
+                vim.api.nvim_command('iabbrev <buffer> [x] - [x]')
+                vim.api.nvim_command('iabbrev <buffer> [X] - [X]')
+            end,
+        })
+        end,
+    },
+    { 'tpope/vim-dadbod', },
+    { 'stevearc/oil.nvim',
+        lazy = false, -- required to be able to do `$ nvim .`
+        opts = { default_file_explorer = true },
+        keys = {
+            { "-", "<CMD>Oil<CR>", { desc = "Open parent directory" } },
+        }
+    },
 })
 
-local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
-vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
-vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
-vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
-
--- Create inser mode abbrevs for vimwiki: [] to create todo, # to create headings, etc.
-vim.api.nvim_create_autocmd('FileType', {
-    desc='vimwiki',
-    pattern='vimwiki',
-    callback=function(opts)
-        -- Headings
-        vim.api.nvim_command('iabbrev <buffer> # = =<left><left>')
-        -- Todo
-        vim.api.nvim_command('iabbrev <buffer> [] - [ ]')
-        vim.api.nvim_command('iabbrev <buffer> [x] - [x]')
-        vim.api.nvim_command('iabbrev <buffer> [X] - [X]')
-    end,
-})
+-- local builtin = require('telescope.builtin')
+-- vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
+-- vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
+-- vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
+-- vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
 
 local lspconfig = require('lspconfig')
 -- npm i -g bash-language-server
@@ -106,14 +123,6 @@ lspconfig.pyright.setup {}
 lspconfig.tsserver.setup {}
 -- installed with rust
 lspconfig.rust_analyzer.setup{}
-
-
--- Global mappings.
--- See `:help vim.diagnostic.*` for documentation on any of the below functions
-vim.keymap.set('n', '<space>e', vim.diagnostic.open_float)
-vim.keymap.set('n', '[d', vim.diagnostic.goto_prev)
-vim.keymap.set('n', ']d', vim.diagnostic.goto_next)
-vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist)
 
 -- Use LspAttach autocommand to only map the following keys
 -- after the language server attaches to the current buffer
@@ -131,16 +140,16 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
     vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
     vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
-    vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, opts)
-    vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, opts)
-    vim.keymap.set('n', '<space>wl', function()
+    vim.keymap.set('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, opts)
+    vim.keymap.set('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, opts)
+    vim.keymap.set('n', '<leader>wl', function()
       print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
     end, opts)
-    vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, opts)
-    vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, opts)
-    vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, opts)
+    vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, opts)
+    vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+    vim.keymap.set({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, opts)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-    vim.keymap.set('n', '<space>f', function()
+    vim.keymap.set('n', '<leader>f', function()
       vim.lsp.buf.format { async = true }
     end, opts)
   end,

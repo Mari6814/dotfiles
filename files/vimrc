@@ -4,7 +4,7 @@ filetype plugin indent on
 colorscheme slate
 " Adjust color of matching braces to be more visible
 hi MatchParen cterm=none ctermbg=darkgray ctermfg=blue
-let mapleader=' '
+let mapleader=','
 set nocompatible
 set number
 set relativenumber
@@ -45,34 +45,8 @@ nnoremap <C-k> <C-w>k
 nnoremap <C-h> <C-w>h
 nnoremap <C-l> <C-w>l
 
-" Save/Close
-nnoremap <leader>q :q<CR>
-nnoremap <leader>Q :qa<CR>
-nnoremap <leader>x :x<CR>
-nnoremap <leader>X :xa<CR>
+" Simplify terminal mode exit
+tnoremap <Esc> <C-\><C-n>
 
-" Buffer navigation
-nnoremap <leader>b :ls<cr>:b<space>
-nnoremap ]b :bnext<CR>
-nnoremap [b :bprevious<CR>
-
-" Tab navigation
-nnoremap <leader>t :tabnew %<CR>
-nnoremap ]t :tabnext<CR>
-nnoremap [t :tabprevious<CR>
-
-" Quickfix navigation
-nnoremap <leader>c :copen<CR>
-nnoremap ]c :cnext<CR>
-nnoremap [c :cprevious<CR>
-
-" Shortcut search for beginnig of word
-nnoremap gw /\<
-nnoremap gW :vim /\</ **<left><left><left><left>
-
-" Replace word under cursor
-nnoremap <leader>r *Ncgn
-" Search and replace the word under the cursor
-nnoremap <leader>R :%s/<C-r><C-w>//g<left><left>
-" Search and replace the current visual selection
-vnoremap <leader>r ygv:s/<c-r>"//<left>
+" Shortcut for the *cgn pattern
+nnoremap g* *``zzcgn

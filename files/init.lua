@@ -23,34 +23,13 @@ vim.keymap.set('n', '<C-j>', '<C-w>j', {})
 vim.keymap.set('n', '<C-k>', '<C-w>k', {})
 vim.keymap.set('n', '<C-l>', '<C-w>l', {})
 
--- Close & save shortcuts
-vim.keymap.set('n', '<leader>q', ':q<CR>', {})
-vim.keymap.set('n', '<leader>Q', ':qa<CR>', {})
-vim.keymap.set('n', '<leader>x', ':x<CR>', {})
-vim.keymap.set('n', '<leader>X', ':xa<CR>', {})
+-- Simplify terminal mode exit shortcut
+vim.keymap.set('t', '<esc>', '<C-\\><C-n>', {})
 
--- Navigate buffers
-vim.keymap.set('n', '<leader>b', ':ls<CR>:b ', {})
-vim.keymap.set('n', ']b', ':bnext<CR>', {})
-vim.keymap.set('n', '[b', ':bprevious<CR>', {})
+-- Shortcut for the *cgn pattern: 
+-- nnoremap g* *zz``cgn
+vim.keymap.set('n', 'g*', '*``zzcgn', {})
 
--- Tab shortcuts
-vim.keymap.set('n', '<leader>t', ':tabnew %<CR>', {})
-vim.keymap.set('n', ']t', ':tabnext<CR>', {})
-vim.keymap.set('n', '[t', ':tabprevious<CR>', {})
-
--- Navigate the quickfix list
-vim.keymap.set('n', '<leader>c', ':copen<CR>', {})
-vim.keymap.set('n', ']c', ':cnext<CR>', {})
-vim.keymap.set('n', '[c', ':cprevious<CR>', {})
-
--- Find beginning of word
-vim.keymap.set('n', 'gw', '/\\<', {})
-vim.keymap.set('n', 'gW', ':vim /\\</ **<left><left><left><left>', {})
-
--- Replace word under cursor
-vim.keymap.set('n', '<leader>rw', ':%s/<C-r><C-w>//g<Left><Left>', {})
-vim.keymap.set('v', '<leader>rw', 'y:%s/<C-r>"//g<Left><Left>', {})
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
@@ -104,15 +83,12 @@ require("lazy").setup({
         opts = { default_file_explorer = true },
         keys = {
             { "-", "<CMD>Oil<CR>", { desc = "Open parent directory" } },
-        }
+        },
+        dependencies={
+            'nvim-tree/nvim-web-devicons'
+        },
     },
 })
-
--- local builtin = require('telescope.builtin')
--- vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
--- vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
--- vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
--- vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
 
 local lspconfig = require('lspconfig')
 -- npm i -g bash-language-server
@@ -140,16 +116,16 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
     vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
     vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
-    vim.keymap.set('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, opts)
-    vim.keymap.set('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, opts)
-    vim.keymap.set('n', '<leader>wl', function()
+    vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, opts)
+    vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, opts)
+    vim.keymap.set('n', '<space>wl', function()
       print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
     end, opts)
-    vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, opts)
-    vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
-    vim.keymap.set({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, opts)
+    vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, opts)
+    vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, opts)
+    vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, opts)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-    vim.keymap.set('n', '<leader>f', function()
+    vim.keymap.set('n', '<space>f', function()
       vim.lsp.buf.format { async = true }
     end, opts)
   end,

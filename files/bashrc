@@ -129,16 +129,6 @@ export LOCAL="$HOME/.local"
 # Rust
 [ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 
-# NPM
-if command -v npm &> /dev/null; then
-    export NPM_PREFIX="$HOME/.npm"
-    if [ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]; then
-        echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
-        npm config set prefix "$NPM_PREFIX"
-    fi
-    export PATH="$(npm config get prefix)/bin:$PATH"
-fi
-
 # Pyenv
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
@@ -157,8 +147,18 @@ fi
 # Golang
 [ -d "$LOCAL/go/bin" ] && export PATH=$PATH:$LOCAL/go/bin
 
-# nvm for nodejs
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# NVM for NPM and NodeJS management
+if [ -d "$HOME/.nvm" ]; then
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+elif command -v npm &> /dev/null; then
+    # NPM: Only install if NVM is not used
+    export NPM_PREFIX="$HOME/.npm"
+    if [ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]; then
+        echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
+        npm config set prefix "$NPM_PREFIX"
+    fi
+    export PATH="$(npm config get prefix)/bin:$PATH"
+fi
 

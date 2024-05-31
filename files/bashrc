@@ -161,4 +161,3 @@ elif command -v npm &> /dev/null; then
     fi
     export PATH="$(npm config get prefix)/bin:$PATH"
 fi
-

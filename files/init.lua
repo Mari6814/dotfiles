@@ -17,19 +17,35 @@ vim.opt.foldmethod = 'indent'
 vim.opt.list = true
 vim.opt.listchars = {tab = '▸ ', trail = '·', extends = '❯', precedes = '❮', nbsp = '␣'}
 
+-- Map F5 in normal and insert mode to run the makeprg
+vim.keymap.set('n', '<F5>', ':make<CR>', {})
+vim.keymap.set('i', '<F5>', '<C-o>:make<CR>', {})
+
+-- Simplify terminal mode exit shortcut
+vim.keymap.set('t', '<esc>', '<C-\\><C-n>', {})
+
 -- Map moving windows in normal mode
 vim.keymap.set('n', '<C-h>', '<C-w>h', {})
 vim.keymap.set('n', '<C-j>', '<C-w>j', {})
 vim.keymap.set('n', '<C-k>', '<C-w>k', {})
 vim.keymap.set('n', '<C-l>', '<C-w>l', {})
 
--- Simplify terminal mode exit shortcut
-vim.keymap.set('t', '<esc>', '<C-\\><C-n>', {})
+-- Unobstructed navigation using [ and ]: Navigate through quickfix list, location list, buffer list and tab list
+vim.keymap.set('n', '[q', ':cprev<CR>', {})
+vim.keymap.set('n', ']q', ':cnext<CR>', {})
+vim.keymap.set('n', '[l', ':lprev<CR>', {})
+vim.keymap.set('n', ']l', ':lnext<CR>', {})
+vim.keymap.set('n', '[b', ':bprev<CR>', {})
+vim.keymap.set('n', ']b', ':bnext<CR>', {})
+vim.keymap.set('n', '[t', ':tabprev<CR>', {})
+vim.keymap.set('n', ']t', ':tabnext<CR>', {})
+vim.keymap.set('n', '[w', ':wincmd w<CR>', {})
+vim.keymap.set('n', ']w', ':wincmd W<CR>', {})
+
 
 -- Shortcut for the *cgn pattern: 
 -- nnoremap g* *zz``cgn
 vim.keymap.set('n', 'g*', '*``zzcgn', {})
-
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then

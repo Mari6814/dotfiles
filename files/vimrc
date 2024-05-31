@@ -31,6 +31,10 @@ set clipboard^=unnamed,unnamedplus
 set completeopt=menu,menuone,preview
 set novisualbell
 
+" F5 to run
+nnoremap <F5> :make<CR>
+inoremap <F5> <c-o>:make<CR>
+
 " Add syntax highlighting to zsh/bash and generic .aliases files
 augroup aliases
     au!
@@ -50,3 +54,13 @@ tnoremap <Esc> <C-\><C-n>
 
 " Shortcut for the *cgn pattern
 nnoremap g* *``zzcgn
+
+" Use [ and ] to navigate through the quickfix-, location-, buffer- and tablist
+nnoremap [q :cprevious<CR>
+nnoremap ]q :cnext<CR>
+nnoremap [l :lprevious<CR>
+nnoremap ]l :lnext<CR>
+nnoremap [b :bprevious<CR>
+nnoremap ]b :bnext<CR>
+nnoremap [t :tabprevious<CR>
+nnoremap ]t :tabnext<CR>

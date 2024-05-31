@@ -1,5 +1,25 @@
 export SOURCED=".bash_aliases:$SOURCED"
 
+function git_pull_all_branches() {
+  for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do
+    echo "Checking out and pulling branch $branch"
+    git checkout $branch
+    git pull
+  done
+}
+
+function git_check_unpushed_commits() {
+  (echo -e "BRANCH:AHEAD:BEHIND"
+  for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do
+    local COMMITS_DIFF=$(git rev-list --left-right --count $branch...origin/master)
+    local COMMITS_AHEAD=$(echo $COMMITS_DIFF | awk '{print $1}')
+    local COMMITS_BEHIND=$(echo $COMMITS_DIFF | awk '{print $2}')
+    if [ $COMMITS_AHEAD -gt 0 ]; then
+     echo -e "$branch:$COMMITS_AHEAD:$COMMITS_BEHIND"
+    fi
+  done) | column -t -s:
+}
+
 tworkspace() {
     # Create a new directory with symlinks of often used files.
     # This reduces fragmantation of the workspace and increases colocation

@@ -31,6 +31,8 @@ vim.keymap.set('n', '<C-k>', '<C-w>k', {})
 vim.keymap.set('n', '<C-l>', '<C-w>l', {})
 
 -- Unobstructed navigation using [ and ]: Navigate through quickfix list, location list, buffer list and tab list
+vim.keymap.set('n', '[g', vim.diagnostic.goto_next)
+vim.keymap.set('n', ']g', vim.diagnostic.goto_prev)
 vim.keymap.set('n', '[q', ':cprev<CR>', {})
 vim.keymap.set('n', ']q', ':cnext<CR>', {})
 vim.keymap.set('n', '[l', ':lprev<CR>', {})

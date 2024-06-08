@@ -81,6 +81,7 @@ require("lazy").setup({
     { 'tpope/vim-fugitive' },
     { 'vimwiki/vimwiki', init = function (plug)
         -- Create inser mode abbrevs for vimwiki: [] to create todo, # to create headings, etc.
+        vim.g.vimwiki_global_ext = 0;
         vim.api.nvim_create_autocmd('FileType', {
             desc='vimwiki',
             pattern='vimwiki',

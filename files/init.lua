@@ -79,7 +79,7 @@ require("lazy").setup({
             vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
         end
     },
-    { 'github/copilot.vim', event="InsertEnter" },
+    { 'github/copilot.vim' },
     { 'neovim/nvim-lspconfig' },
     { 'tpope/vim-fugitive' },
     { 'vimwiki/vimwiki', init = function (plug)

@@ -17,6 +17,9 @@ vim.opt.foldmethod = 'indent'
 vim.opt.list = true
 vim.opt.listchars = {tab = '▸ ', trail = '·', extends = '❯', precedes = '❮', nbsp = '␣'}
 
+vim.keymap.set('n', 'Y', 'y$', {}) -- Yank to end of line
+vim.keymap.set('n', '\\', ':', {}) -- Command mode
+
 -- Map F5 in normal and insert mode to run the makeprg
 vim.keymap.set('n', '<F5>', ':make<CR>', {})
 vim.keymap.set('i', '<F5>', '<C-o>:make<CR>', {})

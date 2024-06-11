@@ -107,13 +107,8 @@ alias checkout="git checkout"
 alias status="git status"
 alias branch="git branch"
 alias gs="git status"
-alias gv="git remote -v"
-alias gd="git diff"
-alias gb="git branch"
 alias gcam="git commit -am"
-alias gc="git commit"
 alias glog="git log --graph --decorate --oneline --all"
-alias cs="ghcp suggest -t shell"
 
 # GitHub
 alias ghcp="gh copilot"

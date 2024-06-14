@@ -20,37 +20,16 @@ function git_check_unpushed_commits() {
   done) | column -t -s:
 }
 
-tworkspace() {
-    # Create a new directory with symlinks of often used files.
-    # This reduces fragmantation of the workspace and increases colocation
-    # of commonly used files we need right now. The effect reduces
-    # the amount of cd, ls, etc.
-    local INDEX_FILE="$HOME/.config/tworkspaces/workspaces";
-    if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
-        echo "USAGE: tworkspace [--help] [-l|--list] <target1> [target2] ...";
-        echo "DESCRIPTION: Links a list of files or directories into this directory and marks is as a 'workspace'.";
-        echo "  --help, -h: Show this help message";
-        echo "  --list, -l: List all workspaces. To clear the least, delete the file at '$INDEX_FILE'";
-        return 1;
+mkworkspace() {
+    if [ $# -eq 0 ]; then
+        echo "Creates symlinks to the files in the current directory"
+        echo "Usage: mkworkspace <file1> <file2> ..."
+        return 1
     fi
-    if [[ "$1" == "-l" || "$1" == "--list" ]]; then
-        cat "$INDEX_FILE";
-        return 0;
-    fi
-    # Mark this directory as a workspace
-    mkdir -p ".tworkspace";
-    # Initialize global workspace index
-    mkdir -p "$(dirname $INDEX_FILE)";
-    # Add the current workspace to the index
-    pwd >> $INDEX_FILE;
-    awk '!NF || !seen[$0]++' $INDEX_FILE > $INDEX_FILE.tmp;
-    mv "$INDEX_FILE.tmp" "$INDEX_FILE";
-    # Link the files into the workspace
     for file in $@; do
         [ -e "$file" ] && ln -s "$file"
     done
 }
-alias ws=tworkspace
 
 watch-files() {
     # Exists if the watched files are touched

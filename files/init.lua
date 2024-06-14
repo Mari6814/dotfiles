@@ -115,6 +115,8 @@ require("lazy").setup({
 local lspconfig = require('lspconfig')
 -- npm i -g bash-language-server
 lspconfig.bashls.setup{}
+-- npm i -g @microsoft/compome-language-service
+lspconfig.docker_compose_language_service.setup{}
 -- pip install pyright
 lspconfig.pyright.setup {}
 -- npm install -g typescript typescript-language-server

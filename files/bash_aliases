@@ -1,3 +1,4 @@
+#!/bin/bash
 export SOURCED=".bash_aliases:$SOURCED"
 
 function git_pull_all_branches() {

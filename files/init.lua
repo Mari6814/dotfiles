@@ -16,8 +16,18 @@ vim.opt.matchpairs:append({'<:>'})
 vim.opt.list = true
 vim.opt.listchars = {tab = '▸ ', trail = '·', extends = '❯', precedes = '❮', nbsp = '␣'}
 
-vim.keymap.set('n', 'Y', 'y$', {}) -- Yank to end of line
-vim.keymap.set('n', '\\', ':', {}) -- Command mode
+-- Shortcut for command mode in normal
+vim.keymap.set('n', ';', ':', {})
+
+-- Shortcut for the *cgn pattern: 
+-- nnoremap g* *zz``cgn
+vim.keymap.set('n', 'g*', '*``zzcgn', {})
+
+-- Shortcut for closing windows
+vim.keymap.set('n', '<leader>q', '<C-w>c', {})
+
+-- Yank to end of line
+vim.keymap.set('n', 'Y', 'y$', {})
 
 -- Map F5 in normal and insert mode to run the makeprg
 vim.keymap.set('n', '<F5>', ':make<CR>', {})
@@ -45,11 +55,6 @@ vim.keymap.set('n', '[t', ':tabprev<CR>', {})
 vim.keymap.set('n', ']t', ':tabnext<CR>', {})
 vim.keymap.set('n', '[w', ':wincmd w<CR>', {})
 vim.keymap.set('n', ']w', ':wincmd W<CR>', {})
-
-
--- Shortcut for the *cgn pattern: 
--- nnoremap g* *zz``cgn
-vim.keymap.set('n', 'g*', '*``zzcgn', {})
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then

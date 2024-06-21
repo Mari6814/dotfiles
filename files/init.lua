@@ -13,7 +13,6 @@ vim.opt.wildmenu = true
 vim.opt.wildmode = {'longest', 'list', 'full'}
 vim.opt.wildignore = {'*~', '*.pyc', '**/node_modules/**', '**/.git/**', '.DS_Store'}
 vim.opt.matchpairs:append({'<:>'})
-vim.opt.foldmethod = 'indent'
 vim.opt.list = true
 vim.opt.listchars = {tab = '▸ ', trail = '·', extends = '❯', precedes = '❮', nbsp = '␣'}
 

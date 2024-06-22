@@ -15,6 +15,10 @@ vim.opt.wildignore = {'*~', '*.pyc', '**/node_modules/**', '**/.git/**', '.DS_St
 vim.opt.matchpairs:append({'<:>'})
 vim.opt.list = true
 vim.opt.listchars = {tab = '▸ ', trail = '·', extends = '❯', precedes = '❮', nbsp = '␣'}
+vim.opt.fillchars = { fold = " " }
+vim.opt.foldmethod = "indent"
+vim.opt.foldenable = false
+vim.opt.foldlevel = 99
 
 -- Shortcut for command mode in normal
 vim.keymap.set('n', ';', ':', {})

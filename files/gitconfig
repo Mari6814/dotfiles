@@ -21,3 +21,5 @@ l = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(re
 	defaultBranch = main
 [push]
 	default = current
+[rerere]
+	enabled = true

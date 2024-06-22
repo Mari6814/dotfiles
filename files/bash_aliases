@@ -37,12 +37,41 @@ watch-files() {
     watch -gt "ls -lR --full-time $@ | md5sum"
 }
 
-# Navigation
-alias zz="cd -" # Go back to the last directory
 mddir() {
     # Create a directory and move into it
     mkdir -p "$@" && cd "$@";
 }
+
+etmp() { e "$(mktemp)$1"; }
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# colored GCC warnings and errors
+#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
+# some more ls aliases
+
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+# Default editor
+if [ -x `which nvim` ]; then
+    export EDITOR=nvim
+fi
+
+# Navigation
+alias zz="cd -" # Go back to the last directory
 
 # Screen shortcuts
 alias s=screen
@@ -56,7 +85,7 @@ alias mkdir="mkdir -pv"
 alias ls="ls -CFh --color=auto" # Subsequent ls calls will have colors
 alias ll='ls -al' # List all files *with details*, including dotfiles
 alias la='ls -A' # List all file *names* except . and .., including dotfiles
-alias l='ls' # shorthand for ls
+alias l='ls -CF' # shorthand for ls
 
 # Dump clipboard contents to stdout
 alias paste="xclip -selection clipboard -o"
@@ -75,8 +104,6 @@ alias envim="e ~/.config/nvim/init.lua"
 alias erc="e ~/.bashrc && source ~/.bashrc"
 alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
 alias etmux="e ~/.tmux.conf"
-
-etmp() { e "$(mktemp)$1"; }
 
 # Git shortcut
 alias g="git"

@@ -20,45 +20,30 @@ vim.opt.foldmethod = "indent"
 vim.opt.foldenable = false
 vim.opt.foldlevel = 99
 
--- Shortcut for command mode in normal
-vim.keymap.set('n', ';', ':', {})
-
--- Shortcut for the *cgn pattern: 
--- nnoremap g* *zz``cgn
-vim.keymap.set('n', 'g*', '*``zzcgn', {})
-
--- Shortcut for closing windows
-vim.keymap.set('n', '<leader>q', '<C-w>c', {})
-
--- Yank to end of line
-vim.keymap.set('n', 'Y', 'y$', {})
-
--- Map F5 in normal and insert mode to run the makeprg
-vim.keymap.set('n', '<F5>', ':make<CR>', {})
-vim.keymap.set('i', '<F5>', '<C-o>:make<CR>', {})
-
--- Simplify terminal mode exit shortcut
-vim.keymap.set('t', '<esc>', '<C-\\><C-n>', {})
-
--- Map moving windows in normal mode
-vim.keymap.set('n', '<C-h>', '<C-w>h', {})
-vim.keymap.set('n', '<C-j>', '<C-w>j', {})
-vim.keymap.set('n', '<C-k>', '<C-w>k', {})
-vim.keymap.set('n', '<C-l>', '<C-w>l', {})
-
--- Unobstructed navigation using [ and ]: Navigate through quickfix list, location list, buffer list and tab list
+-- Misc
+vim.keymap.set('n', '<esc>', ':noh<CR>') -- Clear search highlights on escape
+vim.keymap.set('n', 'g*', '*``zzcgn') -- Shortcut for the *cgn pattern: 
+vim.keymap.set('n', 'Y', 'y$') -- Yank to end of line
+vim.keymap.set('n', '<F5>', ':make<CR>') -- Run make on F5
+vim.keymap.set('i', '<F5>', '<C-c>:w<CR>:make<CR>') -- Run make on F5 in insert mode
+vim.keymap.set('t', '<esc>', '<C-\\><C-n>') -- Simplify terminal mode exit shortcut
+-- Navigation
+vim.keymap.set('n', '<C-h>', '<C-w>h')
+vim.keymap.set('n', '<C-j>', '<C-w>j')
+vim.keymap.set('n', '<C-k>', '<C-w>k')
+vim.keymap.set('n', '<C-l>', '<C-w>l')
 vim.keymap.set('n', '[g', vim.diagnostic.goto_next)
 vim.keymap.set('n', ']g', vim.diagnostic.goto_prev)
-vim.keymap.set('n', '[q', ':cprev<CR>', {})
-vim.keymap.set('n', ']q', ':cnext<CR>', {})
-vim.keymap.set('n', '[l', ':lprev<CR>', {})
-vim.keymap.set('n', ']l', ':lnext<CR>', {})
-vim.keymap.set('n', '[b', ':bprev<CR>', {})
-vim.keymap.set('n', ']b', ':bnext<CR>', {})
-vim.keymap.set('n', '[t', ':tabprev<CR>', {})
-vim.keymap.set('n', ']t', ':tabnext<CR>', {})
-vim.keymap.set('n', '[w', ':wincmd w<CR>', {})
-vim.keymap.set('n', ']w', ':wincmd W<CR>', {})
+vim.keymap.set('n', '[q', ':cprev<CR>')
+vim.keymap.set('n', ']q', ':cnext<CR>')
+vim.keymap.set('n', '[l', ':lprev<CR>')
+vim.keymap.set('n', ']l', ':lnext<CR>')
+vim.keymap.set('n', '[b', ':bprev<CR>')
+vim.keymap.set('n', ']b', ':bnext<CR>')
+vim.keymap.set('n', '[t', ':tabprev<CR>')
+vim.keymap.set('n', ']t', ':tabnext<CR>')
+vim.keymap.set('n', '[w', ':wincmd w<CR>')
+vim.keymap.set('n', ']w', ':wincmd W<CR>')
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
@@ -121,16 +106,11 @@ require("lazy").setup({
 })
 
 local lspconfig = require('lspconfig')
--- npm i -g bash-language-server
-lspconfig.bashls.setup{}
--- npm i -g @microsoft/compome-language-service
-lspconfig.docker_compose_language_service.setup{}
--- pip install pyright
-lspconfig.pyright.setup {}
--- npm install -g typescript typescript-language-server
-lspconfig.tsserver.setup {}
--- installed with rust
-lspconfig.rust_analyzer.setup{}
+lspconfig.bashls.setup{} -- $ npm i -g bash-language-server
+lspconfig.docker_compose_language_service.setup{} -- $ npm i -g @microsoft/compome-language-service
+lspconfig.pyright.setup{} -- $ npm i -g pyright
+lspconfig.tsserver.setup{} -- $ npm i -g typescript typescript-language-server
+lspconfig.rust_analyzer.setup{} -- Already installed with rustup
 
 -- Use LspAttach autocommand to only map the following keys
 -- after the language server attaches to the current buffer
@@ -145,19 +125,19 @@ vim.api.nvim_create_autocmd('LspAttach', {
     local opts = { buffer = ev.buf }
     vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
     vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-    vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+    vim.keymap.set('n', 'gk', vim.lsp.buf.hover, opts)
     vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
-    vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
-    vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, opts)
-    vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, opts)
-    vim.keymap.set('n', '<space>wl', function()
+    vim.keymap.set('n', 'gK', vim.lsp.buf.signature_help, opts)
+    vim.keymap.set('n', '<leader>wa', vim.lsp.buf.add_workspace_folder, opts)
+    vim.keymap.set('n', '<leader>wr', vim.lsp.buf.remove_workspace_folder, opts)
+    vim.keymap.set('n', '<leader>wl', function()
       print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
     end, opts)
-    vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, opts)
-    vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, opts)
-    vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, opts)
+    vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, opts)
+    vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+    vim.keymap.set({ 'n', 'v' }, '<leader>ca', vim.lsp.buf.code_action, opts)
     vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-    vim.keymap.set('n', '<space>f', function()
+    vim.keymap.set('n', '<leader>f', function()
       vim.lsp.buf.format { async = true }
     end, opts)
   end,

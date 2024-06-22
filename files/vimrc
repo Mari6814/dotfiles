@@ -29,7 +29,7 @@ set clipboard^=unnamed,unnamedplus
 set completeopt=menu,menuone,preview
 set novisualbell
 set foldmethod=indent
-set foldenable=false
+set nofoldenable
 set foldlevel=99
 
 " Add syntax highlighting to zsh/bash and generic .aliases files

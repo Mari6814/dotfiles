@@ -40,14 +40,11 @@ augroup aliases
     au BufReadPost .bash_aliases set syntax=bash
 augroup end
 
-" Window navigation
-nnoremap <C-j> <C-w>j
-nnoremap <C-k> <C-w>k
-nnoremap <C-h> <C-w>h
-nnoremap <C-l> <C-w>l
-
 " Simplify terminal mode exit
 tnoremap <Esc> <C-\><C-n>
+
+" Remove search highlighting
+nnoremap <esc> :noh<CR>
 
 " Shortcut for the *cgn pattern
 nnoremap g* *``zzcgn
@@ -61,3 +58,12 @@ nnoremap [b :bprevious<CR>
 nnoremap ]b :bnext<CR>
 nnoremap [t :tabprevious<CR>
 nnoremap ]t :tabnext<CR>
+nnoremap [w :wprevious<CR>
+nnoremap ]w :wnext<CR>
+
+" Window navigation
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-h> <C-w>h
+nnoremap <C-l> <C-w>l
+

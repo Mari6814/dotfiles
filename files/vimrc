@@ -28,10 +28,9 @@ set wildignore+=**/node_modules/**,*.pyc,*.o,
 set clipboard^=unnamed,unnamedplus
 set completeopt=menu,menuone,preview
 set novisualbell
-
-" F5 to run
-nnoremap <F5> :make<CR>
-inoremap <F5> <c-o>:make<CR>
+set foldmethod=indent
+set foldenable=false
+set foldlevel=99
 
 " Add syntax highlighting to zsh/bash and generic .aliases files
 augroup aliases

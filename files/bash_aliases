@@ -116,6 +116,7 @@ alias branch="git branch"
 alias gs="git status"
 alias gcam="git commit -am"
 alias glog="git log --graph --decorate --oneline --all"
+alias grv="git remote -v"
 
 # GitHub
 alias ghcp="gh copilot"

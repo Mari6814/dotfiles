@@ -1,5 +1,5 @@
 #!/bin/bash
-export SOURCED=".bash_aliases:$SOURCED"
+export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
 
 alias wiki="nvim -c VimwikiIndex"
 

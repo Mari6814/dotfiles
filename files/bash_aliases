@@ -1,6 +1,8 @@
 #!/bin/bash
 export SOURCED=".bash_aliases:$SOURCED"
 
+alias wiki="nvim -c VimwikiIndex"
+
 function git_pull_all_branches() {
   for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do
     echo "Checking out and pulling branch $branch"
@@ -107,16 +109,12 @@ alias etmux="e ~/.tmux.conf"
 
 # Git shortcut
 alias g="git"
-alias commit="git commit"
-alias stash="git stash"
-alias unstash="stash pop"
-alias checkout="git checkout"
-alias status="git status"
-alias branch="git branch"
 alias gs="git status"
-alias gcam="git commit -am"
-alias glog="git log --graph --decorate --oneline --all"
-alias grv="git remote -v"
+alias gd="git diff"
+alias gdt="git difftool"
+alias gc="git commit"
+alias gca="git commit -am"
+alias gl="git log --graph --decorate --oneline --all"
 
 # GitHub
 alias ghcp="gh copilot"

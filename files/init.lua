@@ -105,12 +105,23 @@ require("lazy").setup({
     },
 })
 
-local lspconfig = require('lspconfig')
-lspconfig.bashls.setup{} -- $ npm i -g bash-language-server
-lspconfig.docker_compose_language_service.setup{} -- $ npm i -g @microsoft/compome-language-service
-lspconfig.pyright.setup{} -- $ npm i -g pyright
-lspconfig.tsserver.setup{} -- $ npm i -g typescript typescript-language-server
-lspconfig.rust_analyzer.setup{} -- Already installed with rustup
+-- Uses pip
+require'lspconfig'.nginx_language_server.setup{} -- $ pip install -U nginx-language-server
+-- Uses NPM
+require'lspconfig'.bashls.setup{} -- $ npm i -g bash-language-server
+require'lspconfig'.docker_compose_language_service.setup{} -- $ npm i -g @microsoft/compome-language-service
+require'lspconfig'.pyright.setup{} -- $ npm i -g pyright
+require'lspconfig'.tsserver.setup{} -- $ npm i -g typescript typescript-language-server
+require'lspconfig'.ansiblels.setup{} -- $ npm install -g @ansible/ansible-language-server
+require'lspconfig'.dockerls.setup{} -- $ npm install -g dockerfile-language-server-nodejs
+require'lspconfig'.vimls.setup{} -- $ npm install -g vim-language-server
+require'lspconfig'.html.setup{} -- $ npm i -g vscode-langservers-extracted
+require'lspconfig'.tailwindcss.setup{} -- $ npm install -g @tailwindcss/language-server
+-- Uses cargo
+require'lspconfig'.htmx.setup{} -- $ cargo install htmx-lsp
+-- No installation required
+require'lspconfig'.templ.setup{}
+require'lspconfig'.rust_analyzer.setup{}
 
 -- Use LspAttach autocommand to only map the following keys
 -- after the language server attaches to the current buffer

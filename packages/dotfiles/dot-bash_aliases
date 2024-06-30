@@ -1,0 +1,298 @@
+#!/bin/bash
+export SOURCED=".bash_aliases:$SOURCED"
+
+alias wiki="nvim -c VimwikiIndex"
+
+function git_pull_all_branches() {
+  for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do
+    echo "Checking out and pulling branch $branch"
+    git checkout $branch
+    git pull
+  done
+}
+
+function git_check_unpushed_commits() {
+  (echo -e "BRANCH:AHEAD:BEHIND"
+  for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do
+    local COMMITS_DIFF=$(git rev-list --left-right --count $branch...origin/master)
+    local COMMITS_AHEAD=$(echo $COMMITS_DIFF | awk '{print $1}')
+    local COMMITS_BEHIND=$(echo $COMMITS_DIFF | awk '{print $2}')
+    if [ $COMMITS_AHEAD -gt 0 ]; then
+     echo -e "$branch:$COMMITS_AHEAD:$COMMITS_BEHIND"
+    fi
+  done) | column -t -s:
+}
+
+mkworkspace() {
+    if [ $# -eq 0 ]; then
+        echo "Creates symlinks to the files in the current directory"
+        echo "Usage: mkworkspace <file1> <file2> ..."
+        return 1
+    fi
+    for file in $@; do
+        [ -e "$file" ] && ln -s "$file"
+    done
+}
+
+watch-files() {
+    # Exists if the watched files are touched
+    watch -gt "ls -lR --full-time $@ | md5sum"
+}
+
+mddir() {
+    # Create a directory and move into it
+    mkdir -p "$@" && cd "$@";
+}
+
+etmp() { e "$(mktemp)$1"; }
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# colored GCC warnings and errors
+#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
+# some more ls aliases
+
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+# Default editor
+if [ -x `which nvim` ]; then
+    export EDITOR=nvim
+fi
+
+# Navigation
+alias zz="cd -" # Go back to the last directory
+
+# Screen shortcuts
+alias s=screen
+alias sl="s -ls"
+alias ss="s -S"
+alias sr="s -r"
+
+# Modify the default values for builtins
+alias grep="grep --color=auto"
+alias mkdir="mkdir -pv"
+alias ls="ls -CFh --color=auto" # Subsequent ls calls will have colors
+alias ll='ls -al' # List all files *with details*, including dotfiles
+alias la='ls -A' # List all file *names* except . and .., including dotfiles
+alias l='ls -CF' # shorthand for ls
+
+# Dump clipboard contents to stdout
+alias paste="xclip -selection clipboard -o"
+
+# Shortcut to update and upgrade linux distributions
+alias aptuu="sudo apt -y update && sudo apt -y upgrade"
+
+# Search for an expression in directory and children
+alias contains="grep -rnw . -e"
+
+# Shortcut for opening the default editor
+alias e="$EDITOR"
+# Shortcuts to edit specific files
+alias evim="e ~/.vimrc"
+alias envim="e ~/.config/nvim/init.lua"
+alias erc="e ~/.bashrc && source ~/.bashrc"
+alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
+alias etmux="e ~/.tmux.conf"
+
+# Git shortcut
+alias g="git"
+alias gs="git status"
+alias gd="git diff"
+alias gdt="git difftool"
+alias gc="git commit"
+alias gca="git commit -am"
+alias gl="git log --graph --decorate --oneline --all"
+
+# GitHub
+alias ghcp="gh copilot"
+
+ghcs() {
+	TARGET="shell"
+	local GH_DEBUG="$GH_DEBUG"
+
+	read -r -d '' __USAGE <<-EOF
+	Wrapper around \`gh copilot suggest\` to suggest a command based on a natural language description of the desired output effort.
+	Supports executing suggested commands if applicable.
+
+	USAGE
+	  $FUNCNAME [flags] <prompt>
+
+	FLAGS
+	  -d, --debug              Enable debugging
+	  -h, --help               Display help usage
+	  -t, --target target      Target for suggestion; must be shell, gh, git
+	                           default: "$TARGET"
+
+	EXAMPLES
+
+	- Guided experience
+	  $ $FUNCNAME
+
+	- Git use cases
+	  $ $FUNCNAME -t git "Undo the most recent local commits"
+	  $ $FUNCNAME -t git "Clean up local branches"
+	  $ $FUNCNAME -t git "Setup LFS for images"
+
+	- Working with the GitHub CLI in the terminal
+	  $ $FUNCNAME -t gh "Create pull request"
+	  $ $FUNCNAME -t gh "List pull requests waiting for my review"
+	  $ $FUNCNAME -t gh "Summarize work I have done in issues and pull requests for promotion"
+
+	- General use cases
+	  $ $FUNCNAME "Kill processes holding onto deleted files"
+	  $ $FUNCNAME "Test whether there are SSL/TLS issues with github.com"
+	  $ $FUNCNAME "Convert SVG to PNG and resize"
+	  $ $FUNCNAME "Convert MOV to animated PNG"
+	EOF
+
+	local OPT OPTARG OPTIND
+	while getopts "dht:-:" OPT; do
+		if [ "$OPT" = "-" ]; then     # long option: reformulate OPT and OPTARG
+			OPT="${OPTARG%%=*}"       # extract long option name
+			OPTARG="${OPTARG#"$OPT"}" # extract long option argument (may be empty)
+			OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+		fi
+
+		case "$OPT" in
+			debug | d)
+				GH_DEBUG=api
+				;;
+
+			help | h)
+				echo "$__USAGE"
+				return 0
+				;;
+
+			target | t)
+				TARGET="$OPTARG"
+				;;
+		esac
+	done
+
+	# shift so that $@, $1, etc. refer to the non-option arguments
+	shift "$((OPTIND-1))"
+
+	TMPFILE="$(mktemp -t gh-copilotXXXXXX)"
+	trap 'rm -f "$TMPFILE"' EXIT
+	if GH_DEBUG="$GH_DEBUG" gh copilot suggest -t "$TARGET" "$@" --shell-out "$TMPFILE"; then
+		if [ -s "$TMPFILE" ]; then
+			FIXED_CMD="$(cat $TMPFILE)"
+			history -s $(history 1 | cut -d' ' -f4-); history -s "$FIXED_CMD"
+			echo
+			eval "$FIXED_CMD"
+		fi
+	else
+		return 1
+	fi
+}
+
+ghce() {
+	local GH_DEBUG="$GH_DEBUG"
+
+	read -r -d '' __USAGE <<-EOF
+	Wrapper around \`gh copilot explain\` to explain a given input command in natural language.
+
+	USAGE
+	  $FUNCNAME [flags] <command>
+
+	FLAGS
+	  -d, --debug   Enable debugging
+	  -h, --help    Display help usage
+
+	EXAMPLES
+
+	# View disk usage, sorted by size
+	$ $FUNCNAME 'du -sh | sort -h'
+
+	# View git repository history as text graphical representation
+	$ $FUNCNAME 'git log --oneline --graph --decorate --all'
+
+	# Remove binary objects larger than 50 megabytes from git history
+	$ $FUNCNAME 'bfg --strip-blobs-bigger-than 50M'
+	EOF
+
+	local OPT OPTARG OPTIND
+	while getopts "dh-:" OPT; do
+		if [ "$OPT" = "-" ]; then     # long option: reformulate OPT and OPTARG
+			OPT="${OPTARG%%=*}"       # extract long option name
+			OPTARG="${OPTARG#"$OPT"}" # extract long option argument (may be empty)
+			OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+		fi
+
+		case "$OPT" in
+			debug | d)
+				GH_DEBUG=api
+				;;
+
+			help | h)
+				echo "$__USAGE"
+				return 0
+				;;
+		esac
+	done
+
+	# shift so that $@, $1, etc. refer to the non-option arguments
+	shift "$((OPTIND-1))"
+
+	GH_DEBUG="$GH_DEBUG" gh copilot explain "$@"
+}
+
+# Python
+alias py="python3"
+alias ipy="ipython"
+alias m="python3 -m"
+alias p="m poetry"
+alias jn="jupyter notebook"
+alias tb="tensorboard --logdir ."
+alias va="source .venv/bin/activate"
+
+# Create executable bash script and edit it
+# The first argument as the path to the script file that will be created
+cmd() {
+    local NAME="${1:?'Usage: cmd <cmdname>'}"
+    if [ -e "$NAME" ]; then
+        echo "Command already exists: $NAME" >&2
+        return 1
+    fi
+    echo "Creating command: $NAME"
+    echo '#!/bin/bash' >> "$NAME"
+    vim "$NAME"
+    chmod +x "$NAME"
+}
+
+# Append a new note to the notes file
+note() {
+    # If ~/notes.txt last modified day was yesterday, append a clear separator with the date before appending the note's content
+    touch ~/notes.txt
+    if [ $(date -r ~/notes.txt +%Y%m%d) -e $(date -d "yesterday" +%Y%m%d) ]; then
+        echo -e "
+
+$(date +%Y-%m-%d)
+
+" >> ~/notes.txt
+    fi
+    echo "$@" >> ~/notes.txt
+}
+
+# Open the notes file
+notes() {
+    cat ~/notes.txt
+}
+
+# Tail a file and log the changes by prefixing them with the date of the change
+taildate() {
+    tail -f "$1" | xargs -IL date +"%Y-%m-%d %H:%M:%S L"
+}

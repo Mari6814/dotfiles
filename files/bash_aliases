@@ -115,7 +115,8 @@ alias gs="git status"
 alias gd="git diff"
 alias gdt="git difftool"
 alias gc="git commit"
-alias gca="git commit -am"
+alias gca="gc -a"
+alias gcam="gca -m"
 alias gl="git log --graph --decorate --oneline --all"
 
 # GitHub

@@ -1,9 +1,7 @@
 #!/bin/bash
-export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
+export SOURCED=".bash_aliases:$SOURCED"
 
 alias wiki="nvim -c VimwikiIndex"
-
-alias kubectl="minikube kubectl --"
 
 function git_pull_all_branches() {
   for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do

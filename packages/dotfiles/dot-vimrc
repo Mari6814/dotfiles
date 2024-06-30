@@ -1,0 +1,69 @@
+syntax on
+filetype plugin on
+filetype plugin indent on
+colorscheme slate
+" Adjust color of matching braces to be more visible
+hi MatchParen cterm=none ctermbg=darkgray ctermfg=blue
+let mapleader=','
+set nocompatible
+set number
+set relativenumber
+set encoding=utf-8
+set wrap
+set formatoptions=tcqrn1
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set hlsearch
+set incsearch
+set ignorecase
+set smartcase
+set showmatch
+set listchars=trail:·,nbsp:⎵,eol:¬,tab:▸\ ,extends:>,precedes:<,nbsp:·
+set list
+set matchpairs+=<:>
+set hidden
+set wildmenu
+set wildignore+=**/node_modules/**,*.pyc,*.o,
+set clipboard^=unnamed,unnamedplus
+set completeopt=menu,menuone,preview
+set novisualbell
+set foldmethod=indent
+set nofoldenable
+set foldlevel=99
+
+" Add syntax highlighting to zsh/bash and generic .aliases files
+augroup aliases
+    au!
+    au BufReadPost .aliases set syntax=bash
+    au BufReadPost .zsh_aliases set syntax=zsh
+    au BufReadPost .bash_aliases set syntax=bash
+augroup end
+
+" Simplify terminal mode exit
+tnoremap <Esc> <C-\><C-n>
+
+" Remove search highlighting
+nnoremap <esc> :noh<CR>
+
+" Shortcut for the *cgn pattern
+nnoremap g* *``zzcgn
+
+" Use [ and ] to navigate through the quickfix-, location-, buffer- and tablist
+nnoremap [q :cprevious<CR>
+nnoremap ]q :cnext<CR>
+nnoremap [l :lprevious<CR>
+nnoremap ]l :lnext<CR>
+nnoremap [b :bprevious<CR>
+nnoremap ]b :bnext<CR>
+nnoremap [t :tabprevious<CR>
+nnoremap ]t :tabnext<CR>
+nnoremap [w :wprevious<CR>
+nnoremap ]w :wnext<CR>
+
+" Window navigation
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-h> <C-w>h
+nnoremap <C-l> <C-w>l
+

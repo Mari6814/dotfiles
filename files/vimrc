@@ -31,6 +31,8 @@ set novisualbell
 set foldmethod=indent
 set nofoldenable
 set foldlevel=99
+" Fix wsl2 terminal
+set t_u7=
 
 " Add syntax highlighting to zsh/bash and generic .aliases files
 augroup aliases

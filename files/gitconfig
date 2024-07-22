@@ -12,9 +12,36 @@
 [diff]
 	tool = vimdiff
 [alias]
-l = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
+    l = log --oneline --decorate --graph --all
+    L = log --oneline --decorate --graph
+    s = status -s
+    d = diff
+    dd = difftool
+    c = commit
+    C = commit --amend
+    cm = commit -m
+    cam = commit -am
+    a = add
+    A = add -A
+    cs = "!gh copilot suggest -t git"
+    cp = cherry-pick
+    co = checkout
+    b = branch
+    B = branch -a
+    t = tag
+    T = tag -a
+    m = merge
+    M = merge --no-ff
+    p = pull
+    P = push
+    u = pull --rebase
+    wt = worktree
+    wta = worktree add
+    wtr = worktree remove
+    wtm = worktree move
+    wts = worktree list
 [pull]
-	rebase = false
+	rebase = true
 [difftool]
 	prompt = false
 [init]

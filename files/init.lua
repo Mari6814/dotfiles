@@ -27,11 +27,17 @@ vim.keymap.set('n', 'Y', 'y$') -- Yank to end of line
 vim.keymap.set('n', '<F5>', ':make<CR>') -- Run make on F5
 vim.keymap.set('i', '<F5>', '<C-c>:w<CR>:make<CR>') -- Run make on F5 in insert mode
 vim.keymap.set('t', '<esc>', '<C-\\><C-n>') -- Simplify terminal mode exit shortcut
+vim.keymap.set('n', '<C-x>', ':x<CR>') -- Close window with Ctrl-x
+vim.keymap.set('n', '<C-q>', ':q<CR>') -- Close window
 -- Navigation
 vim.keymap.set('n', '<C-h>', '<C-w>h')
 vim.keymap.set('n', '<C-j>', '<C-w>j')
 vim.keymap.set('n', '<C-k>', '<C-w>k')
 vim.keymap.set('n', '<C-l>', '<C-w>l')
+vim.keymap.set('t', '<C-h>', '<C-\\><C-n><C-w>h')
+vim.keymap.set('t', '<C-j>', '<C-\\><C-n><C-w>j')
+vim.keymap.set('t', '<C-k>', '<C-\\><C-n><C-w>k')
+vim.keymap.set('t', '<C-l>', '<C-\\><C-n><C-w>l')
 vim.keymap.set('n', '[g', vim.diagnostic.goto_next)
 vim.keymap.set('n', ']g', vim.diagnostic.goto_prev)
 vim.keymap.set('n', '[q', ':cprev<CR>')
@@ -109,8 +115,6 @@ require("lazy").setup({
 require'lspconfig'.nginx_language_server.setup{}
 -- $ npm i -g bash-language-server
 require'lspconfig'.bashls.setup{} 
--- $ npm i -g @microsoft/compome-language-service
-require'lspconfig'.docker_compose_language_service.setup{}
 -- $ npm i -g pyright
 require'lspconfig'.pyright.setup{}
 -- $ npm i -g typescript typescript-language-server

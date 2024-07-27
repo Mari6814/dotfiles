@@ -40,9 +40,6 @@ augroup aliases
     au BufReadPost .bash_aliases set syntax=bash
 augroup end
 
-" Simplify terminal mode exit
-tnoremap <Esc> <C-\><C-n>
-
 " Remove search highlighting
 nnoremap <esc> :noh<CR>
 
@@ -66,4 +63,11 @@ nnoremap <C-j> <C-w>j
 nnoremap <C-k> <C-w>k
 nnoremap <C-h> <C-w>h
 nnoremap <C-l> <C-w>l
+
+" Simplify navigation when terminal is open
+tnoremap <Esc> <C-\><C-n>
+tnoremap <C-j> <C-\><C-n><C-w>j
+tnoremap <C-k> <C-\><C-n><C-w>k
+tnoremap <C-h> <C-\><C-n><C-w>h
+tnoremap <C-l> <C-\><C-n><C-w>l
 

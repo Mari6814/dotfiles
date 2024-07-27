@@ -1,0 +1,52 @@
+[user]
+	name = Marian Plivelic
+	email = MarianPlivelic@gmail.com
+[core]
+	editor = vim
+	excludesFile = ~/.gitignore
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[diff]
+	tool = vimdiff
+[alias]
+    l = log --oneline --decorate --graph --all
+    L = log --oneline --decorate --graph
+    s = status -s
+    d = diff
+    dd = difftool
+    c = commit
+    C = commit --amend
+    cm = commit -m
+    cam = commit -am
+    a = add
+    A = add -A
+    cs = "!gh copilot suggest -t git"
+    cp = cherry-pick
+    co = checkout
+    b = branch
+    B = branch -a
+    t = tag
+    T = tag -a
+    m = merge
+    M = merge --no-ff
+    p = pull
+    P = push
+    u = pull --rebase
+    wt = worktree
+    wta = worktree add
+    wtr = worktree remove
+    wtm = worktree move
+    wts = worktree list
+[pull]
+	rebase = true
+[difftool]
+	prompt = false
+[init]
+	defaultBranch = main
+[push]
+	default = current
+[rerere]
+	enabled = true

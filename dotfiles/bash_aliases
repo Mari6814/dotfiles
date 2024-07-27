@@ -1,7 +1,11 @@
 #!/bin/bash
-export SOURCED=".bash_aliases:$SOURCED"
+export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
 
 alias wiki="nvim -c VimwikiIndex"
+
+alias kubectl="minikube kubectl --"
+
+alias drun="docker run --rm -it"
 
 function git_pull_all_branches() {
   for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do
@@ -44,14 +48,14 @@ mddir() {
     mkdir -p "$@" && cd "$@";
 }
 
-etmp() { e "$(mktemp)$1"; }
+etmp() {
+    e "$(mktemp)$1";
+}
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
 
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
@@ -111,10 +115,6 @@ alias etmux="e ~/.tmux.conf"
 alias g="git"
 alias gs="git status"
 alias gd="git diff"
-alias gdt="git difftool"
-alias gc="git commit"
-alias gca="git commit -am"
-alias gl="git log --graph --decorate --oneline --all"
 
 # GitHub
 alias ghcp="gh copilot"

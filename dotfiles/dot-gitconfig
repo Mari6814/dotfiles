@@ -18,28 +18,24 @@
     d = diff
     dd = difftool
     c = commit
-    C = commit --amend
     cm = commit -m
     cam = commit -am
+    amend = commit --amend
     a = add
     A = add -A
     cs = "!gh copilot suggest -t git"
-    cp = cherry-pick
     co = checkout
+    sw = switch
     b = branch
     B = branch -a
     t = tag
     T = tag -a
     m = merge
-    M = merge --no-ff
+    no-ff = merge --no-ff
     p = pull
     P = push
-    u = pull --rebase
+    rebase = pull --rebase
     wt = worktree
-    wta = worktree add
-    wtr = worktree remove
-    wtm = worktree move
-    wts = worktree list
 [pull]
 	rebase = true
 [difftool]

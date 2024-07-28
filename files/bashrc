@@ -139,5 +139,6 @@ else
         rm -rf "$NVM_DIR"
         mkdir "$NVM_DIR"
         wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+        nvm install --lts
     }
 fi

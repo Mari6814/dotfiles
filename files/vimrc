@@ -43,8 +43,14 @@ augroup end
 " Remove search highlighting
 nnoremap <esc> :noh<CR>
 
+
 " Shortcut for the *cgn pattern
 nnoremap g* *``zzcgn
+
+" Save and quit
+nnoremap <C-x> :x<CR>
+nnoremap <C-X> :xa<CR>
+nnoremap <C-w>w :bd<CR>
 
 " Use [ and ] to navigate through the quickfix-, location-, buffer- and tablist
 nnoremap [q :cprevious<CR>
@@ -63,6 +69,10 @@ nnoremap <C-j> <C-w>j
 nnoremap <C-k> <C-w>k
 nnoremap <C-h> <C-w>h
 nnoremap <C-l> <C-w>l
+inoremap <C-j> <C-o><C-w>j
+inoremap <C-k> <C-o><C-w>k
+inoremap <C-h> <C-o><C-w>h
+inoremap <C-l> <C-o><C-w>l
 
 " Simplify navigation when terminal is open
 tnoremap <Esc> <C-\><C-n>

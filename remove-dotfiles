@@ -1,0 +1,39 @@
+#!/bin/bash
+set -e
+
+TARGET_DIR="${TARGET_DIR:-$HOME}"
+if [ ! -d "$TARGET_DIR" ]; then
+    echo "TARGET_DIR is not a directory."
+    exit 1
+fi
+
+# Gather the files to be removed from $TARGET_DIR if they are linked to $SCRIPT_DIR/dotfiles
+# List of files to be installed is the $FILES variable.
+SCRIPT_DIR="$(dirname $0)"
+FILES="$SCRIPT_DIR/dotfiles/*"
+if [ -z "$FILES" ]; then
+    echo "No files to be removed."
+    exit 0
+fi
+echo "Files to be removed from $TARGET_DIR:"
+for FILE in $FILES; do
+    if [ -L $TARGET_DIR/.$(basename $FILE) ]; then
+        echo "    .$(basename $FILE)"
+    fi
+done
+
+# Remove the links from $TARGET_DIR after confirmation
+# If a old version in $BACKUP_DIR exists, restore it
+read -p "Do you want to remove the files? [y/N] " -n 1 -r
+echo
+BACKUP_DIR="$TARGET_DIR/.dotfiles_backup"
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    for FILE in $FILES; do
+        if [ -L "$TARGET_DIR/.$(basename $FILE)" ]; then
+            rm -v "$TARGET_DIR/.$(basename $FILE)"
+            if [ -f "$BACKUP_DIR/$(basename $FILE)" ]; then
+                mv -v "$BACKUP_DIR/$(basename $FILE)" "$TARGET_DIR/.$(basename $FILE)"
+            fi
+        fi
+    done
+fi

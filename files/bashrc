@@ -25,56 +25,6 @@ shopt -s autocd
 # Expands symbolic representations of paths
 shopt -s direxpand
 
-# make less more friendly for non-text input files, see lesspipe(1)
-[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
-
-# set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
-    debian_chroot=$(cat /etc/debian_chroot)
-fi
-
-# set a fancy prompt (non-color, unless we know we "want" color)
-case "$TERM" in
-    xterm-color|*-256color) color_prompt=yes;;
-esac
-
-# uncomment for a colored prompt, if the terminal has the capability; turned
-# off by default to not distract the user: the focus in a terminal window
-# should be on the output of commands, not on the prompt
-force_color_prompt=yes
-
-if [ -n "$force_color_prompt" ]; then
-    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
-    else
-	color_prompt=
-    fi
-fi
-
-if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
-else
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
-fi
-unset color_prompt force_color_prompt
-
-# If this is an xterm set the title to user@host:dir
-case "$TERM" in
-xterm*|rxvt*)
-    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
-    ;;
-*)
-    ;;
-esac
-
-# Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
-
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
@@ -100,40 +50,95 @@ export LOCAL="$HOME/.local"
 [ -d "$LOCAL/bin" ] && export PATH="$PATH:$LOCAL/bin"
 
 # Neovim from source
-[ -x "$LOCAL/nvim/bin/nvim" ] && export PATH="$LOCAL/nvim/bin:$PATH"
+if [ -x "$LOCAL/nvim/bin/nvim" ]; then
+    export NVIM_HOME="$LOCAL/nvim"
+    export PATH="$NVIM_HOME/bin:$PATH"
+else
+    setup-nvim() {
+        set -e
+        rm -rf "$LOCAL/nvim"
+        git clone --single-branch --branch stable https://github.com/neovim/neovim "$LOCAL/nvim"
+        cd "$LOCAL/nvim"
+        make CMAKE_INSTALL_PREFIX=$LOCAL/nvim CMAKE_BUILD_TYPE=RelWithDebInfo
+        make install
+        cd -
+    }
+fi
 
 # Rust
-[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+export CARGO_HOME="$LOCAL/cargo"
+export RUSTUP_HOME="$LOCAL/multirust"
+if [ -f "$LOCAL/cargo/env" ]; then
+    source "$CARGO_HOME/env"
+else
+    setup-rust() {
+        set -e
+        rm -rf "$CARGO_HOME" "$RUSTUP_HOME"
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    }
+fi
 
 # Pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-if command -v pyenv &> /dev/null; then
-    eval "$(pyenv init -)"
+export PYENV_ROOT="$LOCAL/pyenv"
+if [ -d "$LOCAL/pyenv" ]; then
+    export PATH="$PYENV_ROOT/bin:$PATH"
+    if command -v pyenv &> /dev/null; then
+        eval "$(pyenv init -)"
+    fi
+else
+    setup-pyenv() {
+        set -e
+        git clone https://github.com/pyenv/pyenv.git "$PYENV_ROOT"
+        cd "$PYENV_ROOT"
+        src/configure && make -C src
+        cd -
+    }
 fi
 
 # Zoxide
 if command -v zoxide &> /dev/null; then
     eval "$(zoxide init bash)"
+else
+    alias setup-zoxide='cargo install zoxide --locked'
 fi
 
 # FZF
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+export FZF_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/fzf"
+if [ -f "$FZF_HOME/fzf.bash" ]; then
+    source "$FZF_HOME/fzf.bash"
+else
+    setup-fzf() {
+        set -e
+        rm -rf "$LOCAL/fzf"
+        git clone --depth 1 https://github.com/junegunn/fzf.git $LOCAL/fzf
+        bash $LOCAL/fzf/install --xdg --key-bindings --completion --no-update-rc
+    }
+fi
 
 # Golang
-[ -d "$LOCAL/go/bin" ] && export PATH=$PATH:$LOCAL/go/bin
+export GOROOT="$LOCAL/go"
+export GOPATH="$GOROOT/bin"
+if [ -d "$LOCAL/go/bin" ]; then
+    export PATH="$GOPATH:$PATH"
+else
+    setup-go-linux-amd64() {
+        set -e
+        rm -rf "$GOROOT"
+        wget -O - -o /dev/null https://go.dev/dl/go1.22.5.linux-amd64.tar.gz | tar -C "$LOCAL" -xzvf -
+    }
+fi
 
 # NVM for NPM and NodeJS management
-if [ -d "$HOME/.nvm" ]; then
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-elif command -v npm &> /dev/null; then
-    # NPM: Only install if NVM is not used
-    export NPM_PREFIX="$HOME/.npm"
-    if [ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]; then
-        echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
-        npm config set prefix "$NPM_PREFIX"
-    fi
-    export PATH="$(npm config get prefix)/bin:$PATH"
+export NVM_DIR="$LOCAL/nvm"
+if [ -d "$NVM_DIR" ]; then
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+else
+    setup-nvm() {
+        set -e
+        rm -rf "$NVM_DIR"
+        mkdir "$NVM_DIR"
+        wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+        nvm install --lts
+    }
 fi

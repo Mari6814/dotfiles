@@ -1,5 +1,5 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
-export SOURCED="$BASH_SOURCE:$SOURCED"
+export SOURCED="$BASH_SOURCE@`date +%H%m%S`:$SOURCED"
 
 # Default editor is vim. The script changes that later.
 export EDITOR=vim
@@ -100,40 +100,69 @@ export LOCAL="$HOME/.local"
 [ -d "$LOCAL/bin" ] && export PATH="$PATH:$LOCAL/bin"
 
 # Neovim from source
-[ -x "$LOCAL/nvim/bin/nvim" ] && export PATH="$LOCAL/nvim/bin:$PATH"
+if [ -x "$LOCAL/nvim/bin/nvim" ]; then
+    export NVIM_HOME="$LOCAL/nvim"
+    export PATH="$NVIM_HOME/bin:$PATH"
+else
+    alias setup-nvim="rm -rf $LOCAL/nvim && git clone --single-branch --branch stable https://github.com/neovim/neovim $LOCAL/nvim && cd $LOCAL/nvim && make CMAKE_INSTALL_PREFIX=$LOCAL/nvim CMAKE_BUILD_TYPE=RelWithDebInfo && make install && cd -"
+fi
 
 # Rust
-[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+if [ -f "$LOCAL/cargo/env" ]; then
+    export CARGO_HOME="$LOCAL/cargo"
+    export RUSTUP_HOME="$LOCAL/multirust"
+    source "$CARGO_HOME/env"
+else
+    alias setup-rust="export CARGO_HOME=$LOCAL/cargo && export RUSTUP_HOME=$LOCAL/multirust && rm -rf $LOCAL/cargo && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+fi
 
 # Pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-if command -v pyenv &> /dev/null; then
-    eval "$(pyenv init -)"
+if [ -d "$LOCAL/pyenv" ]; then
+    export PYENV_ROOT="$LOCAL/pyenv"
+    export PATH="$PYENV_ROOT/bin:$PATH"
+    if command -v pyenv &> /dev/null; then
+        eval "$(pyenv init -)"
+    fi
+else
+    alias setup-pyenv="git clone https://github.com/pyenv/pyenv.git $LOCAL/pyenv && cd $LOCAL/pyenv && src/configure && make -C src && cd -"
 fi
 
 # Zoxide
 if command -v zoxide &> /dev/null; then
     eval "$(zoxide init bash)"
+else
+    alias setup-zoxide='cargo install zoxide --locked'
 fi
 
 # FZF
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+if [ -f "$HOME/.fzf.bash" ]; then
+    source "$HOME/.fzf.bash"
+else
+    alias setup-fzf="rm -rf $LOCAL/fzf && git clone --depth 1 https://github.com/junegunn/fzf.git $LOCAL/fzf && bash $LOCAL/fzf/install"
+fi
 
 # Golang
-[ -d "$LOCAL/go/bin" ] && export PATH=$PATH:$LOCAL/go/bin
+if [ -d "$LOCAL/go/bin" ]; then
+    export GOROOT="$LOCAL/go"
+    export GOPATH="$GOROOT/bin"
+    export PATH="$GOPATH:$PATH"
+else
+    alias setup-go-linux-amd64="rm -rf $LOCAL/go && wget -O - -o /dev/null https://go.dev/dl/go1.22.5.linux-amd64.tar.gz | tar -C $LOCAL -xzvf -"
+fi
 
 # NVM for NPM and NodeJS management
-if [ -d "$HOME/.nvm" ]; then
-    export NVM_DIR="$HOME/.nvm"
+if [ -d "$LOCAL/nvm" ]; then
+    export NVM_DIR="$LOCAL/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 elif command -v npm &> /dev/null; then
     # NPM: Only install if NVM is not used
-    export NPM_PREFIX="$HOME/.npm"
+    export NPM_PREFIX="$LOCAL/npm"
     if [ ! "$(npm config get prefix)" == "$NPM_PREFIX" ]; then
         echo "npm is installed: Setting install directory to $NPM_PREFIX" >&2
         npm config set prefix "$NPM_PREFIX"
     fi
     export PATH="$(npm config get prefix)/bin:$PATH"
+else
+    alias setup-nvm="rm -rf $LOCAL/nvm && mkdir $LOCAL/nvm && export NVM_DIR=$LOCAL/nvm && wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash"
 fi

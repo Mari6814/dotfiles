@@ -136,6 +136,8 @@ require'lspconfig'.vimls.setup{}
 require'lspconfig'.html.setup{}
 -- $ npm i -g @tailwindcss/language-server
 require'lspconfig'.tailwindcss.setup{}
+-- $ go install golang.org/x/tools/gopls@latest
+require'lspconfig'.gopls.setup{}
 -- $ cargo install htmx-lsp
 require'lspconfig'.htmx.setup{}
 require'lspconfig'.templ.setup{}

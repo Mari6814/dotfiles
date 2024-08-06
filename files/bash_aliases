@@ -5,7 +5,7 @@ alias wiki="nvim -c VimwikiIndex"
 
 alias kubectl="minikube kubectl --"
 
-alias drun="docker run --rm -it"
+alias drun="docker run --rm -d -i -t"
 
 function git_pull_all_branches() {
   for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do

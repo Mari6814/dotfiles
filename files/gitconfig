@@ -15,8 +15,7 @@
     l = log --oneline --decorate --graph --all
     L = log --oneline --decorate --graph
     s = status -s
-    d = diff
-    dd = difftool
+    d = difftool
     c = commit
     cm = commit -m
     cam = commit -am
@@ -27,13 +26,10 @@
     co = checkout
     sw = switch
     b = branch
-    B = branch -a
     t = tag
-    T = tag -a
     m = merge
-    no-ff = merge --no-ff
-    p = pull
-    P = push
+    p = push
+    P = pull
     rebase = pull --rebase
     wt = worktree
 [pull]

@@ -110,8 +110,11 @@ else
     setup-fzf() {
         set -e
         rm -rf "$LOCAL/fzf"
+        if [ -d "$FZF_HOME" ]; then
+            rm -rf "$FZF_HOME"
+        fi
         git clone --depth 1 https://github.com/junegunn/fzf.git $LOCAL/fzf
-        bash $LOCAL/fzf/install --xdg --key-bindings --completion --no-update-rc
+        bash $LOCAL/fzf/install --xdg --all --no-update-rc
     }
 fi
 

@@ -7,15 +7,7 @@ alias kubectl="minikube kubectl --"
 
 alias drun="docker run --rm -d -i -t"
 
-function git_pull_all_branches() {
-  for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do
-    echo "Checking out and pulling branch $branch"
-    git checkout $branch
-    git pull
-  done
-}
-
-function git_check_unpushed_commits() {
+function git-check-unpushed-commits() {
   (echo -e "BRANCH:AHEAD:BEHIND"
   for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do
     local COMMITS_DIFF=$(git rev-list --left-right --count $branch...origin/master)

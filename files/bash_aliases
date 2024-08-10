@@ -80,7 +80,7 @@ alias sr="s -r"
 # Modify the default values for builtins
 alias grep="grep --color=auto"
 alias mkdir="mkdir -pv"
-alias ls="ls -CFh --color=auto" # Subsequent ls calls will have colors
+alias ls="ls --group-directories-first -CFh --color=auto" # Subsequent ls calls will have colors
 alias ll='ls -al' # List all files *with details*, including dotfiles
 alias la='ls -A' # List all file *names* except . and .., including dotfiles
 alias l='ls -CF' # shorthand for ls

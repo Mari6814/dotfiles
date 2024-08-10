@@ -122,7 +122,7 @@ fi
 export GOROOT="$LOCAL/go"
 export GOPATH="$GOROOT/bin"
 if [ -d "$LOCAL/go/bin" ]; then
-    export PATH="$GOPATH:$PATH"
+    export PATH="$GOPATH:$GOPATH/bin:$PATH"
 else
     setup-go-linux-amd64() {
         set -e

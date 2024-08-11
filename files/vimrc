@@ -81,3 +81,12 @@ tnoremap <C-k> <C-\><C-n><C-w>k
 tnoremap <C-h> <C-\><C-n><C-w>h
 tnoremap <C-l> <C-\><C-n><C-w>l
 
+" Scripts shortcuts
+nnoremap ge "eyi`:term<CR>"epA
+nnoremap gE "eyi`:!<C-r>e"
+nnoremap <F5> :make<CR>
+inoremap <F5> <C-o>:make<CR>
+nnoremap <F6> :make clean<CR>
+inoremap <F6> <C-o>:make clean<CR>
+nnoremap <F7> :!./%<CR>
+inoremap <F7> <C-o>:!./%<CR>

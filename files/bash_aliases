@@ -1,6 +1,9 @@
 #!/bin/bash
 export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
 
+alias up="docker compose up"
+alias down="docker compose down"
+
 alias wiki="nvim -c VimwikiIndex"
 
 alias kubectl="minikube kubectl --"

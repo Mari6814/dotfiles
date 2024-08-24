@@ -57,8 +57,6 @@ function create-vue-app() {
   echo "@tailwind components;" >> ./src/assets/base.css
   echo "@tailwind utilities;" >> ./src/assets/base.css
   git init || return 1
-  git add . || return 1
-  git commit -m init &> /dev/null || return 1
 }
 
 function git-check-unpushed-commits() {

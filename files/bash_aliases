@@ -12,6 +12,56 @@ alias kubectl="minikube kubectl --"
 
 alias drun="docker run --rm -d -i -t"
 
+function workflows() {
+    # Lists my workflow helper commands
+    local HIGHTLIGHT=$(tput setaf 6)
+    local RESET=$(tput sgr0)
+    local UNOBTRUSIVE=$(tput setaf 8)
+    echo "$(tput setaf 3)Workflows${RESET}: List of workflow helper commands"
+    echo "  - ${HIGHTLIGHT}create-vue-app ${UNOBTRUSIVE}<app-name>${RESET}: Create a new Vue app with Tailwind CSS"
+    echo "  - ${HIGHTLIGHT}mkworkspace ${UNOBTRUSIVE}<file1> <file2> ...${RESET}: Create symlinks to the files in the current directory"
+    echo "  - ${HIGHTLIGHT}watch-files ${UNOBTRUSIVE}<file1> <file2> ...${RESET}: Watch the files for changes"
+    echo "  - ${HIGHTLIGHT}mddir ${UNOBTRUSIVE}<dir>${RESET}: Create a directory and move into it"
+    echo "  - ${HIGHTLIGHT}etmp ${UNOBTRUSIVE}<extension>${RESET}: Create a temporary file with the given extension"
+    echo "  - ${HIGHTLIGHT}e ${UNOBTRUSIVE}<file>${RESET}: Open the file in the default editor"
+    echo "$(tput setaf 3)Shortcuts${RESET}: Workflows that function as shortcuts to do something"
+    echo "  - ${HIGHTLIGHT}git-check-unpushed-commits${RESET}: Check for unpushed commits in all branches"
+    echo "  - ${HIGHTLIGHT}evim${RESET}: Open the vim configuration file"
+    echo "  - ${HIGHTLIGHT}envim${RESET}: Open the neovim configuration file"
+    echo "  - ${HIGHTLIGHT}erc${RESET}: Open the bashrc file"
+    echo "  - ${HIGHTLIGHT}ealias${RESET}: Open the bash_aliases file"
+    echo "  - ${HIGHTLIGHT}etmux${RESET}: Open the tmux configuration file"
+    echo "  - ${HIGHTLIGHT}ghcs${RESET}: Wrapper around gh copilot suggest"
+    echo "  - ${HIGHTLIGHT}ghce${RESET}: Wrapper around gh copilot explain"
+}
+
+function create-vue-app() {
+  if [ -e ${1:?usage: create-vue-app <app-name>} ]; then
+    echo "Directory already exists: $1" >&2
+    return 1
+  fi
+  local CREATE_VUE_VERSION=3.10.4
+  local TAILWIND_VERSION=3.4.10
+  local POSTCSS_VERSION=8.4.41
+  local AUTO_PREFIXER_VERSION=10.4.20
+  npm create vue@$CREATE_VUE_VERSION $1
+  cd $1
+  git init
+  npm install
+  npm run format
+  npm install -D tailwindcss@$TAILWIND_VERSION postcss@$POSTCSS_VERSION autoprefixer@$AUTO_PREFIXER_VERSION
+  npx tailwindcss init -p
+  local DEFAULT_PURGE="purge: [],"
+  local TAILWIND_PURGE="purge: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],"
+  # Replace the default purge configuration with the one that includes the src directory: Raise an error if the file does not exist
+  sed -i "s/$DEFAULT_PURGE/$TAILWIND_PURGE/" tailwind.config.js || echo "Error: tailwind.config.js not found" >&2
+  # Generate the tailwind css file
+  echo "@tailwindcss/base;" >> ./src/index.css
+  echo "@tailwindcss/components;" >> ./src/index.css
+  echo "@tailwindcss/utilities;" >> ./src/index.css
+  echo "Make sure to include ./src/index.css in your project"
+}
+
 function git-check-unpushed-commits() {
   (echo -e "BRANCH:AHEAD:BEHIND"
   for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do

@@ -24,13 +24,15 @@ vim.opt.foldlevel = 99
 vim.keymap.set('n', '<esc>', ':noh<CR>') -- Clear search highlights on escape
 vim.keymap.set('n', 'g*', '*``zzcgn') -- Shortcut for the *cgn pattern: 
 vim.keymap.set('n', 'Y', 'y$') -- Yank to end of line
-vim.keymap.set('n', '<F5>', ':make<CR>') -- Run make on F5
+vim.keymap.set('n', '<F5>', ':wa<CR>:make<CR>') -- Run make on F5
 vim.keymap.set('n', 'ge', '"eyi`:term<CR>"epA') -- Run the current/next code block in a terminal
 vim.keymap.set('n', 'gE', '"eyi`:!<C-r>e') -- Run the current/next code block inline in the current window
-vim.keymap.set('i', '<F5>', '<C-o>:w<CR>:make<CR>') -- Run make on F5 in insert mode
+vim.keymap.set('i', '<F5>', '<C-o>:wa<CR>:make<CR>') -- Run make on F5 in insert mode
 vim.keymap.set('t', '<esc>', '<C-\\><C-n>') -- Simplify terminal mode exit shortcut
 vim.keymap.set('n', '<C-x>', ':x<CR>') -- Close window with saving
 vim.keymap.set('n', '<C-w>w', ':bd<CR>') -- Extend <c-w> by a shortcut to close the current buffer
+vim.keymap.set('n', '<space>', ':wa<CR>') -- Save on space
+vim.keymap.set('i', '<C-s>', '<C-o>:w<CR>') -- in insert mode, only save current buffer
 
 -- Window navigation shortcuts in normal, insert & terminal modes
 vim.keymap.set('n', '<C-h>', '<C-w>h')

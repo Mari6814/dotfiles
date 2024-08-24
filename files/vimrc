@@ -90,3 +90,6 @@ nnoremap <F6> :make clean<CR>
 inoremap <F6> <C-o>:make clean<CR>
 nnoremap <F7> :!./%<CR>
 inoremap <F7> <C-o>:!./%<CR>
+
+nnoremap <space> :wa<CR>
+inoremap <C-s> <C-o>:w<CR>

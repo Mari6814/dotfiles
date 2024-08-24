@@ -12,6 +12,7 @@
 [diff]
 	tool = vimdiff
 [alias]
+    conflicts = diff --check
     l = log --oneline --decorate --graph --all
     L = log --oneline --decorate --graph
     s = status -s

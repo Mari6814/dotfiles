@@ -44,22 +44,21 @@ function create-vue-app() {
   local TAILWIND_VERSION=3.4.10
   local POSTCSS_VERSION=8.4.41
   local AUTO_PREFIXER_VERSION=10.4.20
-  npm create vue@$CREATE_VUE_VERSION $1
+  npm create vue@$CREATE_VUE_VERSION $1 || return 1
   cd $1
-  git init
-  npm install
-  npm run format
-  npm install -D tailwindcss@$TAILWIND_VERSION postcss@$POSTCSS_VERSION autoprefixer@$AUTO_PREFIXER_VERSION
-  npx tailwindcss init -p
-  local DEFAULT_PURGE="purge: [],"
-  local TAILWIND_PURGE="purge: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],"
-  # Replace the default purge configuration with the one that includes the src directory: Raise an error if the file does not exist
-  sed -i "s/$DEFAULT_PURGE/$TAILWIND_PURGE/" tailwind.config.js || echo "Error: tailwind.config.js not found" >&2
-  # Generate the tailwind css file
-  echo "@tailwindcss/base;" >> ./src/index.css
-  echo "@tailwindcss/components;" >> ./src/index.css
-  echo "@tailwindcss/utilities;" >> ./src/index.css
-  echo "Make sure to include ./src/index.css in your project"
+  npm install || return 1
+  npm install -D tailwindcss@$TAILWIND_VERSION postcss@$POSTCSS_VERSION autoprefixer@$AUTO_PREFIXER_VERSION || return 1
+  npx tailwindcss init -p || return 1
+  # Remove the default empty 'content' key
+  sed -i '3 d' tailwind.config.js || return 1 
+  # Add the default tailwind content key
+  sed -i "2 a \ \ content: [ './public/**/*.html', './src/**/*.{js,jsx,ts,tsx,vue}', ]," tailwind.config.js || return 1
+  echo "@tailwind base;" > ./src/assets/base.css
+  echo "@tailwind components;" >> ./src/assets/base.css
+  echo "@tailwind utilities;" >> ./src/assets/base.css
+  git init || return 1
+  git add . || return 1
+  git commit -m init &> /dev/null || return 1
 }
 
 function git-check-unpushed-commits() {

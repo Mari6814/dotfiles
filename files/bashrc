@@ -50,8 +50,8 @@ export LOCAL="$HOME/.local"
 [ -d "$LOCAL/bin" ] && export PATH="$PATH:$LOCAL/bin"
 
 # Neovim from source
-if [ -x "$LOCAL/nvim/bin/nvim" ]; then
-    export NVIM_HOME="$LOCAL/nvim"
+export NVIM_HOME="$LOCAL/nvim"
+if [ -x "$NVIM_HOME/bin/nvim" ]; then
     export PATH="$NVIM_HOME/bin:$PATH"
 else
     setup-nvim() {
@@ -68,7 +68,7 @@ fi
 # Rust
 export CARGO_HOME="$LOCAL/cargo"
 export RUSTUP_HOME="$LOCAL/multirust"
-if [ -f "$LOCAL/cargo/env" ]; then
+if [ -f "$CARGO_HOME/env" ]; then
     source "$CARGO_HOME/env"
 else
     setup-rust() {

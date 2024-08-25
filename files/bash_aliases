@@ -19,6 +19,7 @@ function workflows() {
     local UNOBTRUSIVE=$(tput setaf 8)
     echo "$(tput setaf 3)Workflows${RESET}: List of workflow helper commands"
     echo "  - ${HIGHTLIGHT}create-vue-app ${UNOBTRUSIVE}<app-name>${RESET}: Create a new Vue app with Tailwind CSS"
+    echo "  - ${HIGHTLIGHT}create-nuxt-app ${UNOBTRUSIVE}<app-name>${RESET}: Create a new Nuxt app with Tailwind CSS"
     echo "  - ${HIGHTLIGHT}mkworkspace ${UNOBTRUSIVE}<file1> <file2> ...${RESET}: Create symlinks to the files in the current directory"
     echo "  - ${HIGHTLIGHT}watch-files ${UNOBTRUSIVE}<file1> <file2> ...${RESET}: Watch the files for changes"
     echo "  - ${HIGHTLIGHT}mddir ${UNOBTRUSIVE}<dir>${RESET}: Create a directory and move into it"
@@ -33,6 +34,10 @@ function workflows() {
     echo "  - ${HIGHTLIGHT}etmux${RESET}: Open the tmux configuration file"
     echo "  - ${HIGHTLIGHT}ghcs${RESET}: Wrapper around gh copilot suggest"
     echo "  - ${HIGHTLIGHT}ghce${RESET}: Wrapper around gh copilot explain"
+}
+
+function docker-images() {
+    docker images | e -
 }
 
 function create-vue-app() {
@@ -57,6 +62,33 @@ function create-vue-app() {
   echo "@tailwind components;" >> ./src/assets/base.css
   echo "@tailwind utilities;" >> ./src/assets/base.css
   git init || return 1
+}
+
+function create-nuxt-app() {
+    if [ -e ${1:?usage: create-nuxt-app <app-name>} ]; then
+        echo "Directory already exists: $1" >&2
+        return 1
+    fi
+    local NUXI_VERSION=3.13.0
+    npx nuxi@$NUXI_VERSION init $1 || return 1
+    cd $1
+    npm install -D tailwindcss postcss autoprefixer || return 1
+    npx tailwindcss init || return 1
+    # Append a comma at the end of { devtools: { debug: true } } on line 4
+    sed -i '4 s/$/,/' nuxt.config.ts || return 1
+    # Append tailwindcss config to nuxt.config.ts
+    sed -i '4 a \ \ postcss: { plugins: { tailwindcss: {}, autoprefixer: {}, }, },' nuxt.config.ts || return 1
+    # Remove the default empty 'content' key
+    sed -i '3 d' tailwind.config.js || return 1
+    # Add the nuxt-specific "content" key
+    sed -i '2 a \ \ content: [ "./components/**/*.{js,vue,ts}", "./layouts/**/*.vue", "./pages/**/*.vue", "./plugins/**/*.{js,ts}", "./app.vue", "./error.vue", ],' tailwind.config.js || return 1
+    # Create the main.css file that will be used to generate the tailwind styles
+    mkdir -p ./assets/css
+    echo "@tailwind base;" >> ./assets/css/main.css
+    echo "@tailwind components;" >> ./assets/css/main.css
+    echo "@tailwind utilities;" >> ./assets/css/main.css
+    # Import the main.css file in nuxt.config.ts
+    sed -i '4 a \ \ css: [ "~/assets/css/main.css" ],' nuxt.config.ts || return 1
 }
 
 function git-check-unpushed-commits() {

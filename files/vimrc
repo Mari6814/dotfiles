@@ -19,18 +19,19 @@ set incsearch
 set ignorecase
 set smartcase
 set showmatch
-set listchars=trail:·,nbsp:⎵,eol:¬,tab:▸\ ,extends:>,precedes:<,nbsp:·
-set list
 set matchpairs+=<:>
 set hidden
 set wildmenu
-set wildignore+=**/node_modules/**,*.pyc,*.o,
+set wildignore+=**/node_modules/**,*.pyc,*.o,.git,.hg,.svn,*.DS_Store,*.swp
 set clipboard^=unnamed,unnamedplus
 set completeopt=menu,menuone,preview
 set novisualbell
 set foldmethod=indent
 set nofoldenable
 set foldlevel=99
+set listchars=trail:.
+set list
+set noek " required because of some compatibility issues with WSL2
 
 " Add syntax highlighting to zsh/bash and generic .aliases files
 augroup aliases

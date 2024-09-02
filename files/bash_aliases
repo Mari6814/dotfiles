@@ -1,16 +1,15 @@
 #!/bin/bash
 export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
 
-alias up="docker compose up"
-alias down="docker compose down"
-
 alias al=alias
 
-alias wiki="nvim -c VimwikiIndex"
-
+alias up="docker compose up"
+alias down="docker compose down"
+alias drun="docker run -d -i -t"
+dpush() { docker tag $1 marianplivelic/private:$1; docker push marianplivelic/private:$1; }
 alias kubectl="minikube kubectl --"
 
-alias drun="docker run --rm -d -i -t"
+alias wiki="nvim -c VimwikiIndex"
 
 function workflows() {
     # Lists my workflow helper commands
@@ -34,10 +33,6 @@ function workflows() {
     echo "  - ${HIGHTLIGHT}etmux${RESET}: Open the tmux configuration file"
     echo "  - ${HIGHTLIGHT}ghcs${RESET}: Wrapper around gh copilot suggest"
     echo "  - ${HIGHTLIGHT}ghce${RESET}: Wrapper around gh copilot explain"
-}
-
-function docker-images() {
-    docker images | e -
 }
 
 function create-vue-app() {

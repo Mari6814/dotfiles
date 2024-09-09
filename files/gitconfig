@@ -33,8 +33,6 @@
     P = pull
     rebase = pull --rebase
     wt = worktree
-[pull]
-	rebase = true
 [difftool]
 	prompt = false
 [init]

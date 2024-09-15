@@ -31,7 +31,6 @@ vim.keymap.set('i', '<F5>', '<C-o>:wa<CR>:make<CR>') -- Run make on F5 in insert
 vim.keymap.set('t', '<esc>', '<C-\\><C-n>') -- Simplify terminal mode exit shortcut
 vim.keymap.set('n', '<C-x>', ':x<CR>') -- Close window with saving
 vim.keymap.set('n', '<C-w>w', ':bd<CR>') -- Extend <c-w> by a shortcut to close the current buffer
-vim.keymap.set('n', '<space>', ':wa<CR>') -- Save on space
 vim.keymap.set('i', '<C-s>', '<C-o>:w<CR>') -- in insert mode, only save current buffer
 
 -- Window navigation shortcuts in normal, insert & terminal modes

@@ -176,3 +176,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end, opts)
   end,
 })
+
+-- augroup for saving python, then running 'black' formatter if it is installed
+vim.api.nvim_create_autocmd('BufWritePost', {
+  group = vim.api.nvim_create_augroup('UserPythonBlack', {}),
+  pattern = '*.py',
+  callback = function()
+    vim.cmd('silent! !black %')
+  end,
+})

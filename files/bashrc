@@ -100,16 +100,14 @@ fi
 
 # FZF
 export FZF_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/fzf"
-if [ -f "$FZF_HOME/fzf.bash" ]; then
+export FZF_DIR="$LOCAL/fzf"
+if [ -d "$FZF_DIR" ]; then
     source "$FZF_HOME/fzf.bash"
 else
     setup-fzf() {
-        rm -rf "$LOCAL/fzf"
-        if [ -d "$FZF_HOME" ]; then
-            rm -rf "$FZF_HOME"
-        fi
-        git clone --depth 1 https://github.com/junegunn/fzf.git $LOCAL/fzf
-        bash $LOCAL/fzf/install --xdg --all --no-update-rc
+        rm -ir "$FZF_HOME" "$FZF_DIR"
+        git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
+        bash "$FZF_DIR/install" --xdg --all --no-update-rc
     }
 fi
 
@@ -134,3 +132,5 @@ else
         wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
     }
 fi
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash

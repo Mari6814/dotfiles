@@ -121,29 +121,12 @@ require("lazy").setup({
     },
 })
 
--- $ pip install nginx-language-server
-require'lspconfig'.nginx_language_server.setup{}
--- $ npm i -g bash-language-server
-require'lspconfig'.bashls.setup{} 
--- $ npm i -g pyright
+-- $ npm i -g pyright typescript typescript-language-server vim-language-server vscode-langservers-extracted @tailwindcss/language-server
 require'lspconfig'.pyright.setup{}
--- $ npm i -g typescript typescript-language-server
-require'lspconfig'.tsserver.setup{}
--- $ npm i -g @ansible/ansible-language-server
-require'lspconfig'.ansiblels.setup{}
--- $ npm i -g dockerfile-language-server-nodejs
-require'lspconfig'.dockerls.setup{}
--- $ npm i -g vim-language-server
-require'lspconfig'.vimls.setup{}
--- $ npm i -g vscode-langservers-extracted
+require'lspconfig'.ts_ls.setup{}
 require'lspconfig'.html.setup{}
--- $ npm i -g @tailwindcss/language-server
 require'lspconfig'.tailwindcss.setup{}
--- $ go install golang.org/x/tools/gopls@latest
 require'lspconfig'.gopls.setup{}
--- $ cargo install htmx-lsp
-require'lspconfig'.htmx.setup{}
-require'lspconfig'.templ.setup{}
 require'lspconfig'.rust_analyzer.setup{}
 
 -- Use LspAttach autocommand to only map the following keys

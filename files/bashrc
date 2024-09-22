@@ -51,14 +51,12 @@ export LOCAL="$HOME/.local"
 
 # Neovim from source
 export NVIM_HOME="$LOCAL/nvim"
-if [ -x "$NVIM_HOME/bin/nvim" ]; then
+if [ -d "$NVIM_HOME/bin" ]; then
     export PATH="$NVIM_HOME/bin:$PATH"
 else
     setup-nvim() {
-        set -e
-        rm -rf "$LOCAL/nvim"
-        git clone --single-branch --branch stable https://github.com/neovim/neovim "$LOCAL/nvim"
-        cd "$LOCAL/nvim"
+        git clone --single-branch --branch stable https://github.com/neovim/neovim "$LOCAL/src/nvim"
+        cd "$LOCAL/src/nvim"
         make CMAKE_INSTALL_PREFIX=$LOCAL/nvim CMAKE_BUILD_TYPE=RelWithDebInfo
         make install
         cd -
@@ -72,7 +70,6 @@ if [ -f "$CARGO_HOME/env" ]; then
     source "$CARGO_HOME/env"
 else
     setup-rust() {
-        set -e
         rm -rf "$CARGO_HOME" "$RUSTUP_HOME"
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     }
@@ -87,7 +84,6 @@ if [ -d "$LOCAL/pyenv" ]; then
     fi
 else
     setup-pyenv() {
-        set -e
         git clone https://github.com/pyenv/pyenv.git "$PYENV_ROOT"
         cd "$PYENV_ROOT"
         src/configure && make -C src
@@ -108,7 +104,6 @@ if [ -f "$FZF_HOME/fzf.bash" ]; then
     source "$FZF_HOME/fzf.bash"
 else
     setup-fzf() {
-        set -e
         rm -rf "$LOCAL/fzf"
         if [ -d "$FZF_HOME" ]; then
             rm -rf "$FZF_HOME"
@@ -121,12 +116,10 @@ fi
 # Golang
 export GOROOT="$LOCAL/go"
 export GOPATH="$GOROOT/bin"
-if [ -d "$LOCAL/go/bin" ]; then
+if [ -d "$GOPATH" ]; then
     export PATH="$GOPATH:$GOPATH/bin:$PATH"
 else
     setup-go-linux-amd64() {
-        set -e
-        rm -rf "$GOROOT"
         wget -O - -o /dev/null https://go.dev/dl/go1.22.5.linux-amd64.tar.gz | tar -C "$LOCAL" -xzvf -
     }
 fi
@@ -138,10 +131,6 @@ if [ -d "$NVM_DIR" ]; then
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 else
     setup-nvm() {
-        set -e
-        rm -rf "$NVM_DIR"
-        mkdir "$NVM_DIR"
         wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-        nvm install --lts
     }
 fi

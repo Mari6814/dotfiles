@@ -63,6 +63,15 @@ alias erc="e ~/.bashrc && source ~/.bashrc"
 alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
 alias etmux="e ~/.tmux.conf"
 
+# Python
+alias py="python3"
+alias ipy="ipython"
+alias m="python3 -m"
+alias p="m poetry"
+alias jn="jupyter notebook"
+alias tb="tensorboard --logdir ."
+alias va="source .venv/bin/activate"
+
 # Git shortcut
 alias g="git"
 alias gs="git status"
@@ -201,15 +210,6 @@ ghce() {
 	GH_DEBUG="$GH_DEBUG" gh copilot explain "$@"
 }
 
-# Python
-alias py="python3"
-alias ipy="ipython"
-alias m="python3 -m"
-alias p="m poetry"
-alias jn="jupyter notebook"
-alias tb="tensorboard --logdir ."
-alias va="source .venv/bin/activate"
-
 # Create executable bash script and edit it
 # The first argument as the path to the script file that will be created
 cmd() {
@@ -247,7 +247,6 @@ notes() {
 taildate() {
     tail -f "$1" | xargs -IL date +"%Y-%m-%d %H:%M:%S L"
 }
-
 
 create-vue-app() {
   if [ -e ${1:?usage: create-vue-app <app-name>} ]; then

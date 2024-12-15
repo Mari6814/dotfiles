@@ -33,6 +33,8 @@ vim.keymap.set('t', '<esc>', '<C-\\><C-n>') -- Simplify terminal mode exit short
 vim.keymap.set('n', '<C-x>', ':x<CR>') -- Close window with saving
 vim.keymap.set('n', '<C-w>w', ':bd<CR>') -- Extend <c-w> by a shortcut to close the current buffer
 vim.keymap.set('i', '<C-s>', '<C-o>:w<CR>') -- in insert mode, only save current buffer
+-- Open terminal, move to bottom, set height to 10, and set the title
+vim.keymap.set('n', '<leader>tt', ':split<CR><C-w>r:term<CR>10<C-W>_<CR>:set titlestring=Terminal<CR>A')
 
 -- Window navigation shortcuts in normal, insert & terminal modes
 vim.keymap.set('n', '<C-h>', '<C-w>h')

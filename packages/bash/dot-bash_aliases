@@ -220,6 +220,7 @@ cmd() {
     fi
     echo "Creating command: $NAME"
     echo '#!/bin/bash' >> "$NAME"
+    echo '' >> "$NAME"
     vim "$NAME"
     chmod +x "$NAME"
 }

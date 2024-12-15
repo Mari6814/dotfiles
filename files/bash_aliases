@@ -1,127 +1,7 @@
 #!/bin/bash
 export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
 
-alias al=alias
-
-alias up="docker compose up"
-alias down="docker compose down"
-alias drun="docker run -d -i -t"
-dpush() { docker tag $1 marianplivelic/private:$1; docker push marianplivelic/private:$1; }
-alias kubectl="minikube kubectl --"
-
 alias wiki="nvim -c VimwikiIndex"
-
-function workflows() {
-    # Lists my workflow helper commands
-    local HIGHTLIGHT=$(tput setaf 6)
-    local RESET=$(tput sgr0)
-    local UNOBTRUSIVE=$(tput setaf 8)
-    echo "$(tput setaf 3)Workflows${RESET}: List of workflow helper commands"
-    echo "  - ${HIGHTLIGHT}create-vue-app ${UNOBTRUSIVE}<app-name>${RESET}: Create a new Vue app with Tailwind CSS"
-    echo "  - ${HIGHTLIGHT}create-nuxt-app ${UNOBTRUSIVE}<app-name>${RESET}: Create a new Nuxt app with Tailwind CSS"
-    echo "  - ${HIGHTLIGHT}mkworkspace ${UNOBTRUSIVE}<file1> <file2> ...${RESET}: Create symlinks to the files in the current directory"
-    echo "  - ${HIGHTLIGHT}watch-files ${UNOBTRUSIVE}<file1> <file2> ...${RESET}: Watch the files for changes"
-    echo "  - ${HIGHTLIGHT}mddir ${UNOBTRUSIVE}<dir>${RESET}: Create a directory and move into it"
-    echo "  - ${HIGHTLIGHT}etmp ${UNOBTRUSIVE}<extension>${RESET}: Create a temporary file with the given extension"
-    echo "  - ${HIGHTLIGHT}e ${UNOBTRUSIVE}<file>${RESET}: Open the file in the default editor"
-    echo "$(tput setaf 3)Shortcuts${RESET}: Workflows that function as shortcuts to do something"
-    echo "  - ${HIGHTLIGHT}git-check-unpushed-commits${RESET}: Check for unpushed commits in all branches"
-    echo "  - ${HIGHTLIGHT}evim${RESET}: Open the vim configuration file"
-    echo "  - ${HIGHTLIGHT}envim${RESET}: Open the neovim configuration file"
-    echo "  - ${HIGHTLIGHT}erc${RESET}: Open the bashrc file"
-    echo "  - ${HIGHTLIGHT}ealias${RESET}: Open the bash_aliases file"
-    echo "  - ${HIGHTLIGHT}etmux${RESET}: Open the tmux configuration file"
-    echo "  - ${HIGHTLIGHT}ghcs${RESET}: Wrapper around gh copilot suggest"
-    echo "  - ${HIGHTLIGHT}ghce${RESET}: Wrapper around gh copilot explain"
-}
-
-function create-vue-app() {
-  if [ -e ${1:?usage: create-vue-app <app-name>} ]; then
-    echo "Directory already exists: $1" >&2
-    return 1
-  fi
-  local CREATE_VUE_VERSION=3.10.4
-  local TAILWIND_VERSION=3.4.10
-  local POSTCSS_VERSION=8.4.41
-  local AUTO_PREFIXER_VERSION=10.4.20
-  npm create vue@$CREATE_VUE_VERSION $1 || return 1
-  cd $1
-  npm install || return 1
-  npm install -D tailwindcss@$TAILWIND_VERSION postcss@$POSTCSS_VERSION autoprefixer@$AUTO_PREFIXER_VERSION || return 1
-  npx tailwindcss init -p || return 1
-  # Remove the default empty 'content' key
-  sed -i '3 d' tailwind.config.js || return 1 
-  # Add the default tailwind content key
-  sed -i "2 a \ \ content: [ './public/**/*.html', './src/**/*.{js,jsx,ts,tsx,vue}', ]," tailwind.config.js || return 1
-  echo "@tailwind base;" > ./src/assets/base.css
-  echo "@tailwind components;" >> ./src/assets/base.css
-  echo "@tailwind utilities;" >> ./src/assets/base.css
-  git init || return 1
-}
-
-function create-nuxt-app() {
-    if [ -e ${1:?usage: create-nuxt-app <app-name>} ]; then
-        echo "Directory already exists: $1" >&2
-        return 1
-    fi
-    local NUXI_VERSION=3.13.0
-    npx nuxi@$NUXI_VERSION init $1 || return 1
-    cd $1
-    npm install -D tailwindcss postcss autoprefixer || return 1
-    npx tailwindcss init || return 1
-    # Append a comma at the end of { devtools: { debug: true } } on line 4
-    sed -i '4 s/$/,/' nuxt.config.ts || return 1
-    # Append tailwindcss config to nuxt.config.ts
-    sed -i '4 a \ \ postcss: { plugins: { tailwindcss: {}, autoprefixer: {}, }, },' nuxt.config.ts || return 1
-    # Remove the default empty 'content' key
-    sed -i '3 d' tailwind.config.js || return 1
-    # Add the nuxt-specific "content" key
-    sed -i '2 a \ \ content: [ "./components/**/*.{js,vue,ts}", "./layouts/**/*.vue", "./pages/**/*.vue", "./plugins/**/*.{js,ts}", "./app.vue", "./error.vue", ],' tailwind.config.js || return 1
-    # Create the main.css file that will be used to generate the tailwind styles
-    mkdir -p ./assets/css
-    echo "@tailwind base;" >> ./assets/css/main.css
-    echo "@tailwind components;" >> ./assets/css/main.css
-    echo "@tailwind utilities;" >> ./assets/css/main.css
-    # Import the main.css file in nuxt.config.ts
-    sed -i '4 a \ \ css: [ "~/assets/css/main.css" ],' nuxt.config.ts || return 1
-}
-
-function git-check-unpushed-commits() {
-  (echo -e "BRANCH:AHEAD:BEHIND"
-  for branch in $(git branch --sort=-committerdate --format='%(refname:short)'); do
-    local COMMITS_DIFF=$(git rev-list --left-right --count $branch...origin/master)
-    local COMMITS_AHEAD=$(echo $COMMITS_DIFF | awk '{print $1}')
-    local COMMITS_BEHIND=$(echo $COMMITS_DIFF | awk '{print $2}')
-    if [ $COMMITS_AHEAD -gt 0 ]; then
-     echo -e "$branch:$COMMITS_AHEAD:$COMMITS_BEHIND"
-    fi
-  done) | column -t -s:
-}
-
-mkworkspace() {
-    if [ $# -eq 0 ]; then
-        echo "Creates symlinks to the files in the current directory"
-        echo "Usage: mkworkspace <file1> <file2> ..."
-        return 1
-    fi
-    for file in $@; do
-        [ -e "$file" ] && ln -s "$file"
-    done
-}
-
-watch-files() {
-    # Exists if the watched files are touched
-    watch -gt "ls -lR --full-time $@ | md5sum"
-}
-
-mddir() {
-    # Create a directory and move into it
-    mkdir -p "$@" && cd "$@";
-}
-
-etmp() {
-    e "$(mktemp)$1";
-}
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
@@ -134,9 +14,7 @@ if [ -x /usr/bin/dircolors ]; then
 fi
 
 # colored GCC warnings and errors
-#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
-
-# some more ls aliases
+export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
@@ -366,4 +244,70 @@ notes() {
 # Tail a file and log the changes by prefixing them with the date of the change
 taildate() {
     tail -f "$1" | xargs -IL date +"%Y-%m-%d %H:%M:%S L"
+}
+
+
+create-vue-app() {
+  if [ -e ${1:?usage: create-vue-app <app-name>} ]; then
+    echo "Directory already exists: $1" >&2
+    return 1
+  fi
+  local CREATE_VUE_VERSION=3.10.4
+  local TAILWIND_VERSION=3.4.10
+  local POSTCSS_VERSION=8.4.41
+  local AUTO_PREFIXER_VERSION=10.4.20
+  npm create vue@$CREATE_VUE_VERSION $1 || return 1
+  cd $1
+  npm install || return 1
+  npm install -D tailwindcss@$TAILWIND_VERSION postcss@$POSTCSS_VERSION autoprefixer@$AUTO_PREFIXER_VERSION || return 1
+  npx tailwindcss init -p || return 1
+  # Remove the default empty 'content' key
+  sed -i '3 d' tailwind.config.js || return 1 
+  # Add the default tailwind content key
+  sed -i "2 a \ \ content: [ './public/**/*.html', './src/**/*.{js,jsx,ts,tsx,vue}', ]," tailwind.config.js || return 1
+  echo "@tailwind base;" > ./src/assets/base.css
+  echo "@tailwind components;" >> ./src/assets/base.css
+  echo "@tailwind utilities;" >> ./src/assets/base.css
+  git init || return 1
+}
+
+create-nuxt-app() {
+    if [ -e ${1:?usage: create-nuxt-app <app-name>} ]; then
+        echo "Directory already exists: $1" >&2
+        return 1
+    fi
+    local NUXI_VERSION=3.13.0
+    npx nuxi@$NUXI_VERSION init $1 || return 1
+    cd $1
+    npm install -D tailwindcss postcss autoprefixer || return 1
+    npx tailwindcss init || return 1
+    # Append a comma at the end of { devtools: { debug: true } } on line 4
+    sed -i '4 s/$/,/' nuxt.config.ts || return 1
+    # Append tailwindcss config to nuxt.config.ts
+    sed -i '4 a \ \ postcss: { plugins: { tailwindcss: {}, autoprefixer: {}, }, },' nuxt.config.ts || return 1
+    # Remove the default empty 'content' key
+    sed -i '3 d' tailwind.config.js || return 1
+    # Add the nuxt-specific "content" key
+    sed -i '2 a \ \ content: [ "./components/**/*.{js,vue,ts}", "./layouts/**/*.vue", "./pages/**/*.vue", "./plugins/**/*.{js,ts}", "./app.vue", "./error.vue", ],' tailwind.config.js || return 1
+    # Create the main.css file that will be used to generate the tailwind styles
+    mkdir -p ./assets/css
+    echo "@tailwind base;" >> ./assets/css/main.css
+    echo "@tailwind components;" >> ./assets/css/main.css
+    echo "@tailwind utilities;" >> ./assets/css/main.css
+    # Import the main.css file in nuxt.config.ts
+    sed -i '4 a \ \ css: [ "~/assets/css/main.css" ],' nuxt.config.ts || return 1
+}
+
+watch-files() {
+    # Exists if the watched files are touched
+    watch -gt "ls -lR --full-time $@ | md5sum"
+}
+
+mddir() {
+    # Create a directory and move into it
+    mkdir -p "$@" && cd "$@";
+}
+
+etmp() {
+    e "$(mktemp)$1";
 }

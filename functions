@@ -50,7 +50,7 @@ fi
 
 function package-show-files() {
     # Operate on each package provided
-    PACKAGE_NAMES="${@:-bash git nvim tmux vim}"
+    PACKAGE_NAMES="${@:-$PACKAGES_LIST}"
     for PACKAGE_NAME in $PACKAGE_NAMES; do
         # Check that the package is available in the packages directory
         PACKAGE_DIR="$PACKAGES_DIR/$PACKAGE_NAME"

@@ -1,4 +1,0 @@
-#!/bin/bash
-
-[ ! -d ~/.config/nvim/ ] && mkdir -p ~/.config/nvim/
-[ -f ~/.init.lua ] && [ ! -e ~/.config/nvim/init.lua ] && ln -s ~/.init.lua ~/.config/nvim/init.lua

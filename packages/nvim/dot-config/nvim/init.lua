@@ -1,5 +1,5 @@
 -- Vim settings
-vim.g.mapleader = ","
+vim.g.mapleader = "<Space>"
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.tabstop = 4

@@ -221,8 +221,8 @@ cmd() {
     echo "Creating command: $NAME"
     echo '#!/bin/bash' >> "$NAME"
     echo '' >> "$NAME"
-    vim "$NAME"
     chmod +x "$NAME"
+    vim "$NAME" -c '$'
 }
 
 # Append a new note to the notes file

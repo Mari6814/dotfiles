@@ -1,10 +1,115 @@
 #!/bin/bash
 
-cd "$(dirname $0)"
+PACKAGE_ICON="📦"
+FILE_ICON="📄"
+DIRECTORY_ICON="📁"
+SUCCESS_ICON="✅"
+FAILURE_ICON="❌"
+LINK_ICON="🔗"
+VERBOSE_ENABLED=$(echo "$@" | grep -q -- "-v" && echo "true" || echo "false")
+ENABLE_PACKAGES=$(echo "$@" | grep -q -- "--enable" && echo "true" || echo "false")
+DISABLE_PACKAGES=$(echo "$@" | grep -q -- "--disable" && echo "true" || echo "false")
+PACKAGE_SEARCH=$(echo "$@" | sed 's/-v//g' | sed 's/--enable//g' | sed 's/--disable//g' | xargs)
+SCRIPT_DIR="$(dirname "$0")"
+PACKAGES_DIR="$(realpath "$SCRIPT_DIR/packages")"
+PACKAGES_LIST=$(cd "$PACKAGES_DIR" && echo *)
+TARGET_DIR="${TARGET_DIR:-$HOME}"
 
-. ./functions
+# Exit if enable & disable are both enabled
+if [ "$ENABLE_PACKAGES" = "true" ] && [ "$DISABLE_PACKAGES" = "true" ]; then
+    echo "$FAILURE_ICON Cannot enable and disable packages at the same time" >&2
+    exit 1
+fi
 
-restore-backed-up-files-and-delete-links
-do-backup-files
-link-provided-files
-. ./post-install
+if [ "$VERBOSE_ENABLED" = "true" ] && [ ! -z "$PACKAGE_SEARCH" ]; then
+    if [ "$ENABLE_PACKAGES" = "true" ]; then
+        echo "Enabling $PACKAGE_SEARCH packages"
+    fi
+    if [ "$DISABLE_PACKAGES" = "true" ]; then
+        echo "Disabling $PACKAGE_SEARCH packages"
+    fi
+fi
+if [ "$VERBOSE_ENABLED" = "true" ]; then
+    echo "Running script from"
+    echo "$DIRECTORY_ICON $SCRIPT_DIR"
+fi
+if [ "$VERBOSE_ENABLED" = "true" ]; then
+    echo "Looking for packages in"
+    echo "$DIRECTORY_ICON $PACKAGES_DIR"
+fi
+if [ "$VERBOSE_ENABLED" = "true" ]; then
+    echo "Packages available:"
+    for package in $PACKAGES_LIST; do
+        echo "$PACKAGE_ICON $package"
+    done
+fi
+if [ "$VERBOSE_ENABLED" = "true" ]; then
+    echo "Installing packages in"
+    echo "$DIRECTORY_ICON $TARGET_DIR"
+fi
+
+function package-show-files() {
+    # Operate on each package provided
+    for PACKAGE_NAME in $@; do
+        # Show package name
+        echo "$PACKAGE_ICON $PACKAGE_NAME"
+        # Check that the package is available in the packages directory
+        PACKAGE_DIR="$PACKAGES_DIR/$PACKAGE_NAME"
+        if [ ! -d "$PACKAGE_DIR" ]; then
+            echo "$FAILURE_ICON Package $PACKAGE_NAME not found" >&2
+            return 1
+        fi
+        # List of all available files in that package
+        AVAILABLE_FILES=$(find "$PACKAGE_DIR" -type f)
+        if [ "$VERBOSE_ENABLED" = "true" ]; then
+            echo "Files available in package $PACKAGE_NAME:"
+            for FILE in $AVAILABLE_FILES; do
+                echo "$FILE_ICON $FILE"
+            done
+        fi
+
+        # Operate on each file in the package
+        for FILE in $AVAILABLE_FILES; do 
+            # Resolve the link name by replacing dot- placeholders with actual dots
+            LINK=$(echo "$FILE" | sed 's/dot-/./g')
+            # Generate the link name, relative to the package directory
+            LINK="${LINK#$PACKAGE_DIR/}"
+
+            # Disable installed files from the package
+            if [ "$DISABLE_PACKAGES" = "true" ]; then
+                if [ -L "$TARGET_DIR/$LINK" ]; then
+                    rm -v "$TARGET_DIR/$LINK"
+                else
+                    echo "$LINK cannot be removed or is not a link" >&2
+                fi
+                continue
+            fi
+
+            # Enable available files from the package
+            if [ "$ENABLE_PACKAGES" = "true" ]; then
+                # Skip if something already exists at the target location
+                if [ -e "$TARGET_DIR/$LINK" ] || [ -L "$TARGET_DIR/$LINK" ]; then
+                    echo "$LINK already exists and cannot be created: SKIPPING" >&2
+                    continue
+                fi
+                
+                # Generate the directory path for the link
+                DIR=$(dirname "$TARGET_DIR/$LINK")
+                if [ ! -d "$DIR" ]; then
+                    if [ "$VERBOSE_ENABLED" = "true" ]; then
+                        echo "mkdir -pv $DIR"
+                    fi
+                    mkdir -pv "$DIR"
+                fi
+
+                # Link the file to that location
+                if [ "$VERBOSE_ENABLED" = "true" ]; then
+                    echo "ln -sv $TARGET_DIR/$LINK $FILE"
+                fi
+                ln -sv "$FILE" "$TARGET_DIR/$LINK" 
+            fi
+        done
+    done
+}
+
+package-show-files "$PACKAGE_SEARCH"

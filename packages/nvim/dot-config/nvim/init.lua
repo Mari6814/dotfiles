@@ -1,5 +1,6 @@
 -- Vim settings
-vim.g.mapleader = "<Space>"
+vim.g.mapleader = " "
+vim.keymap.set('n', '<space>', '<nop>', {silent=true, remap=false}) -- Unmap space
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.tabstop = 4

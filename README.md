@@ -1,19 +1,39 @@
 # Description
 My personal shell files.
 
+
 # Installation
+Just run the `install` script.
 
-Use the install and uninstall scripts to install and automaticall back up the previously used scripts in $HOME by default.
-
-
-# Parameters
-
-Set `INSTALL_PREFIX` (default is `$HOME`) to specify the directory in which the files will be installed.
-
-Set `BACKUP_DIR` (default is `$INSTALL_PREFIX/.shell-backup-dir`) to control where the old files will be stored.
+```bash
+./install
+```
+This will link all the packages to the `TARGET_DIR` directory. By default, the `TARGET_DIR` is set to `$HOME`.
 
 
-# Uninstall
+# Uninstallation
+Just run the `uninstall` script.
 
-Use the `uninstall` script to delete the symlinks and restore the previous files from the specified or default `BACKUP_DIR` variable.
+```bash
+./uninstall
+```
 
+
+# Customizing the installation
+To customize, you can select the packages you want to install
+by providing the packages to install as arguments to the install script.
+
+```bash
+./install bash git
+```
+
+To change the directory where the packages are installed, you can set the `TARGET_DIR` environment variable.
+```bash
+TARGET_DIR=~/.local/bin ./install tmux-sessionizer
+```
+
+
+# Debugging
+
+The install script accepts a `-v` flag for verbose output, which will detail
+the linking process.

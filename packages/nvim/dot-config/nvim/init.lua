@@ -173,4 +173,11 @@ vim.api.nvim_create_autocmd('BufWritePost', {
   end,
 })
 
-require'nvim-treesitter.configs'.setup{}
+require'nvim-treesitter.configs'.setup{
+  ensure_installed = { "lua", "vim", "vimdoc", "query", "markdown", "markdown_inline", "go", "gomod", "typescript", "javascript", "rust", "python" },
+  sync_install = false,
+  auto_install = true,
+  highlight = {
+    enable = true
+  }
+}

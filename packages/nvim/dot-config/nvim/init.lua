@@ -78,6 +78,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
+    { 'nvim-treesitter/nvim-treesitter' },
     -- $ sudo apt install ripgrep fd-find
     -- $ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
     { 'nvim-telescope/telescope.nvim',
@@ -171,3 +172,5 @@ vim.api.nvim_create_autocmd('BufWritePost', {
     vim.cmd('silent! !black %')
   end,
 })
+
+require'nvim-treesitter.configs'.setup{}

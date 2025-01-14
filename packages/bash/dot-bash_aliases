@@ -307,7 +307,7 @@ watch-files() {
     watch -gt "ls -lR --full-time $@ | md5sum"
 }
 
-mddir() {
+md() {
     # Create a directory and move into it
     mkdir -p "$@" && cd "$@";
 }

@@ -2,6 +2,7 @@
 export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
 
 alias tree="tree -C -I '.git|node_modules|.venv|__pycache__|.cache|.mypy_cache|.pytest_cache|.ipynb_checkpoints'"
+alias t="tree"
 
 alias wiki="nvim -c VimwikiIndex"
 

@@ -51,11 +51,13 @@ export LOCAL="$HOME/.local"
 
 # Neovim from source
 export NVIM_HOME="$LOCAL/nvim"
-if [ -d "$NVIM_HOME/bin" ]; then
+if [ -x "`which nvim`" ] || [ -d "$NVIM_HOME/bin" ]; then
     export PATH="$NVIM_HOME/bin:$PATH"
 else
     setup-nvim() {
-        git clone --single-branch --branch stable https://github.com/neovim/neovim "$LOCAL/src/nvim"
+        echo 'installing requirements: ninja-build gettext cmake curl build-essential'
+        sudo apt-get install ninja-build gettext cmake curl build-essential
+        git clone --single-branch --depth 1 --branch stable https://github.com/neovim/neovim "$LOCAL/src/nvim"
         cd "$LOCAL/src/nvim"
         make CMAKE_INSTALL_PREFIX=$LOCAL/nvim CMAKE_BUILD_TYPE=RelWithDebInfo
         make install

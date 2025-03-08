@@ -95,7 +95,7 @@ if [ -d "$FZF_DIR" ]; then
     source "$FZF_HOME/fzf.bash"
 else
     setup-fzf() {
-        rm -ir "$FZF_HOME" "$FZF_DIR"
+        rm -irf "$FZF_HOME" "$FZF_DIR"
         git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
         bash "$FZF_DIR/install" --xdg --all --no-update-rc
     }

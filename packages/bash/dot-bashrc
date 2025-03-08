@@ -69,37 +69,23 @@ fi
 
 # Rust
 export CARGO_HOME="$LOCAL/cargo"
-export RUSTUP_HOME="$LOCAL/multirust"
+export RUSTUP_HOME="$LOCAL/rustup"
 if [ -f "$CARGO_HOME/env" ]; then
     source "$CARGO_HOME/env"
 else
     setup-rust() {
-        rm -rf "$CARGO_HOME" "$RUSTUP_HOME"
+        rm -irf "$CARGO_HOME" "$RUSTUP_HOME"
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    }
-fi
-
-# Pyenv
-export PYENV_ROOT="$LOCAL/pyenv"
-if [ -d "$LOCAL/pyenv" ]; then
-    export PATH="$PYENV_ROOT/bin:$PATH"
-    if command -v pyenv &> /dev/null; then
-        eval "$(pyenv init -)"
-    fi
-else
-    setup-pyenv() {
-        git clone https://github.com/pyenv/pyenv.git "$PYENV_ROOT"
-        cd "$PYENV_ROOT"
-        src/configure && make -C src
-        cd -
+        source "$CARGO_HOME/env"
+        cargo component add rust-src rust-analyzer
+        cargo install zoxide tree-sitter-cli --locked
+        eval "$(zoxide init bash)"
     }
 fi
 
 # Zoxide
 if command -v zoxide &> /dev/null; then
     eval "$(zoxide init bash)"
-else
-    alias setup-zoxide='cargo install zoxide --locked'
 fi
 
 # FZF

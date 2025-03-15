@@ -1,6 +1,11 @@
 #!/bin/bash
 export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
 
+alias d="docker"
+alias dc="d compose"
+alias de="d exec"
+alias deit="de -it"
+
 alias tree="tree -C -I '.git|node_modules|.venv|__pycache__|.cache|.mypy_cache|.pytest_cache|.ipynb_checkpoints'"
 alias t="tree"
 

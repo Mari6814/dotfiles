@@ -25,10 +25,6 @@ shopt -s autocd
 # Expands symbolic representations of paths
 shopt -s direxpand
 
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
-
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
 # sources /etc/bash.bashrc).
@@ -40,87 +36,29 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# Git
-[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt
-export PS1='\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
-source /usr/share/bash-completion/completions/git
-
 # Set up the user's "local" directory
 export LOCAL="$HOME/.local"
 [ -d "$LOCAL/bin" ] && export PATH="$PATH:$LOCAL/bin"
 
-# Neovim from source
-export NVIM_HOME="$LOCAL/nvim"
-if [ -d "$NVIM_HOME/bin" ]; then
-    export PATH="$NVIM_HOME/bin:$PATH"
-elif [ ! -x "`which nvim`" ]; then
-    setup-nvim() {
-        local NVIM_SRC_DIR="$LOCAL/src/nvim"
-        rm -rif "$NVIM_HOME" "$NVIM_SRC_DIR"
-        echo 'installing nvim requirements: ninja-build gettext cmake curl build-essential'
-        sudo apt-get install ninja-build gettext cmake curl build-essential
-        git clone --single-branch --depth 1 --branch stable https://github.com/neovim/neovim "$NVIM_SRC_DIR"
-        cd "$NVIM_SRC_DIR"
-        make CMAKE_INSTALL_PREFIX="$NVIM_HOME" CMAKE_BUILD_TYPE=RelWithDebInfo
-        make install
-        cd -
-    }
+# Default editor
+if [ -x `which nvim` ]; then
+    export EDITOR=nvim
+elif [ -x `which vim` ]; then
+	export EDITOR=vim
+elif [ -x `which vi` ]; then
+	export EDITOR=vi
 fi
 
-# Rust
-export CARGO_HOME="$LOCAL/cargo"
-export RUSTUP_HOME="$LOCAL/rustup"
-if [ -f "$CARGO_HOME/env" ]; then
-    source "$CARGO_HOME/env"
-else
-    setup-rust() {
-        rm -irf "$CARGO_HOME" "$RUSTUP_HOME"
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-        source "$CARGO_HOME/env"
-        cargo component add rust-src rust-analyzer
-        cargo install zoxide tree-sitter-cli --locked
-        eval "$(zoxide init bash)"
-    }
+# Dynamically load bashrc plugins from the local directory
+if [ -d "$LOCAL/bash-plugins" ]; then
+    for plugin in "$LOCAL/bash-plugins/"*.sh; do
+        if [ -f "$plugin" ]; then
+            export BASH_PLUGINS_LOADED="$plugin:$BASH_PLUGINS_LOADED"
+            source "$plugin"
+        fi
+    done
 fi
 
-# Zoxide
-if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init bash)"
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
 fi
-
-# FZF
-export FZF_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/fzf"
-export FZF_DIR="$LOCAL/fzf"
-if [ -d "$FZF_DIR" ]; then
-    source "$FZF_HOME/fzf.bash"
-else
-    setup-fzf() {
-        rm -irf "$FZF_HOME" "$FZF_DIR"
-        git clone --depth 1 https://github.com/junegunn/fzf.git "$FZF_DIR"
-        bash "$FZF_DIR/install" --xdg --all --no-update-rc
-    }
-fi
-
-# Golang
-export GOROOT="$LOCAL/go"
-export GOPATH="$GOROOT/bin"
-if [ -d "$GOPATH" ]; then
-    export PATH="$GOPATH:$GOPATH/bin:$PATH"
-else
-    setup-go-linux-amd64() {
-        wget -O - -o /dev/null https://go.dev/dl/go1.22.5.linux-amd64.tar.gz | tar -C "$LOCAL" -xzvf -
-    }
-fi
-
-# NVM for NPM and NodeJS management
-export NVM_DIR="$LOCAL/nvm"
-if [ -d "$NVM_DIR" ]; then
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-else
-    setup-nvm() {
-        wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-    }
-fi
-
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash

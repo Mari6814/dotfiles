@@ -1,64 +1,8 @@
 #!/bin/bash
 export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
 
-alias tree="tree -C -I '.git|node_modules|.venv|__pycache__|.cache|.mypy_cache|.pytest_cache|.ipynb_checkpoints'"
-alias t="tree"
-
-alias wiki="nvim -c VimwikiIndex"
-
-# enable color support of ls and also add handy aliases
-if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias ls='ls --color=auto'
-
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
-fi
-
-# colored GCC warnings and errors
-export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
-
-# Add an "alert" alias for long running commands.  Use like so:
-#   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
-
-# Default editor
-if [ -x `which nvim` ]; then
-    export EDITOR=nvim
-elif [ -x `which vim` ]; then
-	export EDITOR=vim
-elif [ -x `which vi` ]; then
-	export EDITOR=vi
-fi
-
-# Navigation
-alias zz="cd -" # Go back to the last directory
-
-# Screen shortcuts
-alias s="screen"
-alias sl="s -ls"
-alias ss="s -S"
-alias sr="s -r"
-
-# Modify the default values for builtins
-alias mkdir="mkdir -pv"
-alias ls="ls --color=auto --group-directories-first -CFh" # Subsequent ls calls will have colors
-alias ll='ls -al' # List all files *with details*, including dotfiles
-alias la='ls -A' # List all file *names* except . and .., including dotfiles
-alias l='ls -CF' # shorthand for ls
-
-# Dump clipboard contents to stdout
-alias paste="xclip -selection clipboard -o"
-
-# Shortcut to update and upgrade linux distributions
-alias aptuu="sudo apt -y update && sudo apt -y upgrade"
-
-# Search for an expression in directory and children
-alias contains="grep -rnw . -e"
-
-# Shortcut for opening the default editor
 alias e="$EDITOR"
+
 # Shortcuts to edit specific files
 alias evim="e ~/.vimrc"
 alias envim="e ~/.config/nvim/init.lua"
@@ -66,247 +10,20 @@ alias erc="e ~/.bashrc && source ~/.bashrc"
 alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
 alias etmux="e ~/.tmux.conf"
 
-# Python
-alias py="python3"
-alias ipy="ipython"
-alias m="python3 -m"
-alias p="m poetry"
-alias jn="jupyter notebook"
-alias tb="tensorboard --logdir ."
-alias va="source .venv/bin/activate"
-
-# Git shortcut
 alias g="git"
 alias gs="git status"
+alias gc="git commit"
 
-# GitHub
-alias ghcp="gh copilot"
+alias tree="tree -C -I '.git|node_modules|.venv|__pycache__|.cache|.mypy_cache|.pytest_cache|.ipynb_checkpoints'"
+alias t="tree"
 
-ghcs() {
-	TARGET="shell"
-	local GH_DEBUG="$GH_DEBUG"
+alias wiki="$EDITOR -c VimwikiIndex"
 
-	read -r -d '' __USAGE <<-EOF
-	Wrapper around \`gh copilot suggest\` to suggest a command based on a natural language description of the desired output effort.
-	Supports executing suggested commands if applicable.
+alias zz="cd -"
 
-	USAGE
-	  $FUNCNAME [flags] <prompt>
+alias mkdir="mkdir -pv"
 
-	FLAGS
-	  -d, --debug              Enable debugging
-	  -h, --help               Display help usage
-	  -t, --target target      Target for suggestion; must be shell, gh, git
-	                           default: "$TARGET"
-
-	EXAMPLES
-
-	- Guided experience
-	  $ $FUNCNAME
-
-	- Git use cases
-	  $ $FUNCNAME -t git "Undo the most recent local commits"
-	  $ $FUNCNAME -t git "Clean up local branches"
-	  $ $FUNCNAME -t git "Setup LFS for images"
-
-	- Working with the GitHub CLI in the terminal
-	  $ $FUNCNAME -t gh "Create pull request"
-	  $ $FUNCNAME -t gh "List pull requests waiting for my review"
-	  $ $FUNCNAME -t gh "Summarize work I have done in issues and pull requests for promotion"
-
-	- General use cases
-	  $ $FUNCNAME "Kill processes holding onto deleted files"
-	  $ $FUNCNAME "Test whether there are SSL/TLS issues with github.com"
-	  $ $FUNCNAME "Convert SVG to PNG and resize"
-	  $ $FUNCNAME "Convert MOV to animated PNG"
-	EOF
-
-	local OPT OPTARG OPTIND
-	while getopts "dht:-:" OPT; do
-		if [ "$OPT" = "-" ]; then     # long option: reformulate OPT and OPTARG
-			OPT="${OPTARG%%=*}"       # extract long option name
-			OPTARG="${OPTARG#"$OPT"}" # extract long option argument (may be empty)
-			OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
-		fi
-
-		case "$OPT" in
-			debug | d)
-				GH_DEBUG=api
-				;;
-
-			help | h)
-				echo "$__USAGE"
-				return 0
-				;;
-
-			target | t)
-				TARGET="$OPTARG"
-				;;
-		esac
-	done
-
-	# shift so that $@, $1, etc. refer to the non-option arguments
-	shift "$((OPTIND-1))"
-
-	TMPFILE="$(mktemp -t gh-copilotXXXXXX)"
-	trap 'rm -f "$TMPFILE"' EXIT
-	if GH_DEBUG="$GH_DEBUG" gh copilot suggest -t "$TARGET" "$@" --shell-out "$TMPFILE"; then
-		if [ -s "$TMPFILE" ]; then
-			FIXED_CMD="$(cat $TMPFILE)"
-			history -s $(history 1 | cut -d' ' -f4-); history -s "$FIXED_CMD"
-			echo
-			eval "$FIXED_CMD"
-		fi
-	else
-		return 1
-	fi
-}
-
-ghce() {
-	local GH_DEBUG="$GH_DEBUG"
-
-	read -r -d '' __USAGE <<-EOF
-	Wrapper around \`gh copilot explain\` to explain a given input command in natural language.
-
-	USAGE
-	  $FUNCNAME [flags] <command>
-
-	FLAGS
-	  -d, --debug   Enable debugging
-	  -h, --help    Display help usage
-
-	EXAMPLES
-
-	# View disk usage, sorted by size
-	$ $FUNCNAME 'du -sh | sort -h'
-
-	# View git repository history as text graphical representation
-	$ $FUNCNAME 'git log --oneline --graph --decorate --all'
-
-	# Remove binary objects larger than 50 megabytes from git history
-	$ $FUNCNAME 'bfg --strip-blobs-bigger-than 50M'
-	EOF
-
-	local OPT OPTARG OPTIND
-	while getopts "dh-:" OPT; do
-		if [ "$OPT" = "-" ]; then     # long option: reformulate OPT and OPTARG
-			OPT="${OPTARG%%=*}"       # extract long option name
-			OPTARG="${OPTARG#"$OPT"}" # extract long option argument (may be empty)
-			OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
-		fi
-
-		case "$OPT" in
-			debug | d)
-				GH_DEBUG=api
-				;;
-
-			help | h)
-				echo "$__USAGE"
-				return 0
-				;;
-		esac
-	done
-
-	# shift so that $@, $1, etc. refer to the non-option arguments
-	shift "$((OPTIND-1))"
-
-	GH_DEBUG="$GH_DEBUG" gh copilot explain "$@"
-}
-
-# Create executable bash script and edit it
-# The first argument as the path to the script file that will be created
-cmd() {
-    local NAME="${1:?'Usage: cmd <cmdname>'}"
-    if [ -e "$NAME" ]; then
-        echo "Command already exists: $NAME" >&2
-        return 1
-    fi
-    echo "Creating command: $NAME"
-    echo '#!/bin/bash' >> "$NAME"
-    echo '' >> "$NAME"
-    chmod +x "$NAME"
-    vim "$NAME" -c '$'
-}
-
-# Append a new note to the notes file
-note() {
-    # If ~/notes.txt last modified day was yesterday, append a clear separator with the date before appending the note's content
-    touch ~/notes.txt
-    if [ $(date -r ~/notes.txt +%Y%m%d) -e $(date -d "yesterday" +%Y%m%d) ]; then
-        echo -e "
-
-$(date +%Y-%m-%d)
-
-" >> ~/notes.txt
-    fi
-    echo "$@" >> ~/notes.txt
-}
-
-# Open the notes file
-notes() {
-    cat ~/notes.txt
-}
-
-# Tail a file and log the changes by prefixing them with the date of the change
-taildate() {
-    tail -f "$1" | xargs -IL date +"%Y-%m-%d %H:%M:%S L"
-}
-
-create-vue-app() {
-  if [ -e ${1:?usage: create-vue-app <app-name>} ]; then
-    echo "Directory already exists: $1" >&2
-    return 1
-  fi
-  local CREATE_VUE_VERSION=3.10.4
-  local TAILWIND_VERSION=3.4.10
-  local POSTCSS_VERSION=8.4.41
-  local AUTO_PREFIXER_VERSION=10.4.20
-  npm create vue@$CREATE_VUE_VERSION $1 || return 1
-  cd $1
-  npm install || return 1
-  npm install -D tailwindcss@$TAILWIND_VERSION postcss@$POSTCSS_VERSION autoprefixer@$AUTO_PREFIXER_VERSION || return 1
-  npx tailwindcss init -p || return 1
-  # Remove the default empty 'content' key
-  sed -i '3 d' tailwind.config.js || return 1 
-  # Add the default tailwind content key
-  sed -i "2 a \ \ content: [ './public/**/*.html', './src/**/*.{js,jsx,ts,tsx,vue}', ]," tailwind.config.js || return 1
-  echo "@tailwind base;" > ./src/assets/base.css
-  echo "@tailwind components;" >> ./src/assets/base.css
-  echo "@tailwind utilities;" >> ./src/assets/base.css
-  git init || return 1
-}
-
-create-nuxt-app() {
-    if [ -e ${1:?usage: create-nuxt-app <app-name>} ]; then
-        echo "Directory already exists: $1" >&2
-        return 1
-    fi
-    local NUXI_VERSION=3.13.0
-    npx nuxi@$NUXI_VERSION init $1 || return 1
-    cd $1
-    npm install -D tailwindcss postcss autoprefixer || return 1
-    npx tailwindcss init || return 1
-    # Append a comma at the end of { devtools: { debug: true } } on line 4
-    sed -i '4 s/$/,/' nuxt.config.ts || return 1
-    # Append tailwindcss config to nuxt.config.ts
-    sed -i '4 a \ \ postcss: { plugins: { tailwindcss: {}, autoprefixer: {}, }, },' nuxt.config.ts || return 1
-    # Remove the default empty 'content' key
-    sed -i '3 d' tailwind.config.js || return 1
-    # Add the nuxt-specific "content" key
-    sed -i '2 a \ \ content: [ "./components/**/*.{js,vue,ts}", "./layouts/**/*.vue", "./pages/**/*.vue", "./plugins/**/*.{js,ts}", "./app.vue", "./error.vue", ],' tailwind.config.js || return 1
-    # Create the main.css file that will be used to generate the tailwind styles
-    mkdir -p ./assets/css
-    echo "@tailwind base;" >> ./assets/css/main.css
-    echo "@tailwind components;" >> ./assets/css/main.css
-    echo "@tailwind utilities;" >> ./assets/css/main.css
-    # Import the main.css file in nuxt.config.ts
-    sed -i '4 a \ \ css: [ "~/assets/css/main.css" ],' nuxt.config.ts || return 1
-}
-
-watch-files() {
-    # Exists if the watched files are touched
-    watch -gt "ls -lR --full-time $@ | md5sum"
-}
+alias aptuu="sudo apt -y update && sudo apt -y upgrade"
 
 md() {
     # Create a directory and move into it
@@ -314,5 +31,18 @@ md() {
 }
 
 etmp() {
+    # Open a temporary file in the default editor
     e "$(mktemp)$1";
 }
+
+# Dynamically load plugins from the local directory
+if [ -d "$LOCAL/bash-aliases-plugins" ]; then
+    for plugin in "$LOCAL/bash-aliases-plugins/"*.sh; do
+        if [ -f "$plugin" ]; then
+            export BASH_PLUGINS_LOADED="$plugin:$BASH_PLUGINS_LOADED"
+            source "$plugin"
+        fi
+    done
+fi
+
+alias aliases="e $LOCAL/bash-aliases-plugins"

@@ -49,9 +49,8 @@ nnoremap <esc> :noh<CR>
 nnoremap g* *``zzcgn
 
 " Save and quit
-nnoremap <C-x> :x<CR>
-nnoremap <C-X> :xa<CR>
-nnoremap <C-w>w :bd<CR>
+nnoremap <c-w>x :x<CR>
+nnoremap <c-w>W :xa<CR>
 
 " Use [ and ] to navigate through the quickfix-, location-, buffer- and tablist
 nnoremap [q :cprevious<CR>

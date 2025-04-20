@@ -14,10 +14,15 @@ SCRIPT_DIR="$(dirname "$0")"
 PACKAGES_DIR="$(realpath "$SCRIPT_DIR/packages")"
 PACKAGES_LIST=$(cd "$PACKAGES_DIR" && echo *)
 TARGET_DIR="${TARGET_DIR:-$HOME}"
+RED="$(tput setaf 1)"
+GREEN="$(tput setaf 2)"
+BLUE="$(tput setaf 4)"
+DIM="$(tput setaf dim)"
+RESET="$(tput sgr0)"
 
 # Exit if enable & disable are both enabled
 if [ "$ENABLE_PACKAGES" = "true" ] && [ "$DISABLE_PACKAGES" = "true" ]; then
-    echo "$FAILURE_ICON Cannot enable and disable packages at the same time" >&2
+    echo "$RED$FAILURE_ICON Cannot enable and disable packages at the same time$RESET" >&2
     exit 1
 fi
 
@@ -52,16 +57,18 @@ function package-show-files() {
     # Operate on each package provided
     PACKAGE_NAMES="${@:-$PACKAGES_LIST}"
     for PACKAGE_NAME in $PACKAGE_NAMES; do
+        echo
         # Check that the package is available in the packages directory
         PACKAGE_DIR="$PACKAGES_DIR/$PACKAGE_NAME"
         if [ ! -d "$PACKAGE_DIR" ]; then
-            echo "$FAILURE_ICON Package $PACKAGE_NAME not found" >&2
+            echo "$RED$FAILURE_ICON Package $PACKAGE_NAME not found$RESET" >&2
             return 1
         fi
+
+	echo "$PACKAGE_ICON $PACKAGE_NAME:"
         # List of all available files in that package
         AVAILABLE_FILES=$(find "$PACKAGE_DIR" -type f)
         if [ "$VERBOSE_ENABLED" = "true" ]; then
-            echo "Files available in $PACKAGE_ICON $PACKAGE_NAME:"
             for FILE in $AVAILABLE_FILES; do
                 echo "$FILE_ICON $FILE"
             done
@@ -77,9 +84,17 @@ function package-show-files() {
             # Disable installed files from the package
             if [ "$DISABLE_PACKAGES" = "true" ]; then
                 if [ -L "$TARGET_DIR/$LINK" ]; then
-                    rm -v "$TARGET_DIR/$LINK"
+                    if [ "$VERBOSE_ENABLED" = "true" ]; then
+                        rm -v "$TARGET_DIR/$LINK" \
+                            && echo "$LINK_ICON$BLUE $TARGET_DIR/$LINK$RESET" \
+                            || echo "${RED}Failed to unlink $TARGET_DIR/$LINK$LINK_ICON$RESET" >&2
+                    else
+                        rm "$TARGET_DIR/$LINK" \
+                            && echo "$LINK_ICON$BLUE $TARGET_DIR/$LINK$RESET" \
+                            || echo "${RED}Failed to unlink $TARGET_DIR/$LINK$LINK_ICON$RESET" >&2
+                    fi
                 else
-                    echo "$LINK cannot be removed or is not a link" >&2
+                    echo "$FAILURE_ICON $RED$LINK$LINK_ICON cannot be removed or is not a link$RESET" >&2
                 fi
                 continue
             fi
@@ -88,24 +103,33 @@ function package-show-files() {
             if [ "$ENABLE_PACKAGES" = "true" ]; then
                 # Skip if something already exists at the target location
                 if [ -e "$TARGET_DIR/$LINK" ] || [ -L "$TARGET_DIR/$LINK" ]; then
-                    echo "$LINK already exists and cannot be created: SKIPPING" >&2
+                    echo "$LINK$LINK_ICON already exists and cannot be created... ${BLUE}SKIPPING$RESET" >&2
                     continue
                 fi
-                
+
                 # Generate the directory path for the link
                 DIR=$(dirname "$TARGET_DIR/$LINK")
                 if [ ! -d "$DIR" ]; then
                     if [ "$VERBOSE_ENABLED" = "true" ]; then
-                        echo "mkdir -pv $DIR"
+                        mkdir -pv "$DIR" \
+                            && echo "$PACKAGE_ICON $DIR created" \
+                            || echo "${RED}Failed to create directory $DIR$RESET" >&2
+                    else
+                        mkdir -p "$DIR" \
+                            || echo "${RED}Failed to create directory $DIR$RESET" >&2
                     fi
-                    mkdir -pv "$DIR"
                 fi
 
                 # Link the file to that location
                 if [ "$VERBOSE_ENABLED" = "true" ]; then
-                    echo "ln -sv $TARGET_DIR/$LINK $FILE"
+                    ln -sv "$FILE" "$TARGET_DIR/$LINK" \
+                        && echo "$LINK_ICON ${GREEN}$TARGET_DIR/$LINK$RESET" \
+                        || echo "${RED}Failed to link $TARGET_DIR/$LINK$RESET"
+                else
+                    ln -s "$FILE" "$TARGET_DIR/$LINK" \
+                        && echo "$LINK_ICON ${GREEN}$TARGET_DIR/$LINK$RESET" \
+                        || echo "${RED}Failed to link $TARGET_DIR/$LINK$RESET"
                 fi
-                ln -sv "$FILE" "$TARGET_DIR/$LINK" 
             fi
         done
     done

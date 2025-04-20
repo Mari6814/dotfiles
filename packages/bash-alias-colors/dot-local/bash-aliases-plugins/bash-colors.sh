@@ -14,7 +14,7 @@ fi
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 # Modify the default values for builtins
-alias ls="ls --group-directories-first -CFh"
+alias ls="ls --color=auto --group-directories-first -CFh"
 alias ll='ls -al' # List all files *with details*, including dotfiles
 alias la='ls -A' # List all file *names* except . and .., including dotfiles
 alias l='ls -CF' # shorthand for ls

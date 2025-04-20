@@ -20,13 +20,14 @@ vim.opt.foldmethod = "indent"
 vim.opt.foldenable = false
 vim.opt.foldlevel = 99
 
+-- save and quite
+vim.keymap.set('n', '<c-w>x', ':x<CR>')
+vim.keymap.set('n', '<c-w>X', ':xa<CR>')
+
 -- Misc
 vim.keymap.set('n', '<esc>', ':noh<CR>') -- Clear search highlights on escape
 vim.keymap.set('n', 'g*', '*``zzcgn') -- Shortcut for the *cgn pattern: 
 vim.keymap.set('n', 'Y', 'y$') -- Yank to end of line
-vim.keymap.set('n', '<F5>', ':wa<CR>:make<CR>') -- Run make on F5
-vim.keymap.set('n', 'ge', '"eyi`:term<CR>"epA<CR>') -- Run the current/next code block in a terminal
-vim.keymap.set('n', 'gE', '"eyi`:!<C-r>e<CR>') -- Run the current/next code block inline in the current window
 vim.keymap.set('t', '<esc>', '<C-\\><C-n>') -- Simplify terminal mode exit shortcut
 -- Open terminal, move to bottom, set height to 10, and set the title
 vim.keymap.set('n', '<leader><leader>', ':split<CR><C-w>r:term<CR>10<C-W>_<CR>:set titlestring=Terminal<CR>A')

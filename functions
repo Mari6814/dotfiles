@@ -103,7 +103,7 @@ function package-show-files() {
             if [ "$ENABLE_PACKAGES" = "true" ]; then
                 # Skip if something already exists at the target location
                 if [ -e "$TARGET_DIR/$LINK" ] || [ -L "$TARGET_DIR/$LINK" ]; then
-                    echo "$LINK$LINK_ICON already exists and cannot be created... ${BLUE}SKIPPING$RESET" >&2
+                    echo "$LINK$LINK_ICON... ${BLUE}SKIPPING$RESET" >&2
                     continue
                 fi
 

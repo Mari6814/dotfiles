@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Gives a prompt to open an ssh connection as a new session, or attach to an existing one
+# A history file is created, for easy access to the last used connections
+# TODO: Set `SSH_SESSIONIZER_HISTORY_FILE` in the environment if needed.
+# TODO: Set `SSH_SESSIONIZER_PROMPT` in the environment to change what program to use for the prompt. By default this is `fzf`.
+
+PROMPT=${SSH_SESSIONIZER_PROMPT:-"fzf --prompt='SSH Session: ' --print-query --preview='"}
+
+HISTFILE="${SSH_SESSIONIZER_HISTORY_FILE:-$HOME/sessionizer_ssh_history}"
+
+if [[ $# -eq 1 ]]; then
+    selection="$1"
+else
+    touch "$HISTFILE"
+    selection="$(tac $HISTFILE | fzf --print-query --prompt="SSH Session: " | awk 'NF' | tail -n1 || true)"
+fi
+
+if [ -z "$selection" ]; then
+    exit 0
+fi
+
+# Prepare a tmpfile because filtering requires one...
+TMP_HISTFILE="$(mktemp "/tmp/$(basename "$HISTFILE").XXXXXX")"
+cleanup() {
+    [[ -f "$TMP_HISTFILE" ]] && rm -f "$TMP_HISTFILE"
+}
+trap cleanup EXIT
+
+# Append selection to history file, removing duplicates
+grep -Fxv -- "$selection" "$HISTFILE" > "$TMP_HISTFILE" || true
+echo "$selection" >> "$TMP_HISTFILE"
+mv -f "$TMP_HISTFILE" "$HISTFILE"
+
+# The command to run
+ssh_command="ssh $selection"
+
+# A name for the tmux session
+session_name="$(echo "$selection" | tr . _)"
+
+# Create the session if it doesn't exist
+if ! tmux has-session -t "$session_name" 2>/dev/null; then
+    tmux new-session -ds "$session_name" $ssh_command
+fi
+
+if [[ ! -z ${TMUX:-} ]]; then
+    # If we are already in a tmux session, attach to the new session on window with id 0
+    tmux switch-client -t "$session_name"
+else
+    # If we are not in a tmux session, attach to the new session
+    tmux attach-session -t "$session_name"
+fi

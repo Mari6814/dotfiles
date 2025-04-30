@@ -12,6 +12,7 @@ __autocomplete_from_tmux_pane_buffer() {
         | tr -cs '[:alnum:]_\-@\$\~/' '\n' \
         | awk '{ if (length($0) >= 3) print }' \
         | sed '$d' \
+        | sort -u \
         | uniq -u \
         | fzf --track --select-1 --exit-0 --query "$query" --tmux
     )

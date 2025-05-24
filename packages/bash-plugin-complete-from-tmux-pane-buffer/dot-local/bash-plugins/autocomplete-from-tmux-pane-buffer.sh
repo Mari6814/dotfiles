@@ -9,7 +9,7 @@ __autocomplete_from_tmux_pane_buffer() {
     local suffix="${READLINE_LINE:$READLINE_POINT}"
     local query=`echo "$prefix" | awk '{print $NF}'`
     local selected=$(tmux capture-pane -p \
-        | tr -cs '[:alnum:]_\-@\$\~/' '\n' \
+        | tr -cs '[:alnum:]_\.\-@\$\~/' '\n' \
         | awk '{ if (length($0) >= 3) print }' \
         | sed '$d' \
         | sort -u \

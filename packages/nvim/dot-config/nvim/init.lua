@@ -27,12 +27,13 @@ vim.keymap.set('n', '<c-w>X', ':xa<CR>')
 -- Misc
 vim.keymap.set('n', '<esc>', ':noh<CR>') -- Clear search highlights on escape
 vim.keymap.set('n', 'g*', '*``zzcgn') -- Shortcut for the *cgn pattern: 
-vim.keymap.set('n', 'Y', 'y$') -- Yank to end of line
 vim.keymap.set('t', '<esc>', '<C-\\><C-n>') -- Simplify terminal mode exit shortcut
 -- Open terminal, move to bottom, set height to 10, and set the title
 vim.keymap.set('n', '<leader><leader>', ':split<CR><C-w>r:term<CR>10<C-W>_<CR>:set titlestring=Terminal<CR>A')
 -- Closes the terminal window
 vim.keymap.set('t', '<leader><leader>', '<C-\\><C-n>:q<CR>')
+-- When on top of a line like "// :set makeprg=php", copy the ":set makeprg=php" part and enter it into the command line so that I can press Enter to execute it
+vim.keymap.set('n', '<leader>n', '0f:<right>vg_y:<C-r>"<CR>')
 
 -- Window navigation shortcuts in normal, insert & terminal modes
 vim.keymap.set('n', '<C-h>', '<C-w>h')

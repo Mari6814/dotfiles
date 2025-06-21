@@ -62,3 +62,7 @@ fi
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
+
+if [ -d "$HOME/.config/composer" ]; then
+    export PATH="$HOME/.config/composer/vendor/bin:$PATH"
+fi

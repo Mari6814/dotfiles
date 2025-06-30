@@ -9,6 +9,7 @@ alias envim="e ~/.config/nvim/init.lua"
 alias erc="e ~/.bashrc && source ~/.bashrc"
 alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
 alias etmux="e ~/.tmux.conf"
+alias tms="tmux-sessionizer"
 
 alias g="git"
 alias gs="git status"

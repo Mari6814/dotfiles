@@ -25,6 +25,10 @@ shopt -s autocd
 # Expands symbolic representations of paths
 shopt -s direxpand
 
+# Adds the current git branch at the end of the prompt
+[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt && export PS1='\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
+[ -f "/usr/share/bash-completion/completions/git" ] && source /usr/share/bash-completion/completions/git
+
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
 # sources /etc/bash.bashrc).
@@ -44,9 +48,9 @@ export LOCAL="$HOME/.local"
 if [ -x `which nvim` ]; then
     export EDITOR=nvim
 elif [ -x `which vim` ]; then
-	export EDITOR=vim
+    export EDITOR=vim
 elif [ -x `which vi` ]; then
-	export EDITOR=vi
+    export EDITOR=vi
 fi
 
 # Dynamically load bashrc plugins from the local directory
@@ -57,6 +61,35 @@ if [ -d "$LOCAL/bash-plugins" ]; then
             source "$plugin"
         fi
     done
+fi
+
+export FZF_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/fzf"
+export FZF_DIR="$LOCAL/fzf"
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+
+__autocomplete_from_tmux_pane_buffer() {
+    if [ -z "$TMUX" ]; then
+        echo "autocompletion from buffer only works inside a TMUX session." >&2
+        return 1
+    fi
+    local prefix="${READLINE_LINE:0:$READLINE_POINT}"
+    local suffix="${READLINE_LINE:$READLINE_POINT}"
+    local query=`echo "$prefix" | awk '{print $NF}'`
+    local selected=$(tmux capture-pane -p \
+        | tr -cs '[:alnum:]_\.\-@\$\~/' '\n' \
+        | awk '{ if (length($0) >= 3) print }' \
+        | sed '$d' \
+        | sort -u \
+        | uniq -u \
+        | fzf --track --select-1 --exit-0 --query "$query" --tmux
+    )
+    READLINE_LINE="${prefix%$query}$selected$suffix"
+    READLINE_POINT=${#READLINE_LINE}
+}
+
+if [ ! -z "${TMUX:-}" ]; then
+    bind -x '"\C-g": __autocomplete_from_tmux_pane_buffer'
 fi
 
 if [ -f ~/.bash_aliases ]; then

@@ -26,6 +26,38 @@ alias mkdir="mkdir -pv"
 
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"
 
+
+alias s="screen"
+alias sl="s -ls"
+alias ss="s -S"
+alias sr="s -r"
+
+alias py="python3"
+alias ipy="ipython"
+alias m="python3 -m"
+alias jn="jupyter notebook"
+alias tb="tensorboard --logdir ."
+alias va="source .venv/bin/activate"
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# colored GCC warnings and errors
+export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
+# Modify the default values for builtins
+alias ls="ls --group-directories-first -CFh"
+alias ll='ls -al' # List all files *with details*, including dotfiles
+alias la='ls -A' # List all file *names* except . and .., including dotfiles
+
+
 md() {
     # Create a directory and move into it
     mkdir -p "$@" && cd "$@";
@@ -36,6 +68,25 @@ etmp() {
     e "$(mktemp)$1";
 }
 
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# colored GCC warnings and errors
+export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
+# Modify the default values for builtins
+alias ls="ls --color=auto --group-directories-first -CFh"
+alias ll='ls -al' # List all files *with details*, including dotfiles
+alias la='ls -A' # List all file *names* except . and .., including dotfiles
+alias l='ls -CF' # shorthand for ls
+
 # Dynamically load plugins from the local directory
 if [ -d "$LOCAL/bash-aliases-plugins" ]; then
     for plugin in "$LOCAL/bash-aliases-plugins/"*.sh; do
@@ -45,5 +96,73 @@ if [ -d "$LOCAL/bash-aliases-plugins" ]; then
         fi
     done
 fi
+
+cmd() {
+    # Create executable bash script and edit it
+    # The first argument as the path to the script file that will be created
+    local NAME="${1:?'Usage: cmd <cmdname>'}"
+    if [ -e "$NAME" ]; then
+        echo "Command already exists: $NAME" >&2
+        return 1
+    fi
+    echo "Creating command: $NAME"
+    echo '#!/bin/bash' >> "$NAME"
+    echo '' >> "$NAME"
+    chmod +x "$NAME"
+    vim "$NAME" -c '$'
+}
+
+alias d="docker"
+alias dc="docker compose"
+alias de="docker exec -it"
+
+function docker-exec() {
+  if [ "$#" -lt 1 ]; then
+    echo "Usage: docker-exec <command> <container_name>"
+    return 1
+  fi
+  if [ "$#" -lt 2 ]; then
+    echo "Usage: docker-exec \"$1\" <container_name>"
+    return 1
+  fi
+  docker exec -it "$2" "$1"
+}
+
+function docker-bash() {
+  docker exec -it "$1" bash
+}
+
+# Autocompletion function
+_docker_bash_autocomplete() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  local containers=$(docker ps --format '{{.Names}}')
+  COMPREPLY=( $(compgen -W "$containers" -- "$cur") )
+}
+
+# Register the autocompletion function for docker-bash
+complete -F _docker_bash_autocomplete docker-bash
+complete -F _docker_bash_autocomplete docker-exec
+
+taildate() {
+    # Print the date and time of the last line of a file
+    tail -f "$1" | xargs -IL date +"%Y-%m-%d %H:%M:%S L"
+}
+
+# Autocompletion function for taildate
+_taildate() {
+    local cur
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    COMPREPLY=( $(compgen -f -- "$cur") )
+}
+
+# Register the autocompletion
+complete -F _taildate taildate
+
+watch-files() {
+    # Exists if the watched files are touched
+    watch -gt "ls -lR --full-time $@ | md5sum"
+}
+
+complete -F _taildate watch-files
 
 alias aliases="e $LOCAL/bash-aliases-plugins"

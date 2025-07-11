@@ -1,9 +1,6 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 export SOURCED="$BASH_SOURCE@`date +%H%m%S`:$SOURCED"
 
-# Default editor is vim. The script changes that later.
-export EDITOR=vim
-
 # append to the history file, don't overwrite it
 shopt -s histappend
 
@@ -44,13 +41,40 @@ fi
 export LOCAL="$HOME/.local"
 [ -d "$LOCAL/bin" ] && export PATH="$PATH:$LOCAL/bin"
 
-# Default editor
-if [ -x `which nvim` ]; then
-    export EDITOR=nvim
-elif [ -x `which vim` ]; then
-    export EDITOR=vim
-elif [ -x `which vi` ]; then
-    export EDITOR=vi
+[ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
+
+[ -x `which zoxide` ] && eval "$(zoxide init bash --cmd cd)"
+
+[ -d "$HOME/.config/composer" ] && export PATH="$HOME/.config/composer/vendor/bin:$PATH"
+
+[ -d "/opt/nvim-linux-x86_64/bin" ] && export PATH="/opt/nvim-linux-x86_64/bin:$PATH"
+
+# Default editor is vim. The script changes that later.
+export EDITOR=$([ -x `which nvim` ] && echo nvim || echo vim)
+
+[ -d "$LOCAL/fzf/bin" ] && export PATH="$LOCAL/fzf/bin:$PATH" && eval "$(fzf --bash)"
+
+if [ ! -z "${TMUX:-}" ]; then
+    __autocomplete_from_tmux_pane_buffer() {
+        if [ -z "$TMUX" ]; then
+            echo "autocompletion from buffer only works inside a TMUX session." >&2
+            return 1
+        fi
+        local prefix="${READLINE_LINE:0:$READLINE_POINT}"
+        local suffix="${READLINE_LINE:$READLINE_POINT}"
+        local query=`echo "$prefix" | awk '{print $NF}'`
+        local selected=$(tmux capture-pane -p \
+            | tr -cs '[:alnum:]_\.\-@\$\~/' '\n' \
+            | awk '{ if (length($0) >= 3) print }' \
+            | sed '$d' \
+            | sort -u \
+            | uniq -u \
+            | fzf --track --select-1 --exit-0 --query "$query" --tmux
+        )
+        READLINE_LINE="${prefix%$query}$selected$suffix"
+        READLINE_POINT=${#READLINE_LINE}
+    }
+    bind -x '"\C-g": __autocomplete_from_tmux_pane_buffer'
 fi
 
 # Dynamically load bashrc plugins from the local directory
@@ -63,39 +87,6 @@ if [ -d "$LOCAL/bash-plugins" ]; then
     done
 fi
 
-export FZF_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/fzf"
-export FZF_DIR="$LOCAL/fzf"
-
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
-
-__autocomplete_from_tmux_pane_buffer() {
-    if [ -z "$TMUX" ]; then
-        echo "autocompletion from buffer only works inside a TMUX session." >&2
-        return 1
-    fi
-    local prefix="${READLINE_LINE:0:$READLINE_POINT}"
-    local suffix="${READLINE_LINE:$READLINE_POINT}"
-    local query=`echo "$prefix" | awk '{print $NF}'`
-    local selected=$(tmux capture-pane -p \
-        | tr -cs '[:alnum:]_\.\-@\$\~/' '\n' \
-        | awk '{ if (length($0) >= 3) print }' \
-        | sed '$d' \
-        | sort -u \
-        | uniq -u \
-        | fzf --track --select-1 --exit-0 --query "$query" --tmux
-    )
-    READLINE_LINE="${prefix%$query}$selected$suffix"
-    READLINE_POINT=${#READLINE_LINE}
-}
-
-if [ ! -z "${TMUX:-}" ]; then
-    bind -x '"\C-g": __autocomplete_from_tmux_pane_buffer'
-fi
-
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
-
-if [ -d "$HOME/.config/composer" ]; then
-    export PATH="$HOME/.config/composer/vendor/bin:$PATH"
+if [ -f "$HOME/.bash_aliases" ]; then
+    source "$HOME/.bash_aliases"
 fi

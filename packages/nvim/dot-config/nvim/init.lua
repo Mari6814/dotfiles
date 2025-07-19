@@ -105,21 +105,34 @@ require("lazy").setup({
     { 'tpope/vim-fugitive' },
     {
       "vimwiki/vimwiki",
-      cmd = { "VimwikiIndex" },
-      event = "BufEnter *.md",
-      keys = { "<leader>ww", "<leader>wt" },
+      cmd = { "VimwikiIndex", "VimwikiTabIndex", "VimwikiDiaryIndex", "VimwikiMakeDiaryNote", "VimwikiTabMakeDiaryNote", "VimwikiMakeTomorrowDiaryNote" },
+      event = "BufEnter *.wiki",
+      keys = {
+          "<leader>ww",
+          { "<leader>wW", ':VimwikiTabIndex<CR>', { desc = 'Vimwiki Open Index in a new tab' } },
+          { "<leader>wt", ":VimwikiMakeDiaryNote<CR>", { desc = 'Vimwiki Make Today Diary Note' } },
+          { "<leader>wT", ":VimwikiTabMakeDiaryNote<CR>", { desc = 'Vimwiki Make Today Diary Note, but open in a new tab instead' } },
+          { "<leader>w+", ':VimwikiMakeTomorrowDiaryNote<CR>', { desc = 'Vimwiki Make Tomorrow Diary Note' } },
+
+      },
       init = function()
         vim.g.vimwiki_list = {
           {
             path = "~/wiki/",
             syntax = "markdown",
-            ext = "md",
+            ext = "wiki",
+            auto_tags = 1,
+            auto_generate_links = 1,
+            auto_generate_tags = 1,
+            auto_diary_index = 1,
+            table_mappings = 0,
           },
         }
+        vim.g.vimwiki_key_mappings = {
+          table_mappings = 0, -- disable table mappings
+        }
         vim.g.vimwiki_ext2syntax = {
-          [".md"] = "markdown",
-          [".markdown"] = "markdown",
-          [".mdown"] = "markdown",
+          [".wiki"] = "markdown",
         }
       end,
     },

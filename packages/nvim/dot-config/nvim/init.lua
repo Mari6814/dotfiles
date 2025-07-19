@@ -103,22 +103,25 @@ require("lazy").setup({
     { 'github/copilot.vim' },
     { 'neovim/nvim-lspconfig' },
     { 'tpope/vim-fugitive' },
-    { 'vimwiki/vimwiki', init = function (plug)
-        -- Create inser mode abbrevs for vimwiki: [] to create todo, # to create headings, etc.
-        vim.g.vimwiki_global_ext = 0;
-        vim.api.nvim_create_autocmd('FileType', {
-            desc='vimwiki',
-            pattern='vimwiki',
-            callback=function(opts)
-                -- Headings
-                vim.api.nvim_command('iabbrev <buffer> # = =<left><left>')
-                -- Todo
-                vim.api.nvim_command('iabbrev <buffer> [] - [ ]')
-                vim.api.nvim_command('iabbrev <buffer> [x] - [x]')
-                vim.api.nvim_command('iabbrev <buffer> [X] - [X]')
-            end,
-        })
-        end,
+    {
+      "vimwiki/vimwiki",
+      cmd = { "VimwikiIndex" },
+      event = "BufEnter *.md",
+      keys = { "<leader>ww", "<leader>wt" },
+      init = function()
+        vim.g.vimwiki_list = {
+          {
+            path = "~/wiki/",
+            syntax = "markdown",
+            ext = "md",
+          },
+        }
+        vim.g.vimwiki_ext2syntax = {
+          [".md"] = "markdown",
+          [".markdown"] = "markdown",
+          [".mdown"] = "markdown",
+        }
+      end,
     },
     { 'tpope/vim-dadbod', },
     { 'stevearc/oil.nvim',

@@ -157,7 +157,7 @@ _taildate() {
 complete -F _taildate taildate
 
 watch-files() {
-    # Exists if the watched files are touched
+    # Exits if the watched files are touched
     watch -gt "ls -lR --full-time $@ | md5sum"
 }
 

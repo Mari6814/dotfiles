@@ -17,7 +17,7 @@ alias gs="git status"
 alias tree="tree -C -I '.git|node_modules|.venv|__pycache__|.cache|.mypy_cache|.pytest_cache|.ipynb_checkpoints'"
 
 alias wiki="nvim -c VimwikiIndex"
-alias diary="nvim -c VimwikiDiaryToday"
+alias diary="nvim -c VimwikiMakeDiaryNote"
 
 alias zz="cd -"
 

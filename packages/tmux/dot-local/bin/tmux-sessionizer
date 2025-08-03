@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Example tmux usage:
+# ```
+# bind C-s display-popup -E "tmux-sessionizer"
+# ```
+# Add the above line to your ~/.tmux.conf to open tmux-sessionizer in a popup
 
 if [[ $# -eq 1 ]]; then
     selected=$1

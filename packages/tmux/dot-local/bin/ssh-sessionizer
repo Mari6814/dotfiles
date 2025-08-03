@@ -2,13 +2,13 @@
 set -euo pipefail
 # Gives a prompt to open an ssh connection as a new session, or attach to an existing one
 # A history file is created, for easy access to the last used connections
-# TODO: Set `SSH_SESSIONIZER_HISTORY_FILE` in the environment if needed.
 
-HISTFILE="${SSH_SESSIONIZER_HISTORY_FILE:-$HOME/sessionizer_ssh_history}"
+HISTFILE="${SSH_SESSIONIZER_HISTORY_FILE:-${XDG_DATA_HOME:-$HOME/.local/share}/ssh_sessionizer/ssh_sessionizer_history}"
 
 if [[ $# -eq 1 ]]; then
     selection="$1"
 else
+    mkdir -p "$(dirname "$HISTFILE")"
     touch "$HISTFILE"
     selection="$(tac $HISTFILE | fzf --prompt='user@host: ' --print-query | tail -n1 || true)"
 fi

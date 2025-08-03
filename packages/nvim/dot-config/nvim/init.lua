@@ -20,7 +20,7 @@ vim.opt.foldmethod = "indent"
 vim.opt.foldenable = false
 vim.opt.foldlevel = 99
 
--- save and quite
+-- save and quit
 vim.keymap.set('n', '<c-w>x', ':x<CR>')
 vim.keymap.set('n', '<c-w>X', ':xa<CR>')
 

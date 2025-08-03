@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# Example tmux usage:
+# Add this to your ~/.tmux.conf to open ssh-sessionizer in a popup:
+# bind C-s display-popup -E "ssh-sessionizer"
+#
 # Gives a prompt to open an ssh connection as a new session, or attach to an existing one
-# A history file is created, for easy access to the last used connections
+# A history file is created, for easy access to the last used connections.
+
+set -euo pipefail
 
 HISTFILE="${SSH_SESSIONIZER_HISTORY_FILE:-${XDG_DATA_HOME:-$HOME/.local/share}/ssh_sessionizer/ssh_sessionizer_history}"
 

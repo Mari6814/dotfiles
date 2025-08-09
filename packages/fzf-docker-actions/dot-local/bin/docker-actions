@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+list_stopped_containers() {
+  docker ps --filter "status=exited" --format '{{.Names}}' | while read -r name; do
+      echo "start: $name"
+      echo "rm-container: $name"
+  done
+}
+
+list_running_containers() {
+  docker ps --filter "status=running" --format '{{.Names}}' | while read -r name; do
+    echo "stop: $name"
+    echo "shell: $name"
+  done
+}
+
+list_compose_files() {
+  find . \
+    -maxdepth 1 -type f \( -iname 'compose.yaml' -o -iname 'compose.yml' -o -iname 'docker-compose.yaml' -o -iname 'docker-compose.yml' \) \
+    -o \( -type f -path './docker/*' \( -iname 'compose.yaml' -o -iname 'compose.yml' -o -iname 'docker-compose.yaml' -o -iname 'docker-compose.yml' \) \) \
+    | sed 's|^\./||' | while read -r file; do
+      echo "up: $file"
+      echo "down: $file"
+    done
+}
+
+list_images() {
+  docker images --format '{{.Repository}}:{{.Tag}}' | while read -r image; do
+    if [[ "$image" == "<none>:<none>" ]]; then
+      continue
+    fi
+    echo "run: $image"
+    echo "rm-image: $image"
+  done
+}
+
+menu=$(
+  {
+    list_running_containers
+    list_stopped_containers
+    list_compose_files
+    list_images
+  } | fzf \
+      --prompt='Docker Actions> ' \
+      --delimiter=': ' \
+      --with-nth=1,2 \
+      --preview='
+        action=$(echo {} | cut -d":" -f1)
+        target=$(echo {} | cut -d":" -f2- | sed "s/^ //")
+        case "$action" in
+          start|shell|stop|rm-container)
+            docker ps --filter "name=$target" --format "table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+            ;;
+          up|down)
+            cat --style=plain --paging=never "$target" 2>/dev/null || cat "$target"
+            ;;
+          run|rm-image)
+            docker image inspect "$target" 2>/dev/null | head -n 20
+            ;;
+        esac
+      '
+)
+
+[[ -z "$menu" ]] && exit 0
+
+action="${menu%%:*}"
+target="${menu#*: }"
+
+case "$action" in
+  start)
+    echo "Starting container: $target"
+    docker start "$target"
+    ;;
+  shell)
+    if docker exec -it "$target" /bin/sh; then
+      exit 0
+    fi
+    if docker exec -it "$target" /bin/bash; then
+      exit 0
+    fi
+    echo "Failed to attach to container $target with /bin/sh or /bin/bash."
+    exit 1
+    ;;
+  stop)
+    echo "Stopping container: $target"
+    docker stop "$target"
+    ;;
+  rm-container)
+    echo "Removing container: $target"
+    docker rm "$target"
+    ;;
+  up)
+    read -rp "Run detached? [y/N]: " ans
+    if [[ "$ans" =~ ^[Yy]$ ]]; then
+      docker compose -f "$target" up -d
+    else
+      docker compose -f "$target" up
+    fi
+    ;;
+  down)
+    read -rp "Remove volumes? [y/N]: " ans
+    if [[ "$ans" =~ ^[Yy]$ ]]; then
+      docker compose -f "$target" down -v
+    else
+        docker compose -f "$target" down
+    fi
+    ;;
+  run)
+    docker run --rm -it "$target"
+    ;;
+  rm-image)
+    echo "Removing image: $target"
+    docker rmi "$target"
+    ;;
+  *)
+    echo "Unknown action: $action"
+    exit 1
+    ;;
+esac
+

@@ -36,6 +36,21 @@ while [[ $# -gt 0 ]]; do
         LIST_CONTAINERS=true
       fi
       ;;
+    --only-images)
+      LIST_IMAGES=true
+      LIST_CONTAINERS=false
+      LIST_COMPOSE=false
+      ;;
+    --only-containers)
+      LIST_IMAGES=false
+      LIST_CONTAINERS=true
+      LIST_COMPOSE=false
+      ;;
+    --only-compose)
+      LIST_IMAGES=false
+      LIST_CONTAINERS=false
+      LIST_COMPOSE=true
+      ;;
     *)
       echo "Usage: $0 [--prefer-compose] [--compose] [--no-compose] [--images] [--containers] [--no-images] [--no-containers]"
       echo "Options:"
@@ -46,6 +61,9 @@ while [[ $# -gt 0 ]]; do
       echo "  --no-images: Do not list images"
       echo "  --containers: List containers (default: true)"
       echo "  --no-containers: Do not list containers"
+      echo "  --only-images: Only list images"
+      echo "  --only-containers: Only list containers"
+      echo "  --only-compose: Only list compose files"
       exit 1
       ;;
   esac

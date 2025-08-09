@@ -1,7 +1,63 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+LIST_IMAGES=true
+LIST_CONTAINERS=true
+LIST_COMPOSE=true
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --images)
+      LIST_IMAGES=true
+      ;;
+    --no-images)
+      LIST_IMAGES=false
+      ;;
+    --containers)
+      LIST_CONTAINERS=true
+      ;;
+    --no-containers)
+      LIST_CONTAINERS=false
+      ;;
+    --compose)
+      LIST_COMPOSE=true
+      ;;
+    --no-compose)
+      LIST_COMPOSE=false
+      ;;
+    --prefer-compose)
+      # Disables listing images and containers if any compose files are found
+      LIST_COMPOSE=true
+      if find . -maxdepth 1 -type f \( -iname 'compose.yaml' -o -iname 'compose.yml' -o -iname 'docker-compose.yaml' -o -iname 'docker-compose.yml' \) | grep -q .; then
+        LIST_IMAGES=false
+        LIST_CONTAINERS=false
+      else
+        LIST_IMAGES=true
+        LIST_CONTAINERS=true
+      fi
+      ;;
+    *)
+      echo "Usage: $0 [--prefer-compose] [--compose] [--no-compose] [--images] [--containers] [--no-images] [--no-containers]"
+      echo "Options:"
+      echo "  --prefer-compose: Prefer listing compose files over images and containers"
+      echo "  --compose: List compose files (default: true)"
+      echo "  --no-compose: Do not list compose files"
+      echo "  --images: List images (default: true)"
+      echo "  --no-images: Do not list images"
+      echo "  --containers: List containers (default: true)"
+      echo "  --no-containers: Do not list containers"
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+
+
 list_stopped_containers() {
+  if [[ "$LIST_CONTAINERS" == false ]]; then
+    return
+  fi
   docker ps --filter "status=exited" --format '{{.Names}}' | while read -r name; do
       echo "start: $name"
       echo "rm-container: $name"
@@ -9,6 +65,9 @@ list_stopped_containers() {
 }
 
 list_running_containers() {
+  if [[ "$LIST_CONTAINERS" == false ]]; then
+    return
+  fi
   docker ps --filter "status=running" --format '{{.Names}}' | while read -r name; do
     echo "stop: $name"
     echo "shell: $name"
@@ -16,6 +75,9 @@ list_running_containers() {
 }
 
 list_compose_files() {
+  if [[ "$LIST_COMPOSE" == false ]]; then
+    return
+  fi
   find . \
     -maxdepth 1 -type f \( -iname 'compose.yaml' -o -iname 'compose.yml' -o -iname 'docker-compose.yaml' -o -iname 'docker-compose.yml' \) \
     -o \( -type f -path './docker/*' \( -iname 'compose.yaml' -o -iname 'compose.yml' -o -iname 'docker-compose.yaml' -o -iname 'docker-compose.yml' \) \) \
@@ -26,6 +88,12 @@ list_compose_files() {
 }
 
 list_images() {
+  # List all images, excluding dangling images
+  # Only list images if the `--images` option of this command is set
+  if [[ "$LIST_IMAGES" == false ]]; then
+    return
+  fi
+
   docker images --format '{{.Repository}}:{{.Tag}}' | while read -r image; do
     if [[ "$image" == "<none>:<none>" ]]; then
       continue

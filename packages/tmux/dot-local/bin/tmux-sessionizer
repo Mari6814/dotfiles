@@ -8,9 +8,15 @@
 if [[ $# -eq 1 ]]; then
     selected=$1
 elif [[ -d "$HOME/repositories/" ]]; then
-    selected=$(find "$HOME/repositories/" -type d -name ".git" -prune -printf '%h\n' | fzf)
+    selected=$(find "$HOME/repositories/" \
+        -type d \
+        \( -name node_modules -o -name vendor -o -name '.*' \) -prune -false \
+        -o -type d -name ".git" -prune -printf '%h\n' | fzf)
 else
-    selected=$(find "$HOME/projects/" -type d -name ".git" -prune -printf '%h\n' | fzf)
+    selected=$(find "$HOME/projects/" \
+        -type d \
+        \( -name node_modules -o -name vendor -o -name '.*' \) -prune -false \
+        -o -type d -name ".git" -prune -printf '%h\n' | fzf)
 fi
 
 if [[ -z $selected ]]; then

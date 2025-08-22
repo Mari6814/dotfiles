@@ -85,6 +85,7 @@ fi
 [ -d "/opt/nvim-linux-x86_64/bin" ] && export PATH="/opt/nvim-linux-x86_64/bin:$PATH" && export EDITOR=nvim
 
 [ -d "$LOCAL/fzf/bin" ] && export PATH="$LOCAL/fzf/bin:$PATH" && eval "$(fzf --bash)"
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

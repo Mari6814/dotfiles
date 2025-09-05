@@ -25,7 +25,7 @@ shopt -s autocd
 shopt -s direxpand
 
 # Adds the current git branch at the end of the prompt
-[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt && export PS1='\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1 " %s")\$ '
+[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt && export PS1='\[\033[01;34m\]\W\[\033[00m\]$(__git_ps1 " %s")\$ '
 [ -f "/usr/share/bash-completion/completions/git" ] && source /usr/share/bash-completion/completions/git
 
 # enable programmable completion features (you don't need to enable

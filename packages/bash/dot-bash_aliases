@@ -64,7 +64,9 @@ md() {
 
 etmp() {
     # Open a temporary file in the default editor
-    e "$(mktemp)$1";
+    local file="$(mktemp)$1";
+    e "$file";
+    echo "$file";
 }
 
 # enable color support of ls and also add handy aliases

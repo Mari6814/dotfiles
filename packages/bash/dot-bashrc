@@ -86,7 +86,7 @@ fi
 
 [ -d "/usr/local/go/bin" ] && export PATH="/usr/local/go/bin:$PATH"
 
-[ -d "$LOCAL/fzf/bin" ] && export PATH="$LOCAL/fzf/bin:$PATH" && eval "$(fzf --bash)"
+export FZF_CTRL_R_OPTS="--height=7 --reverse --inline-info"
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 export NVM_DIR="$HOME/.nvm"

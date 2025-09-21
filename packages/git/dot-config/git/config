@@ -34,6 +34,23 @@
     wta = worktree add
     wtr = worktree remove
     wtl = worktree list
+    bump = "!f() { \
+      part=$1; \
+      latest=$(git tag -l 'v[0-9]*' | sed 's/^v//' | sort -V | tail -n1); \
+      [ -z \"$latest\" ] && latest=\"0.0.0\"; \
+      major=$(echo $latest | cut -d. -f1); \
+      minor=$(echo $latest | cut -d. -f2); \
+      patch=$(echo $latest | cut -d. -f3); \
+      case \"$part\" in \
+        major) major=$((major+1)); minor=0; patch=0 ;; \
+        minor) minor=$((minor+1)); patch=0 ;; \
+        patch) patch=$((patch+1)) ;; \
+        *) echo \"Usage: git bump [major|minor|patch]\"; exit 1 ;; \
+      esac; \
+      newtag=\"v${major}.${minor}.${patch}\"; \
+      git tag $newtag && echo \"Created tag $newtag\"; \
+    }; f"
+
 [difftool]
 	prompt = false
 [init]

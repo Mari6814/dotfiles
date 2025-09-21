@@ -20,6 +20,21 @@ vim.opt.foldmethod = "indent"
 vim.opt.foldenable = false
 vim.opt.foldlevel = 99
 
+vim.opt.termguicolors = true
+vim.cmd('colorscheme desert')
+vim.opt.background = 'dark'
+vim.opt.cursorline = true
+vim.opt.updatetime = 300
+vim.opt.clipboard = 'unnamedplus'
+vim.opt.scrolloff = 8
+vim.opt.sidescrolloff = 8
+vim.opt.splitbelow = true
+vim.opt.splitright = true
+vim.opt.mouse = 'a' -- Enable mouse support
+vim.opt.completeopt = {'menu', 'menuone', 'noselect'} -- Better completion experience, specifically 1. don't auto-select 2. show menu even if there's only one match. How to use: <c-x><c-o> in insert mode
+vim.opt.shortmess:append('c') -- Don't show the completion messages in the command line
+
+
 -- save and quit
 vim.keymap.set('n', '<c-w>x', ':x<CR>')
 vim.keymap.set('n', '<c-w>X', ':xa<CR>')

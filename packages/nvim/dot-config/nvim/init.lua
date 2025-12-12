@@ -182,11 +182,10 @@ require("lazy").setup({
 })
 
 -- $ npm i -g pyright typescript typescript-language-server vim-language-server vscode-langservers-extracted @tailwindcss/language-server
-require'lspconfig'.pyright.setup{}
-require'lspconfig'.ts_ls.setup{}
-require'lspconfig'.tailwindcss.setup{}
-require'lspconfig'.gopls.setup{}
-require'lspconfig'.rust_analyzer.setup{}
+vim.lsp.enable("pyright")
+vim.lsp.enable("ts_ls")
+vim.lsp.enable("tailwindcss")
+vim.lsp.enable("rust_analyzer")
 
 -- Use LspAttach autocommand to only map the following keys
 -- after the language server attaches to the current buffer

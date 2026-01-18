@@ -181,10 +181,8 @@ require("lazy").setup({
     },
 })
 
--- $ npm i -g pyright typescript typescript-language-server vim-language-server vscode-langservers-extracted @tailwindcss/language-server
+--- $ npm i -g pyright
 vim.lsp.enable("pyright")
-vim.lsp.enable("ts_ls")
-vim.lsp.enable("tailwindcss")
 vim.lsp.enable("rust_analyzer")
 
 -- Use LspAttach autocommand to only map the following keys

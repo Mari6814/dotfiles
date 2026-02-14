@@ -65,3 +65,9 @@
     autoStash = true
 [rerere]
 	enabled = true
+[commit]
+	gpgsign = true
+[tag]
+	gpgSign = true
+[include]
+    path = ~/.gitconfig.local

@@ -1,6 +1,8 @@
 #!/bin/bash
 export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
 
+alias clipboard="xclip -sel clip"
+
 alias e="$EDITOR"
 
 # Shortcuts to edit specific files

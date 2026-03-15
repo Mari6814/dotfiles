@@ -24,8 +24,16 @@ shopt -s autocd
 # Expands symbolic representations of paths
 shopt -s direxpand
 
+shrink_path() {
+  # Transforms the current PWD from '~/projects/repo/src' to '~/p/r/src' and '/etc/nginx/conf' to '/e/n/conf'.
+  # 1. Take PWD and replace the Home path with ~
+  # 2. Use sed to find every character followed by more characters and a slash,
+  #    then replace it with just that first character and the slash.
+  echo "${PWD/#$HOME/\~}" | sed -E 's|([^/])[^/]+(/)|\1\2|g'
+}
+
 # Adds the current git branch at the end of the prompt
-[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt && export PS1='\[\033[01;34m\]\W\[\033[00m\]$(__git_ps1 " %s")\$ '
+[ -f "/etc/bash_completion.d/git-prompt" ] && source /etc/bash_completion.d/git-prompt && export PS1='\[\033[01;34m\]$(shrink_path)\[\033[00m\]$(__git_ps1 " %s")\$ '
 [ -f "/usr/share/bash-completion/completions/git" ] && source /usr/share/bash-completion/completions/git
 
 # enable programmable completion features (you don't need to enable

@@ -97,6 +97,33 @@
             echo 'Codeberg remote already exists'; \
         fi; \
     }; f_git_alias_add_mirrors"
+    active-remote = "!f_git_alias_activate_remote() { \
+        show_help() { \
+            echo 'Usage: git active-remote <remote>'; \
+            echo; \
+            echo 'Sets the URL of \"origin\" to match the specified remote.'; \
+            echo; \
+            echo 'Example:'; \
+            echo '  git active-remote upstream'; \
+        }; \
+        if [ \"$1\" = \"--help\" ] || [ \"$1\" = \"-h\" ]; then \
+            show_help; \
+            exit 0; \
+        fi; \
+        if [ -z \"$1\" ]; then \
+            echo 'Error: missing remote name.'; \
+            exit 1; \
+        fi; \
+        if ! git remote get-url \"$1\" >/dev/null 2>&1; then \
+            echo \"Error: remote '$1' does not exist.\"; \
+            exit 1; \
+        fi; \
+        url=$(git remote get-url \"$1\"); \
+        git remote set-url origin \"$url\"; \
+        echo 'origin now points to:'; \
+        echo \"  $url\"; \
+    }; f_git_alias_activate_remote"
+
 [difftool]
 	prompt = false
 [init]

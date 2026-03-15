@@ -34,7 +34,7 @@
     wta = worktree add
     wtr = worktree remove
     wtl = worktree list
-    bump = "!f() { \
+    bump = "!f_git_alias_bump() { \
       part=$1; \
       shift; \
       latest=$(git tag -l 'v[0-9]*' | sed 's/^v//' | sort -V | tail -n1); \
@@ -50,8 +50,53 @@
       esac; \
       newtag=\"v${major}.${minor}.${patch}\"; \
       git tag \"$@\" $newtag && echo \"Created tag $newtag\"; \
-    }; f"
-
+    }; f_git_alias_bump"
+    # Provides a preview of the remotes the push-mirrors command will push into
+    show-mirrors = "!f_git_alias_show_mirrors() { \
+        origin_url=$(git remote get-url origin); \
+        if [ -z \"$origin_url\" ]; then \
+            echo 'Error: origin remote has no URL!'; \
+            return 1; \
+        fi; \
+        for remote in $(git remote); do \
+            remote_url=$(git remote get-url $remote 2>/dev/null || echo ''); \
+            if [ -n \"$remote_url\" ] && [ \"$remote_url\" != \"$origin_url\" ]; then \
+                echo \"[dry-run] git push $remote --mirror\"; \
+            fi; \
+        done; \
+    }; f_git_alias_show_mirrors"
+    # pushes to all remotes that are not the current origin remote using --mirror flag
+    push-mirrors = "!f_git_alias_push_mirrors() { \
+        origin_url=$(git remote get-url origin); \
+        if [ -z \"$origin_url\" ]; then \
+            echo 'Error: origin remote has no URL!'; \
+            return 1; \
+        fi; \
+        for remote in $(git remote); do \
+            remote_url=$(git remote get-url $remote 2>/dev/null || echo ''); \
+            if [ -n \"$remote_url\" ] && [ \"$remote_url\" != \"$origin_url\" ]; then \
+                echo \"Mirroring to '$remote'\"; \
+                git push --mirror $remote; \
+            fi; \
+        done; \
+    }; f_git_alias_push_mirrors"
+    # Generates remotes for all my common code mirrors
+    add-mirrors = "!f_git_alias_add_mirrors() { \
+        base_url=$(git remote get-url origin); \
+        repo_name=$(basename -s .git $base_url); \
+        if ! git remote get-url github >/dev/null 2>&1; then \
+            git remote add github git@github.com:Mari6814/$repo_name.git; \
+            echo 'Added GitHub remote'; \
+        else \
+            echo 'GitHub remote already exists'; \
+        fi; \
+        if ! git remote get-url codeberg >/dev/null 2>&1; then \
+            git remote add codeberg ssh://git@codeberg.org/marianplivelic/$repo_name.git; \
+            echo 'Added Codeberg remote'; \
+        else \
+            echo 'Codeberg remote already exists'; \
+        fi; \
+    }; f_git_alias_add_mirrors"
 [difftool]
 	prompt = false
 [init]

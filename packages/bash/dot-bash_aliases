@@ -90,16 +90,6 @@ alias ll='ls -al' # List all files *with details*, including dotfiles
 alias la='ls -A' # List all file *names* except . and .., including dotfiles
 alias l='ls -CF' # shorthand for ls
 
-# Dynamically load plugins from the local directory
-if [ -d "$LOCAL/bash-aliases-plugins" ]; then
-    for plugin in "$LOCAL/bash-aliases-plugins/"*.sh; do
-        if [ -f "$plugin" ]; then
-            export BASH_PLUGINS_LOADED="$plugin:$BASH_PLUGINS_LOADED"
-            source "$plugin"
-        fi
-    done
-fi
-
 cmd() {
     # Create executable bash script and edit it
     # The first argument as the path to the script file that will be created
@@ -115,57 +105,19 @@ cmd() {
     vim "$NAME" -c '$'
 }
 
-alias d="docker"
-alias dc="docker compose"
-alias de="docker exec -it"
-
-function docker-exec() {
-  if [ "$#" -lt 1 ]; then
-    echo "Usage: docker-exec <command> <container_name>"
-    return 1
-  fi
-  if [ "$#" -lt 2 ]; then
-    echo "Usage: docker-exec \"$1\" <container_name>"
-    return 1
-  fi
-  docker exec -it "$2" "$1"
-}
-
-function docker-bash() {
-  docker exec -it "$1" bash
-}
-
-# Autocompletion function
-_docker_bash_autocomplete() {
-  local cur="${COMP_WORDS[COMP_CWORD]}"
-  local containers=$(docker ps --format '{{.Names}}')
-  COMPREPLY=( $(compgen -W "$containers" -- "$cur") )
-}
-
-# Register the autocompletion function for docker-bash
-complete -F _docker_bash_autocomplete docker-bash
-complete -F _docker_bash_autocomplete docker-exec
-
 taildate() {
     # Print the date and time of the last line of a file
     tail -f "$1" | xargs -IL date +"%Y-%m-%d %H:%M:%S L"
 }
-
-# Autocompletion function for taildate
-_taildate() {
-    local cur
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    COMPREPLY=( $(compgen -f -- "$cur") )
-}
-
-# Register the autocompletion
-complete -F _taildate taildate
 
 watch-files() {
     # Exits if the watched files are touched
     watch -gt "ls -lR --full-time $@ | md5sum"
 }
 
-complete -F _taildate watch-files
+# Load machine-local aliases that are not commited into git
+if [ -f "$LOCAL/bash_aliases.local" ]; then
+    export SOURCED="$LOCAL/.bash_aliases@`date +%H%m%S`:$SOURCED"
+    source "$LOCAL/bash_aliases.local"
+fi
 
-alias aliases="e $LOCAL/bash-aliases-plugins"

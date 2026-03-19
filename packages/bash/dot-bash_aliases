@@ -121,3 +121,4 @@ if [ -f "$LOCAL/bash_aliases.local" ]; then
     source "$LOCAL/bash_aliases.local"
 fi
 
+alias compose="docker compose"

@@ -15,7 +15,7 @@ if [[ $# -eq 1 ]]; then
 else
     mkdir -p "$(dirname "$HISTFILE")"
     touch "$HISTFILE"
-    selection="$(tac $HISTFILE | fzf --prompt='user@host: ' --print-query | tail -n1 || true)"
+    selection="$(fzf --tac --prompt='user@host: ' --print-query < "$HISTFILE" | tail -n1 || true)"
 fi
 
 if [ -z "$selection" ]; then
@@ -34,15 +34,12 @@ grep -Fxv -- "$selection" "$HISTFILE" > "$TMP_HISTFILE" || true
 echo "$selection" >> "$TMP_HISTFILE"
 mv -f "$TMP_HISTFILE" "$HISTFILE"
 
-# The command to run
-ssh_command="ssh $selection"
-
 # A name for the tmux session
 session_name="$(echo "$selection" | tr '.-' _)"
 
 # Create the session if it doesn't exist
 if ! tmux has-session -t "$session_name" 2>/dev/null; then
-    tmux new-session -ds "$session_name" $ssh_command
+    tmux new-session -ds "$session_name" ssh "$selection"
 fi
 
 if [[ ! -z ${TMUX:-} ]]; then

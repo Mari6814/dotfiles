@@ -15,9 +15,7 @@ else
     done
     if [[ ${#existing_dirs[@]} -gt 0 ]]; then
         selected=$(find "${existing_dirs[@]}" \
-            -type d \
-            \( -name node_modules -o -name vendor -o -name '.*' \) -prune -false \
-            -o -type d -name ".git" -prune -print | sed 's:/\.git$::' | fzf)
+            -mindepth 1 -maxdepth 1 -type d | fzf)
     fi
 fi
 

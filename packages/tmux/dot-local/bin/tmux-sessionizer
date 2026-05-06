@@ -7,11 +7,18 @@
 
 if [[ $# -eq 1 ]]; then
     selected=$1
-elif [[ -d "$HOME/projects/" ]]; then
-    selected=$(find "$HOME/projects/" \
-        -type d \
-        \( -name node_modules -o -name vendor -o -name '.*' \) -prune -false \
-        -o -type d -name ".git" -prune -printf '%h\n' | fzf)
+else
+    IFS=':' read -ra search_dirs <<< "${TMUX_SESSIONIZER_PATHS:-$HOME/projects}"
+    existing_dirs=()
+    for dir in "${search_dirs[@]}"; do
+        [[ -d "$dir" ]] && existing_dirs+=("$dir")
+    done
+    if [[ ${#existing_dirs[@]} -gt 0 ]]; then
+        selected=$(find "${existing_dirs[@]}" \
+            -type d \
+            \( -name node_modules -o -name vendor -o -name '.*' \) -prune -false \
+            -o -type d -name ".git" -prune -print | sed 's:/\.git$::' | fzf)
+    fi
 fi
 
 if [[ -z $selected ]]; then

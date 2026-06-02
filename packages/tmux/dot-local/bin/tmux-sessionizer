@@ -14,8 +14,31 @@ else
         [[ -d "$dir" ]] && existing_dirs+=("$dir")
     done
     if [[ ${#existing_dirs[@]} -gt 0 ]]; then
-        selected=$(find "${existing_dirs[@]}" \
-            -mindepth 1 -maxdepth 1 -type d | fzf)
+        # Build "label<TAB>path" entries. A bare repo expands to the bare repo
+        # itself plus each of its worktrees, labelled "repo#worktree" so their
+        # session names don't collide across repos.
+        entries=()
+        while IFS= read -r dir; do
+            name=$(basename "$dir")
+            # A bare repo keeps its git files (HEAD, objects, refs) at the top
+            # level; a normal project keeps them under .git. This cheap test
+            # avoids spawning git for every (mostly non-bare) directory.
+            if [[ -f "$dir/HEAD" && -d "$dir/objects" && -d "$dir/refs" ]]; then
+                entries+=("$name"$'\t'"$dir")
+                while IFS= read -r worktree; do
+                    [[ "$worktree" == "$dir" ]] && continue
+                    entries+=("$name#$(basename "$worktree")"$'\t'"$worktree")
+                done < <(git -C "$dir" worktree list --porcelain \
+                    | awk '/^worktree /{print $2}')
+            else
+                entries+=("$name"$'\t'"$dir")
+            fi
+        done < <(find "${existing_dirs[@]}" -mindepth 1 -maxdepth 1 -type d)
+        selection=$(printf '%s\n' "${entries[@]}" | fzf --delimiter='\t' --with-nth=1)
+        if [[ -n $selection ]]; then
+            selected=${selection#*$'\t'}
+            session_name=$(printf '%s' "${selection%%$'\t'*}" | tr . _)
+        fi
     fi
 fi
 
@@ -23,7 +46,7 @@ if [[ -z $selected ]]; then
     exit 0
 fi
 
-session_name=$(basename "$selected" | tr . _)
+session_name=${session_name:-$(basename "$selected" | tr . _)}
 
 # Create the session if it doesn't exist
 if ! tmux has-session -t "$session_name" 2>/dev/null; then

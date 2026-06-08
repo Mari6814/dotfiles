@@ -33,6 +33,7 @@
     wta = worktree add
     wtr = worktree remove
     wtl = worktree list
+    worktrees = worktree list
     bump = "!f_git_alias_bump() { \
       part=$1; \
       shift; \

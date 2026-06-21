@@ -93,3 +93,8 @@ inoremap <F7> <C-o>:!./%<CR>
 
 nnoremap <space> :wa<CR>
 inoremap <C-s> <C-o>:w<CR>
+
+if executable('rg')
+  set grepprg=rg\ --vimgrep\ --smart-case
+  set grepformat=%f:%l:%c:%m
+endif

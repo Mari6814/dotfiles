@@ -14,24 +14,26 @@ else
         [[ -d "$dir" ]] && existing_dirs+=("$dir")
     done
     if [[ ${#existing_dirs[@]} -gt 0 ]]; then
-        # Build "label<TAB>path" entries. A bare repo expands to the bare repo
-        # itself plus each of its worktrees, labelled "repo#worktree" so their
-        # session names don't collide across repos.
+        # Build "label<TAB>path" entries. The label (and thus the session name)
+        # is prefixed with the search-dir it lives under ("root/repo") so that
+        # repos with the same basename under different search dirs don't collide.
+        # A bare repo expands to the bare repo itself plus each of its worktrees,
+        # labelled "root/repo#worktree".
         entries=()
         while IFS= read -r dir; do
-            name=$(basename "$dir")
+            label="$(basename "$(dirname "$dir")")/$(basename "$dir")"
             # A bare repo keeps its git files (HEAD, objects, refs) at the top
             # level; a normal project keeps them under .git. This cheap test
             # avoids spawning git for every (mostly non-bare) directory.
             if [[ -f "$dir/HEAD" && -d "$dir/objects" && -d "$dir/refs" ]]; then
-                entries+=("$name"$'\t'"$dir")
+                entries+=("$label"$'\t'"$dir")
                 while IFS= read -r worktree; do
                     [[ "$worktree" == "$dir" ]] && continue
-                    entries+=("$name#$(basename "$worktree")"$'\t'"$worktree")
+                    entries+=("$label#$(basename "$worktree")"$'\t'"$worktree")
                 done < <(git -C "$dir" worktree list --porcelain \
                     | awk '/^worktree /{print $2}')
             else
-                entries+=("$name"$'\t'"$dir")
+                entries+=("$label"$'\t'"$dir")
             fi
         done < <(find "${existing_dirs[@]}" -mindepth 1 -maxdepth 1 -type d)
         selection=$(printf '%s\n' "${entries[@]}" | fzf --delimiter='\t' --with-nth=1)
@@ -49,14 +51,14 @@ fi
 session_name=${session_name:-$(basename "$selected" | tr . _)}
 
 # Create the session if it doesn't exist
-if ! tmux has-session -t "$session_name" 2>/dev/null; then
+if ! tmux has-session -t "=$session_name" 2>/dev/null; then
     tmux new-session -ds "$session_name" -c "$selected"
 fi
 
 if [[ ! -z ${TMUX:-} ]]; then
     # If we are already in a tmux session, attach to the new session on window with id 0
-    tmux switch-client -t "$session_name"
+    tmux switch-client -t "=$session_name"
 else
     # If we are not in a tmux session, attach to the new session
-    tmux attach-session -t "$session_name"
+    tmux attach-session -t "=$session_name"
 fi

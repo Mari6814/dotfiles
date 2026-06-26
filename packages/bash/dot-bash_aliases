@@ -13,6 +13,7 @@ alias ealias="e ~/.bash_aliases && source ~/.bash_aliases"
 alias etmux="e ~/.tmux.conf"
 alias tms="tmux-sessionizer"
 alias sss="ssh-sessionizer"
+alias gss="git-sessionizer"
 
 alias g="git"
 alias gs="git status"

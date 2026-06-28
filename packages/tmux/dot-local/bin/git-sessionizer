@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# Switch git branches as tmux sessions, sourced from the current repo:
+#   * Bare repo (or one of its worktrees): pick a branch to check out as a
+#     worktree, then open/attach its tmux session.
+#   * Normal repo: pick a branch to switch to in place.
+# Type a name that matches no branch to create it.
+#
+# Example tmux binding:
+#   bind C-w display-popup -E "git-sessionizer"
+
+set -euo pipefail
+
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+    echo "git-sessionizer: not inside a git repository" >&2
+    exit 1
+fi
+
+is_bare=$(git rev-parse --is-bare-repository)
+common_dir=$(cd "$(git rev-parse --git-common-dir)" && pwd -P)
+histfile="$common_dir/git-sessionizer-history"
+
+order_branches() {
+    local all; all=$(cat)
+    { [[ -f "$histfile" ]] && cat "$histfile"; printf '%s\n' "$all"; } \
+        | awk 'NF && !seen[$0]++' \
+        | grep -Fxf <(printf '%s\n' "$all") || true
+}
+
+record_history() {
+    local tmp; tmp=$(mktemp "${TMPDIR:-/tmp}/git-sessionizer.XXXXXX")
+    { printf '%s\n' "$1"; [[ -f "$histfile" ]] && grep -Fxv -- "$1" "$histfile"; } \
+        > "$tmp" 2>/dev/null || true
+    mv -f "$tmp" "$histfile"
+}
+
+mode=normal
+bare_dir=""
+if [[ "$is_bare" == "true" ]]; then
+    mode=bare
+    bare_dir=$common_dir
+elif [[ "$(git config -f "$common_dir/config" --bool --get core.bare 2>/dev/null \
+        || echo false)" == "true" ]]; then
+    mode=bare
+    bare_dir=$common_dir
+fi
+
+if [[ "$mode" == "normal" ]]; then
+    toplevel=$(git rev-parse --show-toplevel)
+    out=$(git -C "$toplevel" branch --format='%(refname:short)' | order_branches \
+        | fzf --print-query --prompt='switch branch: ' --reverse || true)
+    query=$(printf '%s\n' "$out" | sed -n '1p')
+    match=$(printf '%s\n' "$out" | sed -n '2p')
+    if [[ -n "$match" ]]; then
+        record_history "$match"; git -C "$toplevel" switch "$match"
+    elif [[ -n "$query" ]]; then
+        record_history "$query"; git -C "$toplevel" switch -c "$query"
+    fi
+    exit 0
+fi
+
+# Bare repo: pick a branch, ensure it has a worktree, open its session.
+wt_branches=$(git -C "$bare_dir" worktree list --porcelain \
+    | awk '/^branch /{sub("refs/heads/","",$2); print $2}')
+
+entries=()
+while IFS= read -r br; do
+    [[ -z "$br" ]] && continue
+    if grep -Fxq -- "$br" <<<"$wt_branches"; then
+        entries+=("$br"$'\t'"$br  *")   # " *" = branch already has a worktree
+    else
+        entries+=("$br"$'\t'"$br")
+    fi
+done < <(git -C "$bare_dir" branch --format='%(refname:short)' | order_branches)
+
+out=$(printf '%s\n' "${entries[@]}" \
+    | fzf --delimiter='\t' --with-nth=2 --print-query --prompt='branch: ' --reverse || true)
+query=$(printf '%s\n' "$out" | sed -n '1p')
+match=$(printf '%s\n' "$out" | sed -n '2p')
+
+if [[ -n "$match" ]]; then
+    branch=${match%%$'\t'*}
+elif [[ -n "$query" ]]; then
+    branch=$query
+else
+    exit 0
+fi
+record_history "$branch"
+
+worktree=$(git -C "$bare_dir" worktree list --porcelain \
+    | awk -v b="refs/heads/$branch" '/^worktree /{p=substr($0,10)} $0=="branch "b{print p}')
+
+if [[ -z "$worktree" ]]; then
+    # Ask where to check out worktrees, pre-filling the saved location.
+    base=$(git -C "$bare_dir" config --get sessionizer.worktreedir 2>/dev/null || true)
+    base=${base:-$bare_dir}
+    base=$(echo "$base" | fzf --print-query --query="$base" \
+        --prompt='worktree base dir: ' --height=10% | tail -n1 || true)
+    base=${base%/}
+    [[ -z "$base" ]] && exit 0
+    git -C "$bare_dir" config sessionizer.worktreedir "$base"
+
+    worktree="$base/${branch//\//-}"
+    if git -C "$bare_dir" show-ref --verify --quiet "refs/heads/$branch"; then
+        git -C "$bare_dir" worktree add "$worktree" "$branch"
+    else
+        git -C "$bare_dir" worktree add -b "$branch" "$worktree"
+    fi
+fi
+
+selected=$worktree
+session_name=$(printf '%s' "$(basename "$bare_dir")#$(basename "$worktree")" | tr . _)
+
+if ! tmux has-session -t "=$session_name" 2>/dev/null; then
+    tmux new-session -ds "$session_name" -c "$selected"
+fi
+if [[ -n ${TMUX:-} ]]; then
+    tmux switch-client -t "=$session_name"
+else
+    tmux attach-session -t "=$session_name"
+fi

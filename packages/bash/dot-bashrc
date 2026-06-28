@@ -105,3 +105,5 @@ export NVM_DIR="$HOME/.nvm"
 
 # opencode
 export PATH=/home/m/.opencode/bin:$PATH
+
+[ -f $LOCAL/bashrc.local ] && source "$LOCAL/bashrc.local"

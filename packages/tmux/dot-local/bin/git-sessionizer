@@ -7,6 +7,10 @@
 #
 # Example tmux binding:
 #   bind C-w display-popup -E "git-sessionizer"
+#
+# TODO: When creating this I forgot that i was doing a sessionizer...
+# that means when we are not in a bare repository, sessionizeing a branch checkout
+# makes no sense. This sessionizer always has to have to do something with worktrees.
 
 set -euo pipefail
 

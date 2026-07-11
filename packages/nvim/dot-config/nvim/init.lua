@@ -115,7 +115,6 @@ require("lazy").setup({
             vim.keymap.set('n', '<leader>gf', builtin.git_files, {})
         end
     },
-    { 'github/copilot.vim' },
     { 'neovim/nvim-lspconfig' },
     { 'tpope/vim-fugitive' },
     {

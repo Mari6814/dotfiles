@@ -115,7 +115,6 @@ require("lazy").setup({
             vim.keymap.set('n', '<leader>gf', builtin.git_files, {})
         end
     },
-    { 'github/copilot.vim' },
     { 'neovim/nvim-lspconfig' },
     { 'tpope/vim-fugitive' },
     {
@@ -152,23 +151,6 @@ require("lazy").setup({
       end,
     },
     { 'tpope/vim-dadbod', },
-    {
-        'kristijanhusak/vim-dadbod-ui',
-        dependencies = {
-            { 'tpope/vim-dadbod', lazy = true },
-            { 'kristijanhusak/vim-dadbod-completion', ft = { 'sql', 'mysql', 'plsql' }, lazy = true }, -- Optional
-        },
-        cmd = {
-            'DBUI',
-            'DBUIToggle',
-            'DBUIAddConnection',
-            'DBUIFindBuffer',
-        },
-        init = function()
-            -- Your DBUI configuration
-            vim.g.db_ui_use_nerd_fonts = 1
-        end,
-    },
     { 'stevearc/oil.nvim',
         lazy = false, -- required to be able to do `$ nvim .`
         opts = { default_file_explorer = true },
@@ -253,6 +235,6 @@ require'nvim-treesitter.configs'.setup{
 }
 
 if vim.fn.executable("rg") == 1 then
-  vim.opt.grepprg = "rg --vimgrep --smart-case"
-  vim.opt.grepformat = "%f:%l:%c:%m"
+  vim.o.grepprg = "rg --vimgrep --smart-case"
+  vim.o.grepformat = "%f:%l:%c:%m"
 end

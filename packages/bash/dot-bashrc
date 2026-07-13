@@ -103,7 +103,8 @@ export NVM_DIR="$HOME/.nvm"
 
 [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
 
-# opencode
 export PATH=/home/m/.opencode/bin:$PATH
+
+export ODIN_ROOT="$HOME/odin"
 
 [ -f $LOCAL/bashrc.local ] && source "$LOCAL/bashrc.local"

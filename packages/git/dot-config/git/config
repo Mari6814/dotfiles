@@ -2,7 +2,7 @@
 	name = Marian Plivelic
 	email = MarianPlivelic@gmail.com
 [core]
-	editor = vim
+	editor = nvim
 	excludesFile = ~/.gitignore
 [filter "lfs"]
 	clean = git-lfs clean -- %f

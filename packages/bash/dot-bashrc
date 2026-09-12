@@ -51,16 +51,6 @@ fi
 export LOCAL="$HOME/.local"
 [ -d "$LOCAL/bin" ] && export PATH="$PATH:$LOCAL/bin"
 
-# Dynamically load bashrc plugins from the local directory
-if [ -d "$LOCAL/bash-plugins" ]; then
-    for plugin in "$LOCAL/bash-plugins/"*.sh; do
-        if [ -f "$plugin" ]; then
-            export BASH_PLUGINS_LOADED="$plugin:$BASH_PLUGINS_LOADED"
-            source "$plugin"
-        fi
-    done
-fi
-
 if [ ! -z "${TMUX:-}" ]; then
     __autocomplete_from_tmux_pane_buffer() {
         if [ -z "$TMUX" ]; then

@@ -1,6 +1,7 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 export SOURCED="$BASH_SOURCE@`date +%H%m%S`:$SOURCED"
 
+# Default to `vim`, but if nvim is installed, it will later override this with `nvim`
 export EDITOR=vim
 
 # append to the history file, don't overwrite it
@@ -49,7 +50,9 @@ fi
 
 # Set up the user's "local" directory
 export LOCAL="$HOME/.local"
+
 [ -d "$LOCAL/bin" ] && export PATH="$PATH:$LOCAL/bin"
+[ -d "$LOCAL/completions" ] && for f in "$LOCAL/completions/"*.{bash,sh}; do [[ -f "$f" ]] && source "$f"; done
 
 if [ ! -z "${TMUX:-}" ]; then
     __autocomplete_from_tmux_pane_buffer() {
@@ -84,15 +87,14 @@ fi
 
 [ -d "/usr/local/go/bin" ] && export PATH="/usr/local/go/bin:$PATH"
 
-export FZF_CTRL_R_OPTS="--height=7 --reverse --inline-info"
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+export FZF_CTRL_R_OPTS="--height=7 --reverse --inline-info" && [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-[ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
+[ -d "/$HOME/.opencode/bin" ] && export PATH="$HOME/.opencode/bin:$PATH"
 
-export PATH="$HOME/.opencode/bin:$PATH"
+[ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
 
 [ -f "$LOCAL/bashrc" ] && source "$LOCAL/bashrc"

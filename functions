@@ -1,5 +1,63 @@
 #!/bin/bash
 
+# # dotfiles
+# This is the functions script used by `install` and `remove`
+#
+# ## Installation
+# Install all packages:
+#
+# ```bash
+# ./install
+# ```
+#
+# Only *some* packages:
+#
+# ```bash
+# ./install git tmux
+# ```
+#
+# ## Uninstall
+# To remove all packages:
+#
+# ```bash
+# ./remove
+# ```
+#
+# To remove some packages:
+#
+# ```bash
+# ./remove git tmux
+# ```
+#
+# ## Git update
+# Before you `git pull` to get the changes, make sure you have *removed* all packages once first,
+# to make sure we don't leave any symlinks behind:
+#
+# ```bash
+# ./remove
+# git pull
+# ```
+#
+# ## Inventory & cleanup
+# This script creates symlinks from its current directory architecture,
+# which means if the architecture changes *before you manage to cleanup the current one*
+# then symlinks might be left behind.
+#
+# By default we store the inventory in
+#   `$HOME/.local/state/dotfiles/inventory`
+# Override by setting `DOTFILES_INVENTORY`.
+#
+# It is just a list of all symlinks ever created.
+#
+# In case you want to clean up, run:
+#
+# ```bash
+# while IFS= read -r path; do
+#     [[ "$path" == \#* ]] && continue
+#     [[ -L "$path" && ! -e "$path" ]] && rm "$path"
+# done < "$INVENTORY"
+# ```
+
 PACKAGE_ICON="📦"
 FILE_ICON="📄"
 DIRECTORY_ICON="📁"
@@ -19,6 +77,8 @@ GREEN="$(tput setaf 2)"
 BLUE="$(tput setaf 4)"
 DIM="$(tput setaf dim)"
 RESET="$(tput sgr0)"
+
+INVENTORY="${DOTFILES_INVENTORY:-${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/inventory}"
 
 # Exit if enable & disable are both enabled
 if [ "$ENABLE_PACKAGES" = "true" ] && [ "$DISABLE_PACKAGES" = "true" ]; then
@@ -122,13 +182,31 @@ function package-show-files() {
 
                 # Link the file to that location
                 if [ "$VERBOSE_ENABLED" = "true" ]; then
-                    ln -sv "$FILE" "$TARGET_DIR/$LINK" \
-                        && echo "$LINK_ICON ${GREEN}$TARGET_DIR/$LINK$RESET" \
-                        || echo "${RED}Failed to link $TARGET_DIR/$LINK$RESET"
+                    ln -sv "$FILE" "$TARGET_DIR/$LINK"
                 else
-                    ln -s "$FILE" "$TARGET_DIR/$LINK" \
-                        && echo "$LINK_ICON ${GREEN}$TARGET_DIR/$LINK$RESET" \
-                        || echo "${RED}Failed to link $TARGET_DIR/$LINK$RESET"
+                    ln -s "$FILE" "$TARGET_DIR/$LINK"
+                fi
+
+                if [ $? -eq 0 ]; then
+                    echo "$LINK_ICON ${GREEN}$TARGET_DIR/$LINK$RESET"
+                    mkdir -p "$(dirname "$INVENTORY")"
+
+                    if [ ! -f "$INVENTORY" ]; then
+                        cat > "$INVENTORY" <<'EOF'
+# Dotfiles symlink inventory
+#
+# Contains all symlinks ever created by my dotfiles/install script.
+# You can iterate this list, check for broken symlinks that still
+# exist, and clean them up.
+#
+EOF
+                    fi
+
+                    if ! grep -Fxq "$TARGET_DIR/$LINK" "$INVENTORY"; then
+                        printf '%s\n' "$TARGET_DIR/$LINK" >> "$INVENTORY"
+                    fi
+                else
+                    echo "${RED}Failed to link $TARGET_DIR/$LINK$RESET"
                 fi
             fi
         done

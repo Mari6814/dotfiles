@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
-# Example tmux usage:
-# Add this to your ~/.tmux.conf to open ssh-sessionizer in a popup:
-# bind C-s display-popup -E "ssh-sessionizer"
+# # SSH Sessionizer
+# A bash script that uses FZF to quickly connect, sessionize and create a connection
+# history for my past ssh connections.
 #
-# Gives a prompt to open an ssh connection as a new session, or attach to an existing one
-# A history file is created, for easy access to the last used connections.
+# ## Installation
+# Add this to your `~/.tmux.conf` to open ssh-sessionizer in a popup:
+#
+# ```sh
+# bind C-s display-popup -E "ssh-sessionizer"
+# ```
+#
+# ## History
+# The history is created at `~/.local/state/ssh-sessionizer/history` by default.
+# Customize it by setting `SSH_SESSIONIZER_HISTFILE`.
 
 set -euo pipefail
 
-HISTFILE="${SSH_SESSIONIZER_HISTORY_FILE:-${XDG_DATA_HOME:-$HOME/.local/share}/ssh_sessionizer/ssh_sessionizer_history}"
+HISTFILE="${SSH_SESSIONIZER_HISTFILE:-${XDG_STATE_HOME:-$HOME/.local/state}/ssh-sessionizer/history}"
 
 if [[ $# -eq 1 ]]; then
     selection="$1"

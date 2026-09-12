@@ -54,29 +54,8 @@ export LOCAL="$HOME/.local"
 [ -d "$LOCAL/bin" ] && export PATH="$PATH:$LOCAL/bin"
 [ -d "$LOCAL/completions" ] && for f in "$LOCAL/completions/"*.{bash,sh}; do [[ -f "$f" ]] && source "$f"; done
 
-if [ ! -z "${TMUX:-}" ]; then
-    __autocomplete_from_tmux_pane_buffer() {
-        if [ -z "$TMUX" ]; then
-            echo "autocompletion from buffer only works inside a TMUX session." >&2
-            return 1
-        fi
-        local prefix="${READLINE_LINE:0:$READLINE_POINT}"
-        local suffix="${READLINE_LINE:$READLINE_POINT}"
-        local query=`echo "$prefix" | awk '{print $NF}'`
-        local selected=$(tmux capture-pane -p \
-            | tr -cs '[:alnum:]_\.\-@\$\~/' '\n' \
-            | awk '{ if (length($0) >= 3) print }' \
-            | sed '$d' \
-            | sort -u \
-            | uniq -u \
-            | fzf --track --select-1 --exit-0 --query "$query" --tmux
-        )
-        READLINE_LINE="${prefix%$query}$selected$suffix"
-        READLINE_POINT=${#READLINE_LINE}
-    }
-    bind -x '"\C-g": __autocomplete_from_tmux_pane_buffer'
-fi
-
+[ -d "$LOCAL/bashrc.d" ] && for f in "$LOCAL/bashrc.d/"*.{bash,sh}; do [[ -f "$f" ]] && source "$f"; done
+:
 [ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 
 [ -x `which zoxide` ] && eval "$(zoxide init bash --cmd z)"

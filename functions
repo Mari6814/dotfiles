@@ -38,25 +38,16 @@
 # git pull
 # ```
 #
-# ## Inventory & cleanup
+# ## Inventory
 # This script creates symlinks from its current directory architecture,
 # which means if the architecture changes *before you manage to cleanup the current one*
-# then symlinks might be left behind.
+# then symlinks might be left behind. Override by setting `DOTFILES_INVENTORY`.
 #
 # By default we store the inventory in
 #   `$HOME/.local/state/dotfiles/inventory`
-# Override by setting `DOTFILES_INVENTORY`.
 #
 # It is just a list of all symlinks ever created.
-#
-# In case you want to clean up, run:
-#
-# ```bash
-# while IFS= read -r path; do
-#     [[ "$path" == \#* ]] && continue
-#     [[ -L "$path" && ! -e "$path" ]] && rm "$path"
-# done < "$INVENTORY"
-# ```
+# Automatically cleaned up with every `ENABLE_PACKAGES` enabled execution.
 
 PACKAGE_ICON="📦"
 FILE_ICON="📄"
@@ -113,7 +104,35 @@ if [ "$VERBOSE_ENABLED" = "true" ]; then
     echo "$DIRECTORY_ICON $TARGET_DIR"
 fi
 
-function package-show-files() {
+cleanup_stale_symlink_inventory() {
+    local cleaned_up=false
+
+    [[ -r "$INVENTORY" ]] || { echo "Inventory not readable: $INVENTORY" >&2; return 1; }
+
+    while IFS= read -r path; do
+        path="${path%$'\r'}"
+        [[ -z "$path" || "$path" == \#* ]] && continue
+
+        [[ "$VERBOSE_ENABLED" = "true" ]] && echo "Reading: $path"
+
+        if [[ ! -L "$path" ]]; then
+            [[ "$VERBOSE_ENABLED" = "true" ]] && echo "Discarded: not a symlink"
+        elif [[ ! -e "$path" ]]; then
+            if rm ${VERBOSE_ENABLED:+ -v} -- "$path"; then
+                echo "Cleaned up stale symlink: $path"
+                cleaned_up=true
+            else
+                echo "Failed to remove: $path" >&2
+            fi
+        else
+            [[ "$VERBOSE_ENABLED" = "true" ]] && echo "Discarded: not broken"
+        fi
+    done < "$INVENTORY"
+
+    [[ "$cleaned_up" = false ]] && echo "No stale symlinks found."
+}
+
+function package_show_files() {
     # Operate on each package provided
     PACKAGE_NAMES="${@:-$PACKAGES_LIST}"
     for PACKAGE_NAME in $PACKAGE_NAMES; do
@@ -211,6 +230,10 @@ EOF
             fi
         done
     done
+
+    if [ "$ENABLE_PACKAGES" = "true" ]; then
+        cleanup_stale_symlink_inventory
+    fi
 }
 
-package-show-files "$PACKAGE_SEARCH"
+package_show_files "$PACKAGE_SEARCH"

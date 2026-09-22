@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
+# # TMUX Sessionizer
+# A utility written for bash using FZF to quickly create new TMUX sessions
+# for git repositories in my sessionizer path.
+#
+# ## Installation
 # Example tmux usage:
 # ```
 # bind C-s display-popup -E "tmux-sessionizer"
 # ```
-# Add the above line to your ~/.tmux.conf to open tmux-sessionizer in a popup
+# Add the above line to your `~/.tmux.conf` to open tmux-sessionizer in a popup
+# by pressing `ctrl` and `s`.
+#
+# ## Customization
+# To customize, you should set the `TMUX_SESSINOIZER_PATHS` variable.
+# It can be a `:` separated list of directories in which the sessionizer will
+# search for GIT repositories. Only a depth of `1` is searched.
 
 if [[ $# -eq 1 ]]; then
     selected=$1

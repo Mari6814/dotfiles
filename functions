@@ -1,5 +1,54 @@
 #!/bin/bash
 
+# # dotfiles
+# This is the functions script used by `install` and `remove`
+#
+# ## Installation
+# Install all packages:
+#
+# ```bash
+# ./install
+# ```
+#
+# Only *some* packages:
+#
+# ```bash
+# ./install git tmux
+# ```
+#
+# ## Uninstall
+# To remove all packages:
+#
+# ```bash
+# ./remove
+# ```
+#
+# To remove some packages:
+#
+# ```bash
+# ./remove git tmux
+# ```
+#
+# ## Git update
+# Before you `git pull` to get the changes, make sure you have *removed* all packages once first,
+# to make sure we don't leave any symlinks behind:
+#
+# ```bash
+# ./remove
+# git pull
+# ```
+#
+# ## Inventory
+# This script creates symlinks from its current directory architecture,
+# which means if the architecture changes *before you manage to cleanup the current one*
+# then symlinks might be left behind. Override by setting `DOTFILES_INVENTORY`.
+#
+# By default we store the inventory in
+#   `$HOME/.local/state/dotfiles/inventory`
+#
+# It is just a list of all symlinks ever created.
+# Automatically cleaned up with every `ENABLE_PACKAGES` enabled execution.
+
 PACKAGE_ICON="📦"
 FILE_ICON="📄"
 DIRECTORY_ICON="📁"
@@ -19,6 +68,8 @@ GREEN="$(tput setaf 2)"
 BLUE="$(tput setaf 4)"
 DIM="$(tput setaf dim)"
 RESET="$(tput sgr0)"
+
+INVENTORY="${DOTFILES_INVENTORY:-${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/inventory}"
 
 # Exit if enable & disable are both enabled
 if [ "$ENABLE_PACKAGES" = "true" ] && [ "$DISABLE_PACKAGES" = "true" ]; then
@@ -53,7 +104,35 @@ if [ "$VERBOSE_ENABLED" = "true" ]; then
     echo "$DIRECTORY_ICON $TARGET_DIR"
 fi
 
-function package-show-files() {
+cleanup_stale_symlink_inventory() {
+    local cleaned_up=false
+
+    [[ -r "$INVENTORY" ]] || { echo "Inventory not readable: $INVENTORY" >&2; return 1; }
+
+    while IFS= read -r path; do
+        path="${path%$'\r'}"
+        [[ -z "$path" || "$path" == \#* ]] && continue
+
+        [[ "$VERBOSE_ENABLED" = "true" ]] && echo "Reading: $path"
+
+        if [[ ! -L "$path" ]]; then
+            [[ "$VERBOSE_ENABLED" = "true" ]] && echo "Discarded: not a symlink"
+        elif [[ ! -e "$path" ]]; then
+            if rm ${VERBOSE_ENABLED:+ -v} -- "$path"; then
+                echo "Cleaned up stale symlink: $path"
+                cleaned_up=true
+            else
+                echo "Failed to remove: $path" >&2
+            fi
+        else
+            [[ "$VERBOSE_ENABLED" = "true" ]] && echo "Discarded: not broken"
+        fi
+    done < "$INVENTORY"
+
+    [[ "$cleaned_up" = false ]] && echo "No stale symlinks found."
+}
+
+function package_show_files() {
     # Operate on each package provided
     PACKAGE_NAMES="${@:-$PACKAGES_LIST}"
     for PACKAGE_NAME in $PACKAGE_NAMES; do
@@ -122,17 +201,39 @@ function package-show-files() {
 
                 # Link the file to that location
                 if [ "$VERBOSE_ENABLED" = "true" ]; then
-                    ln -sv "$FILE" "$TARGET_DIR/$LINK" \
-                        && echo "$LINK_ICON ${GREEN}$TARGET_DIR/$LINK$RESET" \
-                        || echo "${RED}Failed to link $TARGET_DIR/$LINK$RESET"
+                    ln -sv "$FILE" "$TARGET_DIR/$LINK"
                 else
-                    ln -s "$FILE" "$TARGET_DIR/$LINK" \
-                        && echo "$LINK_ICON ${GREEN}$TARGET_DIR/$LINK$RESET" \
-                        || echo "${RED}Failed to link $TARGET_DIR/$LINK$RESET"
+                    ln -s "$FILE" "$TARGET_DIR/$LINK"
+                fi
+
+                if [ $? -eq 0 ]; then
+                    echo "$LINK_ICON ${GREEN}$TARGET_DIR/$LINK$RESET"
+                    mkdir -p "$(dirname "$INVENTORY")"
+
+                    if [ ! -f "$INVENTORY" ]; then
+                        cat > "$INVENTORY" <<'EOF'
+# Dotfiles symlink inventory
+#
+# Contains all symlinks ever created by my dotfiles/install script.
+# You can iterate this list, check for broken symlinks that still
+# exist, and clean them up.
+#
+EOF
+                    fi
+
+                    if ! grep -Fxq "$TARGET_DIR/$LINK" "$INVENTORY"; then
+                        printf '%s\n' "$TARGET_DIR/$LINK" >> "$INVENTORY"
+                    fi
+                else
+                    echo "${RED}Failed to link $TARGET_DIR/$LINK$RESET"
                 fi
             fi
         done
     done
+
+    if [ "$ENABLE_PACKAGES" = "true" ]; then
+        cleanup_stale_symlink_inventory
+    fi
 }
 
-package-show-files "$PACKAGE_SEARCH"
+package_show_files "$PACKAGE_SEARCH"

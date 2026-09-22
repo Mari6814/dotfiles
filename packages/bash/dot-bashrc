@@ -1,6 +1,7 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 export SOURCED="$BASH_SOURCE@`date +%H%m%S`:$SOURCED"
 
+# Default to `vim`, but if nvim is installed, it will later override this with `nvim`
 export EDITOR=vim
 
 # append to the history file, don't overwrite it
@@ -49,41 +50,12 @@ fi
 
 # Set up the user's "local" directory
 export LOCAL="$HOME/.local"
+
 [ -d "$LOCAL/bin" ] && export PATH="$PATH:$LOCAL/bin"
+[ -d "$LOCAL/completions" ] && for f in "$LOCAL/completions/"*.{bash,sh}; do [[ -f "$f" ]] && source "$f"; done
 
-# Dynamically load bashrc plugins from the local directory
-if [ -d "$LOCAL/bash-plugins" ]; then
-    for plugin in "$LOCAL/bash-plugins/"*.sh; do
-        if [ -f "$plugin" ]; then
-            export BASH_PLUGINS_LOADED="$plugin:$BASH_PLUGINS_LOADED"
-            source "$plugin"
-        fi
-    done
-fi
-
-if [ ! -z "${TMUX:-}" ]; then
-    __autocomplete_from_tmux_pane_buffer() {
-        if [ -z "$TMUX" ]; then
-            echo "autocompletion from buffer only works inside a TMUX session." >&2
-            return 1
-        fi
-        local prefix="${READLINE_LINE:0:$READLINE_POINT}"
-        local suffix="${READLINE_LINE:$READLINE_POINT}"
-        local query=`echo "$prefix" | awk '{print $NF}'`
-        local selected=$(tmux capture-pane -p \
-            | tr -cs '[:alnum:]_\.\-@\$\~/' '\n' \
-            | awk '{ if (length($0) >= 3) print }' \
-            | sed '$d' \
-            | sort -u \
-            | uniq -u \
-            | fzf --track --select-1 --exit-0 --query "$query" --tmux
-        )
-        READLINE_LINE="${prefix%$query}$selected$suffix"
-        READLINE_POINT=${#READLINE_LINE}
-    }
-    bind -x '"\C-g": __autocomplete_from_tmux_pane_buffer'
-fi
-
+[ -d "$LOCAL/bashrc.d" ] && for f in "$LOCAL/bashrc.d/"*.{bash,sh}; do [[ -f "$f" ]] && source "$f"; done
+:
 [ -d "$HOME/.cargo/bin" ] && export PATH="$HOME/.cargo/bin:$PATH"
 
 [ -x `which zoxide` ] && eval "$(zoxide init bash --cmd z)"
@@ -94,13 +66,14 @@ fi
 
 [ -d "/usr/local/go/bin" ] && export PATH="/usr/local/go/bin:$PATH"
 
-export FZF_CTRL_R_OPTS="--height=7 --reverse --inline-info"
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+export FZF_CTRL_R_OPTS="--height=7 --reverse --inline-info" && [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
+[ -d "/$HOME/.opencode/bin" ] && export PATH="$HOME/.opencode/bin:$PATH"
+
 [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
 
-[ -f "$LOCAL/bashrc.local" ] && source "$LOCAL/bashrc.local"
+[ -f "$LOCAL/bashrc" ] && source "$LOCAL/bashrc"

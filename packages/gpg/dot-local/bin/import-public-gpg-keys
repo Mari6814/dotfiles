@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+: "${HOME:?HOME must be set}"
+
+keys_dir="$HOME/.local/share/gpg/public-keys"
+
+if [[ ! -d "$keys_dir" ]]; then
+    echo "error: GPG public key directory not found: $keys_dir" >&2
+    exit 1
+fi
+
+found=false
+
+for key in "$keys_dir"/*.asc; do
+    [[ -f "$key" ]] || continue
+    found=true
+    gpg --import "$key"
+done
+
+if [[ "$found" == false ]]; then
+    echo "error: no .asc files found in $keys_dir" >&2
+    exit 1
+fi

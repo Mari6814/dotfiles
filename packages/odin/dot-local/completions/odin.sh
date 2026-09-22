@@ -1,5 +1,5 @@
 # Odin language: ODIN_ROOT + bash completion
-# Auto-sourced by ~/.bashrc via the ~/.local/bash-plugins/*.sh loader.
+# Auto-sourced by ~/.bashrc via the ~/.local/completions/*.sh loader.
 #
 # To use, define:
 #   ODIN_ROOT

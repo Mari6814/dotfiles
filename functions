@@ -118,7 +118,7 @@ cleanup_stale_symlink_inventory() {
         if [[ ! -L "$path" ]]; then
             [[ "$VERBOSE_ENABLED" = "true" ]] && echo "Discarded: not a symlink"
         elif [[ ! -e "$path" ]]; then
-            if rm ${VERBOSE_ENABLED:+ -v} -- "$path"; then
+            if rm -- "$path"; then
                 echo "Cleaned up stale symlink: $path"
                 cleaned_up=true
             else
@@ -129,7 +129,7 @@ cleanup_stale_symlink_inventory() {
         fi
     done < "$INVENTORY"
 
-    [[ "$cleaned_up" = false ]] && echo "No stale symlinks found."
+    [[ "$cleaned_up" = false ]] && echo "No stale symlinks found in $INVENTORY."
 }
 
 function package_show_files() {

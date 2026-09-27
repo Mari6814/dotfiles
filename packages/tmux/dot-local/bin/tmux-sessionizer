@@ -12,9 +12,40 @@
 # by pressing `ctrl` and `s`.
 #
 # ## Customization
-# To customize, you should set the `TMUX_SESSINOIZER_PATHS` variable.
+# To customize, you should set the `TMUX_SESSIONIZER_PATHS` variable.
 # It can be a `:` separated list of directories in which the sessionizer will
 # search for GIT repositories. Only a depth of `1` is searched.
+#
+# Example: `TMUX_SESSIONIZER_PATHS=/tmp:/some/other/path`
+#
+# ## History
+# Selections are recorded at `~/.local/state/tmux-sessionizer/history` and used
+# to order the available entries, most-recently-used first.
+
+histfile="${TMUX_SESSIONIZER_HISTFILE:-${XDG_STATE_HOME:-$HOME/.local/state}/tmux-sessionizer/history}"
+
+# Generates the list of available options, but uses the histfile as a hint for how to order them
+order_by_history() {
+    awk -F'\t' -v hf="$histfile" '
+        BEGIN {
+            while ((getline line < hf) > 0) {
+                if (line != "" && !(line in rank)) rank[line] = ++n
+            }
+        }
+        {
+            key = ($NF in rank) ? rank[$NF] : 1000000 + NR
+            printf "%d\t%s\n", key, $0
+        }
+    ' | sort -n -k1,1 | cut -f2-
+}
+
+# Record a selection at the top of the history file, removing duplicates in the process
+record_history() {
+    mkdir -p "$(dirname "$histfile")"
+    local tmp; tmp=$(mktemp "${TMPDIR:-/tmp}/tmux-sessionizer.XXXXXX")
+    { printf '%s\n' "$1"; [[ -f "$histfile" ]] && grep -Fxv -- "$1" "$histfile"; } > "$tmp"
+    mv -f "$tmp" "$histfile"
+}
 
 if [[ $# -eq 1 ]]; then
     selected=$1
@@ -47,10 +78,15 @@ else
                 entries+=("$label"$'\t'"$dir")
             fi
         done < <(find "${existing_dirs[@]}" -mindepth 1 -maxdepth 1 -type d)
-        selection=$(printf '%s\n' "${entries[@]}" | fzf --delimiter='\t' --with-nth=1)
+        # Alphabetical for determinism, then pull most-recently-used to the top.
+        selection=$(printf '%s\n' "${entries[@]}" \
+            | sort -t$'\t' -k1,1 \
+            | order_by_history \
+            | fzf --delimiter='\t' --with-nth=1)
         if [[ -n $selection ]]; then
             selected=${selection#*$'\t'}
             session_name=$(printf '%s' "${selection%%$'\t'*}" | tr . _)
+            record_history "$selected"
         fi
     fi
 fi

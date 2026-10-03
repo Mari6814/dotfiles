@@ -21,8 +21,11 @@
 # ## History
 # Selections are recorded at `~/.local/state/tmux-sessionizer/history` and used
 # to order the available entries, most-recently-used first.
+# Pick "✎ edit history" to edit the file in $EDITOR.
 
 histfile="${TMUX_SESSIONIZER_HISTFILE:-${XDG_STATE_HOME:-$HOME/.local/state}/tmux-sessionizer/history}"
+
+edit_history_entry='✎ edit history'
 
 # Generates the list of available options, but uses the histfile as a hint for how to order them
 order_by_history() {
@@ -45,6 +48,15 @@ record_history() {
     local tmp; tmp=$(mktemp "${TMPDIR:-/tmp}/tmux-sessionizer.XXXXXX")
     { printf '%s\n' "$1"; [[ -f "$histfile" ]] && grep -Fxv -- "$1" "$histfile"; } > "$tmp"
     mv -f "$tmp" "$histfile"
+}
+
+# Open the history file in $EDITOR.
+edit_history() {
+    mkdir -p "$(dirname "$histfile")"
+    touch "$histfile"
+    local -a editor
+    read -r -a editor <<< "${EDITOR:-vi}"
+    "${editor[@]}" "$histfile"
 }
 
 if [[ $# -eq 1 ]]; then
@@ -79,10 +91,14 @@ else
             fi
         done < <(find "${existing_dirs[@]}" -mindepth 1 -maxdepth 1 -type d)
         # Alphabetical for determinism, then pull most-recently-used to the top.
-        selection=$(printf '%s\n' "${entries[@]}" \
-            | sort -t$'\t' -k1,1 \
-            | order_by_history \
-            | fzf --delimiter='\t' --with-nth=1)
+        while true; do
+            selection=$( {
+                printf '%s\n' "${entries[@]}" | sort -t$'\t' -k1,1 | order_by_history
+                printf '%s\n' "$edit_history_entry"
+            } | fzf --delimiter='\t' --with-nth=1)
+            [[ "$selection" == "$edit_history_entry" ]] || break
+            edit_history
+        done
         if [[ -n $selection ]]; then
             selected=${selection#*$'\t'}
             session_name=$(printf '%s' "${selection%%$'\t'*}" | tr . _)

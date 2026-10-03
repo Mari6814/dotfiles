@@ -13,17 +13,35 @@
 # ## History
 # The history is created at `~/.local/state/ssh-sessionizer/history` by default.
 # Customize it by setting `SSH_SESSIONIZER_HISTFILE`.
+# Pick "✎ edit history" to edit the history in $EDITOR.
 
 set -euo pipefail
 
 HISTFILE="${SSH_SESSIONIZER_HISTFILE:-${XDG_STATE_HOME:-$HOME/.local/state}/ssh-sessionizer/history}"
+
+edit_history_entry='✎ edit history'
+
+# Open the history file in $EDITOR.
+edit_history() {
+    mkdir -p "$(dirname "$HISTFILE")"
+    touch "$HISTFILE"
+    local -a editor
+    read -r -a editor <<< "${EDITOR:-vi}"
+    "${editor[@]}" "$HISTFILE"
+}
 
 if [[ $# -eq 1 ]]; then
     selection="$1"
 else
     mkdir -p "$(dirname "$HISTFILE")"
     touch "$HISTFILE"
-    selection="$(fzf --tac --prompt='user@host: ' --print-query < "$HISTFILE" | tail -n1 || true)"
+    while true; do
+        # First in the input so --tac leaves it last. The MRU host is selected.
+        selection="$( { printf '%s\n' "$edit_history_entry"; cat "$HISTFILE"; } \
+            | fzf --tac --prompt='user@host: ' --print-query | tail -n1 || true)"
+        [[ "$selection" == "$edit_history_entry" ]] || break
+        edit_history
+    done
 fi
 
 if [ -z "$selection" ]; then
@@ -33,7 +51,7 @@ fi
 # Prepare a tmpfile because filtering requires one...
 TMP_HISTFILE="$(mktemp "/tmp/$(basename "$HISTFILE").XXXXXX")"
 cleanup() {
-    [[ -f "$TMP_HISTFILE" ]] && rm -f "$TMP_HISTFILE"
+    rm -f "$TMP_HISTFILE"
 }
 trap cleanup EXIT
 

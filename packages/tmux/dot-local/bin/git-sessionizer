@@ -4,6 +4,7 @@
 #     worktree, then open/attach its tmux session.
 #   * Normal repo: pick a branch to switch to in place.
 # Type a name that matches no branch to create it.
+# Pick "✎ edit history" to edit the history in $EDITOR.
 #
 # Example tmux binding:
 #   bind C-w display-popup -E "git-sessionizer"
@@ -37,6 +38,17 @@ record_history() {
     mv -f "$tmp" "$histfile"
 }
 
+edit_history_entry='✎ edit history'
+
+# Open the history file in $EDITOR.
+edit_history() {
+    mkdir -p "$(dirname "$histfile")"
+    touch "$histfile"
+    local -a editor
+    read -r -a editor <<< "${EDITOR:-vi}"
+    "${editor[@]}" "$histfile"
+}
+
 mode=normal
 bare_dir=""
 if [[ "$is_bare" == "true" ]]; then
@@ -50,10 +62,15 @@ fi
 
 if [[ "$mode" == "normal" ]]; then
     toplevel=$(git rev-parse --show-toplevel)
-    out=$(git -C "$toplevel" branch --format='%(refname:short)' | order_branches \
-        | fzf --print-query --prompt='switch branch: ' --reverse || true)
-    query=$(printf '%s\n' "$out" | sed -n '1p')
-    match=$(printf '%s\n' "$out" | sed -n '2p')
+    while true; do
+        out=$( { git -C "$toplevel" branch --format='%(refname:short)' | order_branches
+            printf '%s\n' "$edit_history_entry"
+        } | fzf --print-query --prompt='switch branch: ' --reverse || true)
+        query=$(printf '%s\n' "$out" | sed -n '1p')
+        match=$(printf '%s\n' "$out" | sed -n '2p')
+        [[ "$match" == "$edit_history_entry" ]] || break
+        edit_history
+    done
     if [[ -n "$match" ]]; then
         record_history "$match"; git -C "$toplevel" switch "$match"
     elif [[ -n "$query" ]]; then
@@ -76,10 +93,16 @@ while IFS= read -r br; do
     fi
 done < <(git -C "$bare_dir" branch --format='%(refname:short)' | order_branches)
 
-out=$(printf '%s\n' "${entries[@]}" \
-    | fzf --delimiter='\t' --with-nth=2 --print-query --prompt='branch: ' --reverse || true)
-query=$(printf '%s\n' "$out" | sed -n '1p')
-match=$(printf '%s\n' "$out" | sed -n '2p')
+# Tab-delimited for --with-nth=2, placed last to keep the MRU branch preselected.
+while true; do
+    out=$( { printf '%s\n' "${entries[@]}"
+        printf '%s\n' "$edit_history_entry"$'\t'"$edit_history_entry"
+    } | fzf --delimiter='\t' --with-nth=2 --print-query --prompt='branch: ' --reverse || true)
+    query=$(printf '%s\n' "$out" | sed -n '1p')
+    match=$(printf '%s\n' "$out" | sed -n '2p')
+    [[ -n "$match" && "${match%%$'\t'*}" == "$edit_history_entry" ]] || break
+    edit_history
+done
 
 if [[ -n "$match" ]]; then
     branch=${match%%$'\t'*}

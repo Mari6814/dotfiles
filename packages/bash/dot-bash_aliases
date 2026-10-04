@@ -26,6 +26,7 @@ alias diary="nvim -c VimwikiMakeDiaryNote"
 alias zz="cd -"
 
 alias mkdir="mkdir -pv"
+alias rmdir="rmdir -pv"
 
 alias aptuu="sudo apt -y update && sudo apt -y upgrade"
 

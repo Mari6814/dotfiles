@@ -69,7 +69,7 @@
 #
 # To enable better longopts for that command, use
 #
-#   `complete -F better_longopt dev_tool`
+#   `complete -F _better_longopt dev_tool`
 
 
 

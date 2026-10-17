@@ -1,0 +1,562 @@
+#!/bin/bash
+set -u
+
+STATE_DIR=${FAKECTL_STATE_DIR:-${TMPDIR:-/tmp}/llm-completion-test}
+IMAGES=$STATE_DIR/images.tsv
+CONTAINERS=$STATE_DIR/containers.tsv
+
+write_default_images() {
+    printf 'nginx:latest\timg-nginx\t25MB\n'
+    printf 'alpine:latest\timg-alpine\t5MB\n'
+}
+
+write_default_containers() {
+    printf 'web\tnginx:latest\trunning\t8080:80\n'
+    printf 'db\talpine:latest\tstopped\t\n'
+}
+
+ensure_state() {
+    mkdir -p "$STATE_DIR"
+    [[ -f $IMAGES ]] || write_default_images >"$IMAGES"
+    [[ -f $CONTAINERS ]] || write_default_containers >"$CONTAINERS"
+}
+
+reset_state() {
+    mkdir -p "$STATE_DIR"
+    write_default_images >"$IMAGES"
+    write_default_containers >"$CONTAINERS"
+}
+
+die() {
+    printf 'fakectl: %s\n' "$*" >&2
+    exit 1
+}
+
+image_exists() {
+    awk -F '\t' -v img="$1" '$1 == img { found = 1 } END { exit !found }' "$IMAGES"
+}
+
+image_field() {
+    awk -F '\t' -v img="$1" -v col="$2" '$1 == img { print $col; exit }' "$IMAGES"
+}
+
+container_exists() {
+    awk -F '\t' -v n="$1" '$1 == n { found = 1 } END { exit !found }' "$CONTAINERS"
+}
+
+container_field() {
+    awk -F '\t' -v n="$1" -v col="$2" '$1 == n { print $col; exit }' "$CONTAINERS"
+}
+
+set_container_state() {
+    local name=$1 state=$2 tmp
+    tmp=$(mktemp)
+    awk -F '\t' -v OFS='\t' -v n="$name" -v s="$state" '
+        $1 == n { $3 = s }
+        { print }
+    ' "$CONTAINERS" >"$tmp"
+    mv "$tmp" "$CONTAINERS"
+}
+
+remove_container() {
+    local name=$1 tmp
+    tmp=$(mktemp)
+    awk -F '\t' -v OFS='\t' -v n="$name" '$1 != n { print }' "$CONTAINERS" >"$tmp"
+    mv "$tmp" "$CONTAINERS"
+}
+
+help_root() {
+    cat <<'EOF'
+fakectl - fake container CLI
+
+Usage:
+  fakectl [OPTIONS] COMMAND
+  fakectl COMMAND --help
+
+Commands:
+  container   Manage containers
+  image       Manage images
+  reset       Reset the fake state
+
+Options:
+      --verbose   Verbose output
+  -h, --help      Show help
+EOF
+}
+
+help_container() {
+    cat <<'EOF'
+Usage: fakectl container COMMAND
+
+Manage containers
+
+Commands:
+  run         Create and run a container from an image
+  ps          List containers
+  stop        Stop one or more running containers
+  start       Start one or more stopped containers
+  rm          Remove one or more containers
+  inspect     Inspect a container
+
+Options:
+  -h, --help  Show help
+EOF
+}
+
+help_container_run() {
+    cat <<'EOF'
+Usage: fakectl container run [OPTIONS] IMAGE
+
+Create and run a container from an image
+
+Options:
+      --name string      Container name
+      --publish string   Publish a container port (host:container)
+  -d, --detach           Run container in background
+  -h, --help             Show help
+EOF
+}
+
+help_container_ps() {
+    cat <<'EOF'
+Usage: fakectl container ps [OPTIONS]
+
+List containers
+
+Options:
+  -a, --all               Show all containers (default shows running)
+  -f, --filter string     Filter output (state=running, state=stopped)
+  -q, --quiet             Only display container names
+  -h, --help              Show help
+EOF
+}
+
+help_container_stop() {
+    cat <<'EOF'
+Usage: fakectl container stop [OPTIONS] CONTAINER [CONTAINER...]
+
+Stop one or more running containers
+
+Options:
+  -s, --signal string   Signal to send (default "SIGTERM")
+  -t, --timeout int     Seconds to wait before killing
+  -h, --help            Show help
+EOF
+}
+
+help_container_start() {
+    cat <<'EOF'
+Usage: fakectl container start [OPTIONS] CONTAINER [CONTAINER...]
+
+Start one or more stopped containers
+
+Options:
+  -a, --attach          Attach container output
+  -h, --help            Show help
+EOF
+}
+
+help_container_rm() {
+    cat <<'EOF'
+Usage: fakectl container rm [OPTIONS] CONTAINER [CONTAINER...]
+
+Remove one or more containers
+
+Options:
+  -f, --force           Force removal of running containers
+  -h, --help            Show help
+EOF
+}
+
+help_container_inspect() {
+    cat <<'EOF'
+Usage: fakectl container inspect [OPTIONS] CONTAINER [CONTAINER...]
+
+Inspect a container
+
+Options:
+  -f, --format string   Format output using a template
+  -h, --help            Show help
+EOF
+}
+
+help_image() {
+    cat <<'EOF'
+Usage: fakectl image COMMAND
+
+Manage images
+
+Commands:
+  list        List images
+  pull        Pull an image
+  rm          Remove one or more images
+  inspect     Inspect an image
+
+Options:
+  -h, --help  Show help
+EOF
+}
+
+help_image_list() {
+    cat <<'EOF'
+Usage: fakectl image list [OPTIONS]
+
+List images
+
+Options:
+  -q, --quiet   Only display image names
+  -h, --help    Show help
+EOF
+}
+
+help_image_pull() {
+    cat <<'EOF'
+Usage: fakectl image pull [OPTIONS] IMAGE
+
+Pull an image
+
+Options:
+      --platform string   Pull a specific platform
+  -h, --help              Show help
+EOF
+}
+
+help_image_rm() {
+    cat <<'EOF'
+Usage: fakectl image rm [OPTIONS] IMAGE [IMAGE...]
+
+Remove one or more images
+
+Options:
+  -f, --force           Force removal
+  -h, --help            Show help
+EOF
+}
+
+help_image_inspect() {
+    cat <<'EOF'
+Usage: fakectl image inspect [OPTIONS] IMAGE [IMAGE...]
+
+Inspect an image
+
+Options:
+  -f, --format string   Format output using a template
+  -h, --help            Show help
+EOF
+}
+
+cmd_image() {
+    local sub=${1:-}
+    case $sub in
+        list | ls)
+            shift
+            local quiet=0
+            while (( $# )); do
+                case $1 in
+                    -q | --quiet) quiet=1; shift ;;
+                    -h | --help) help_image_list; return 0 ;;
+                    *) die "unknown option: $1" ;;
+                esac
+            done
+            if (( quiet )); then
+                awk -F '\t' '{ print $1 }' "$IMAGES"
+            else
+                printf 'REPOSITORY:TAG\tIMAGE ID\tSIZE\n'
+                awk -F '\t' -v OFS='\t' '{ print $1, $2, $3 }' "$IMAGES"
+            fi
+            ;;
+        pull)
+            shift
+            local image=
+            while (( $# )); do
+                case $1 in
+                    --platform)
+                        [[ $# -ge 2 ]] || die "--platform requires a value"
+                        shift 2
+                        ;;
+                    -h | --help)
+                        help_image_pull
+                        return 0
+                        ;;
+                    -*)
+                        die "unknown option: $1"
+                        ;;
+                    *)
+                        image=$1
+                        shift
+                        ;;
+                esac
+            done
+            [[ -n $image ]] || die "image pull requires an image"
+            if image_exists "$image"; then
+                printf '%s already exists\n' "$image"
+            else
+                printf '%s\timg-%s\t0B\n' "$image" "$RANDOM" >>"$IMAGES"
+                printf 'pulled %s\n' "$image"
+            fi
+            ;;
+        rm)
+            local force=0 image
+            shift
+            while (( $# )); do
+                case $1 in
+                    -f | --force) force=1; shift ;;
+                    -h | --help) help_image_rm; return 0 ;;
+                    -*) die "unknown option: $1" ;;
+                    *) break ;;
+                esac
+            done
+            (( $# )) || die "image rm requires an image"
+            for image in "$@"; do
+                image_exists "$image" || die "no such image: $image"
+                if awk -F '\t' -v img="$image" '$2 == img { found = 1 } END { exit !found }' "$CONTAINERS"; then
+                    (( force )) || die "image is in use by a container: $image"
+                fi
+                local tmp
+                tmp=$(mktemp)
+                awk -F '\t' -v OFS='\t' -v img="$image" '$1 != img { print }' "$IMAGES" >"$tmp"
+                mv "$tmp" "$IMAGES"
+                printf 'removed %s\n' "$image"
+            done
+            ;;
+        inspect)
+            shift
+            while (( $# )); do
+                case $1 in
+                    -f | --format)
+                        [[ $# -ge 2 ]] || die "--format requires a value"
+                        shift 2
+                        ;;
+                    -h | --help) help_image_inspect; return 0 ;;
+                    -*) die "unknown option: $1" ;;
+                    *) break ;;
+                esac
+            done
+            (( $# )) || die "image inspect requires an image"
+            local image
+            for image in "$@"; do
+                image_exists "$image" || die "no such image: $image"
+                printf '{"Name":"%s","Id":"%s","Size":"%s"}\n' \
+                    "$image" "$(image_field "$image" 2)" "$(image_field "$image" 3)"
+            done
+            ;;
+        -h | --help | help | '')
+            help_image
+            ;;
+        *)
+            die "unknown image command: $sub"
+            ;;
+    esac
+}
+
+cmd_container() {
+    local sub=${1:-}
+    case $sub in
+        run)
+            shift
+            local name= image= detach=0 ports=
+            while (( $# )); do
+                case $1 in
+                    --name)
+                        [[ $# -ge 2 ]] || die "--name requires a value"
+                        name=$2
+                        shift 2
+                        ;;
+                    --publish)
+                        [[ $# -ge 2 ]] || die "--publish requires a value"
+                        ports=$2
+                        shift 2
+                        ;;
+                    -d | --detach)
+                        detach=1
+                        shift
+                        ;;
+                    -h | --help)
+                        help_container_run
+                        return 0
+                        ;;
+                    -*)
+                        die "unknown option: $1"
+                        ;;
+                    *)
+                        image=$1
+                        shift
+                        ;;
+                esac
+            done
+            [[ -n $image ]] || die "container run requires an image"
+            image_exists "$image" || die "no such image: $image"
+            if [[ -z $name ]]; then
+                name="ctr-$(( $(wc -l <"$CONTAINERS") + 1 ))"
+            fi
+            container_exists "$name" && die "container name already in use: $name"
+            printf '%s\t%s\trunning\t%s\n' "$name" "$image" "$ports" >>"$CONTAINERS"
+            printf '%s\n' "$name"
+            ;;
+        ps)
+            shift
+            local all=0 filter= quiet=0
+            while (( $# )); do
+                case $1 in
+                    -a | --all) all=1; shift ;;
+                    -f | --filter)
+                        [[ $# -ge 2 ]] || die "--filter requires a value"
+                        filter=$2
+                        shift 2
+                        ;;
+                    -q | --quiet) quiet=1; shift ;;
+                    -h | --help)
+                        help_container_ps
+                        return 0
+                        ;;
+                    *) die "unknown option: $1" ;;
+                esac
+            done
+            local state=
+            [[ $filter == state=* ]] && state=${filter#state=}
+            if (( quiet )); then
+                awk -F '\t' -v all="$all" -v state="$state" '
+                    (all || $3 == "running") && (state == "" || $3 == state) { print $1 }
+                ' "$CONTAINERS"
+            else
+                printf 'NAME\tIMAGE\tSTATE\tPORTS\n'
+                awk -F '\t' -v OFS='\t' -v all="$all" -v state="$state" '
+                    (all || $3 == "running") && (state == "" || $3 == state) { print }
+                ' "$CONTAINERS"
+            fi
+            ;;
+        stop | start)
+            local action=$sub
+            shift
+            local -a names=()
+            while (( $# )); do
+                case $1 in
+                    -h | --help)
+                        if [[ $action == stop ]]; then help_container_stop; else help_container_start; fi
+                        return 0
+                        ;;
+                    -s | --signal | -t | --timeout)
+                        [[ $# -ge 2 ]] || die "$1 requires a value"
+                        shift 2
+                        ;;
+                    -a | --attach)
+                        shift
+                        ;;
+                    -*)
+                        die "unknown option: $1"
+                        ;;
+                    *)
+                        names+=("$1")
+                        shift
+                        ;;
+                esac
+            done
+            (( ${#names[@]} )) || die "$action requires a container"
+            local name rc=0
+            for name in "${names[@]}"; do
+                if ! container_exists "$name"; then
+                    printf 'fakectl: no such container: %s\n' "$name" >&2
+                    rc=1
+                    continue
+                fi
+                if [[ $action == stop && $(container_field "$name" 3) != running ]]; then
+                    printf 'fakectl: container is not running: %s\n' "$name" >&2
+                    rc=1
+                    continue
+                fi
+                if [[ $action == start && $(container_field "$name" 3) != stopped ]]; then
+                    printf 'fakectl: container is not stopped: %s\n' "$name" >&2
+                    rc=1
+                    continue
+                fi
+                if [[ $action == stop ]]; then
+                    set_container_state "$name" stopped
+                else
+                    set_container_state "$name" running
+                fi
+                printf '%s\n' "$name"
+            done
+            return "$rc"
+            ;;
+        rm)
+            shift
+            local force=0
+            while (( $# )); do
+                case $1 in
+                    -f | --force) force=1; shift ;;
+                    -h | --help) help_container_rm; return 0 ;;
+                    *) break ;;
+                esac
+            done
+            (( $# )) || die "container rm requires a container"
+            local name rc=0
+            for name in "$@"; do
+                if ! container_exists "$name"; then
+                    printf 'fakectl: no such container: %s\n' "$name" >&2
+                    rc=1
+                    continue
+                fi
+                if [[ $(container_field "$name" 3) == running ]] && (( ! force )); then
+                    printf 'fakectl: container is running: %s\n' "$name" >&2
+                    rc=1
+                    continue
+                fi
+                remove_container "$name"
+                printf '%s\n' "$name"
+            done
+            return "$rc"
+            ;;
+        inspect)
+            shift
+            while (( $# )); do
+                case $1 in
+                    -f | --format)
+                        [[ $# -ge 2 ]] || die "--format requires a value"
+                        shift 2
+                        ;;
+                    -h | --help) help_container_inspect; return 0 ;;
+                    -*) die "unknown option: $1" ;;
+                    *) break ;;
+                esac
+            done
+            (( $# )) || die "container inspect requires a container"
+            local name
+            for name in "$@"; do
+                container_exists "$name" || die "no such container: $name"
+                printf '{"Name":"%s","Image":"%s","State":"%s","Ports":"%s"}\n' \
+                    "$name" "$(container_field "$name" 2)" \
+                    "$(container_field "$name" 3)" "$(container_field "$name" 4)"
+            done
+            ;;
+        -h | --help | help | '')
+            help_container
+            ;;
+        *)
+            die "unknown container command: $sub"
+            ;;
+    esac
+}
+
+ensure_state
+
+case ${1:-} in
+    -h | --help | help | '')
+        help_root
+        ;;
+    reset)
+        reset_state
+        printf 'reset fake state\n'
+        ;;
+    image)
+        shift
+        cmd_image "$@"
+        ;;
+    container)
+        shift
+        cmd_container "$@"
+        ;;
+    *)
+        help_root >&2
+        exit 2
+        ;;
+esac

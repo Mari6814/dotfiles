@@ -106,12 +106,25 @@ fi
 
 cleanup_stale_symlink_inventory() {
     local cleaned_up=false
+    local path
+    local tmp_inventory
 
-    [[ -r "$INVENTORY" ]] || { echo "Inventory not readable: $INVENTORY" >&2; return 1; }
+    [[ -r "$INVENTORY" ]] || {
+        echo "Inventory not readable: $INVENTORY" >&2
+        return 1
+    }
+
+    tmp_inventory=$(mktemp) || {
+        echo "Failed to create temporary inventory." >&2
+        return 1
+    }
 
     while IFS= read -r path; do
         path="${path%$'\r'}"
-        [[ -z "$path" || "$path" == \#* ]] && continue
+        [[ -z "$path" || "$path" == \#* ]] && {
+            printf '%s\n' "$path" >> "$tmp_inventory"
+            continue
+        }
 
         [[ "$VERBOSE_ENABLED" = "true" ]] && echo "Reading: $path"
 
@@ -123,13 +136,24 @@ cleanup_stale_symlink_inventory() {
                 cleaned_up=true
             else
                 echo "Failed to remove: $path" >&2
+                printf '%s\n' "$path" >> "$tmp_inventory"
             fi
         else
-            [[ "$VERBOSE_ENABLED" = "true" ]] && echo "Discarded: not broken"
+            printf '%s\n' "$path" >> "$tmp_inventory"
+            [[ "$VERBOSE_ENABLED" = "true" ]] && echo "Kept: $path"
         fi
     done < "$INVENTORY"
 
-    [[ "$cleaned_up" = false ]] && echo "No stale symlinks found in $INVENTORY."
+    if ! cat "$tmp_inventory" > "$INVENTORY"; then
+        echo "Failed to update inventory: $INVENTORY" >&2
+        rm -f -- "$tmp_inventory"
+        return 1
+    fi
+
+    rm -f -- "$tmp_inventory"
+
+    [[ "$cleaned_up" = false ]] &&
+        echo "No stale symlinks found in $INVENTORY."
 }
 
 function package_show_files() {

@@ -63,12 +63,14 @@ export LOCAL="$HOME/.local"
     [ -s "$f" ] && \. "$f"
 done
 
+# Load aliases as a separate module
+[ -s "$HOME/.bash_aliases" ] && \. "$HOME/.bash_aliases"
+
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash --cmd z)"
 
-[ -s "$HOME/.fzf.bash" ] && export FZF_CTRL_R_OPTS="--height=7 --reverse --inline-info" && \. "$HOME/.fzf.bash"
+export FZF_CTRL_R_OPTS="--height=7 --reverse --inline-info"
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-[ -s "$HOME/.bash_aliases" ] && \. "$HOME/.bash_aliases"

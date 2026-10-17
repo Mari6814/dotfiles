@@ -8,17 +8,24 @@ if [ ! -z "${TMUX:-}" ]; then
         fi
         local prefix="${READLINE_LINE:0:$READLINE_POINT}"
         local suffix="${READLINE_LINE:$READLINE_POINT}"
-        local query=`echo "$prefix" | awk '{print $NF}'`
-        local selected=$(tmux capture-pane -p \
+        local query="${prefix##*[[:space:]]}"
+
+        local selected
+        selected=$(tmux capture-pane -p -J \
+            | awk 'NF { last = NR } { lines[NR] = $0 } END { for (i = 1; i < last; i++) print lines[i] }' \
             | tr -cs '[:alnum:]_\.\-@\$\~/' '\n' \
-            | awk '{ if (length($0) >= 3) print }' \
-            | sed '$d' \
+            | awk 'length($0) >= 3' \
             | sort -u \
-            | uniq -u \
-            | fzf --track --select-1 --exit-0 --query "$query" --tmux
+            | fzf --track --select-1 --exit-0 --query "$query" \
+                --height=~40% --min-height=10 \
+                --layout=reverse --info=inline-right --scheme=path
         )
-        READLINE_LINE="${prefix%$query}$selected$suffix"
-        READLINE_POINT=${#READLINE_LINE}
+
+        # Esc / Ctrl-C / no match: leave the command line untouched
+        [ -n "$selected" ] || return
+
+        READLINE_LINE="${prefix%"$query"}$selected$suffix"
+        READLINE_POINT=$(( ${#prefix} - ${#query} + ${#selected} ))
     }
     bind -x '"\C-g": __autocomplete_from_tmux_pane_buffer'
 fi

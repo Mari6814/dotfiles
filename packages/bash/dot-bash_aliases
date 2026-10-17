@@ -66,19 +66,26 @@ etmp() {
     echo "$file";
 }
 
-cmd() {
-    # Create executable bash script and edit it
-    # The first argument as the path to the script file that will be created
-    local NAME="${1:?'Usage: cmd <cmdname>'}"
-    if [ -e "$NAME" ]; then
-        echo "Command already exists: $NAME" >&2
+should_print_help() {
+    # Returns 0 in case that --help|-h was detected in arguments
+    # Usage: `if should_print_help "$@"; then echo ...; return; fi`
+    local arg
+    for arg in "$@"; do
+    [[ "$arg" == "-h" || "$arg" == "--help" ]] && return 0
+    done
+    return 1
+}
+
+mkcmd() {
+    local name="${1:?Usage: cmd <PATH>}"
+
+    if ! (set -o noclobber; printf '#!/usr/bin/env bash\n\n' > "$name"); then
+        printf 'Error: cannot create or write "%s"\n' "$name" >&2
         return 1
     fi
-    echo "Creating command: $NAME"
-    echo '#!/bin/bash' >> "$NAME"
-    echo '' >> "$NAME"
-    chmod +x "$NAME"
-    vim "$NAME" -c '$'
+
+    chmod +x -- "$name" || return 1
+    "${EDITOR:-vim}" "$name" +startinsert
 }
 
 taildate() {

@@ -97,8 +97,6 @@ watch-files() {
 
 # Load machine-local aliases that are not commited into git
 if [ -f "$LOCAL/bash_aliases.local" ]; then
-    export SOURCED="$LOCAL/.bash_aliases@`date +%H%m%S`:$SOURCED"
+    export SOURCED="$LOCAL/bash_aliases.local@`date +%H%m%S`:$SOURCED"
     source "$LOCAL/bash_aliases.local"
 fi
-
-alias compose="docker compose"

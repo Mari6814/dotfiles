@@ -44,16 +44,33 @@
 # then symlinks might be left behind. Override by setting `DOTFILES_INVENTORY`.
 #
 # By default we store the inventory in
-#   `$HOME/.local/state/dotfiles/inventory`
+#   `$XDG_STATE_HOME/dotfiles/inventory`
+# which is `$HOME/.local/state/dotfiles/inventory` unless `XDG_STATE_HOME` is set.
 #
 # It is just a list of all symlinks ever created.
 # Automatically cleaned up with every `ENABLE_PACKAGES` enabled execution.
+#
+# ## Package paths
+# Within a package, `dot-` is replaced with `.` (for example `dot-bashrc` becomes `.bashrc`).
+#
+# A path component wrapped in braces references an environment variable, resolved when the
+# package is linked:
+#
+#   `packages/bash/{XDG_DATA_HOME}/bash-completion/completions/foo.bash`
+#
+# `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, and `XDG_CACHE_HOME` default to their
+# standard locations when unset or empty. Any other empty variable causes that file to be
+# skipped with a warning.
+#
+# Paths that resolve to an absolute location are linked there directly; relative paths are
+# linked under `$TARGET_DIR`.
 
 PACKAGE_ICON="📦"
 FILE_ICON="📄"
 DIRECTORY_ICON="📁"
 SUCCESS_ICON="✅"
 FAILURE_ICON="❌"
+WARNING_ICON="⚠️"
 LINK_ICON="🔗"
 VERBOSE_ENABLED=$(echo "$@" | grep -q -- "-v" && echo "true" || echo "false")
 ENABLE_PACKAGES=$(echo "$@" | grep -q -- "--enable" && echo "true" || echo "false")
@@ -63,13 +80,19 @@ SCRIPT_DIR="$(dirname "$0")"
 PACKAGES_DIR="$(realpath "$SCRIPT_DIR/packages")"
 PACKAGES_LIST=$(cd "$PACKAGES_DIR" && echo *)
 TARGET_DIR="${TARGET_DIR:-$HOME}"
+# XDG base directories default to the locations defined by the XDG Base Directory Specification.
+: "${XDG_CONFIG_HOME:=$HOME/.config}"
+: "${XDG_DATA_HOME:=$HOME/.local/share}"
+: "${XDG_STATE_HOME:=$HOME/.local/state}"
+: "${XDG_CACHE_HOME:=$HOME/.cache}"
 RED="$(tput setaf 1)"
 GREEN="$(tput setaf 2)"
+YELLOW="$(tput setaf 3)"
 BLUE="$(tput setaf 4)"
 DIM="$(tput setaf dim)"
 RESET="$(tput sgr0)"
 
-INVENTORY="${DOTFILES_INVENTORY:-${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/inventory}"
+INVENTORY="${DOTFILES_INVENTORY:-$XDG_STATE_HOME/dotfiles/inventory}"
 
 # Exit if enable & disable are both enabled
 if [ "$ENABLE_PACKAGES" = "true" ] && [ "$DISABLE_PACKAGES" = "true" ]; then
@@ -156,6 +179,31 @@ cleanup_stale_symlink_inventory() {
         echo "No stale symlinks found in $INVENTORY."
 }
 
+# Resolve dot- placeholders and {VARIABLE} placeholders in a package-relative path.
+resolve_link_path() {
+    local path=$1
+    local original=$1
+    local placeholder
+    local variable
+
+    # dot- is the legacy placeholder for a leading dot.
+    path=${path//dot-/.}
+
+    while [[ $path =~ \{([A-Za-z_][A-Za-z0-9_]*)\} ]]; do
+        placeholder=${BASH_REMATCH[0]}
+        variable=${BASH_REMATCH[1]}
+
+        if [[ -z "${!variable-}" ]]; then
+            echo "$WARNING_ICON ${YELLOW}Skipping $original: \$$variable is not set or empty$RESET" >&2
+            return 1
+        fi
+
+        path=${path//"$placeholder"/"${!variable}"}
+    done
+
+    printf '%s' "$path"
+}
+
 function package_show_files() {
     # Operate on each package provided
     PACKAGE_NAMES="${@:-$PACKAGES_LIST}"
@@ -179,25 +227,34 @@ function package_show_files() {
 
         # Operate on each file in the package
         for FILE in $AVAILABLE_FILES; do 
-            # Resolve the link name by replacing dot- placeholders with actual dots
-            LINK=$(echo "$FILE" | sed 's/dot-/./g')
             # Generate the link name, relative to the package directory
-            LINK="${LINK#$PACKAGE_DIR/}"
+            LINK="${FILE#"$PACKAGE_DIR/"}"
+            # Resolve dot- and {VARIABLE} placeholders
+            if ! LINK=$(resolve_link_path "$LINK"); then
+                continue
+            fi
+
+            # Absolute resolved paths are used as-is, relative paths live under TARGET_DIR
+            if [[ "$LINK" == /* ]]; then
+                DEST="$LINK"
+            else
+                DEST="$TARGET_DIR/$LINK"
+            fi
 
             # Disable installed files from the package
             if [ "$DISABLE_PACKAGES" = "true" ]; then
-                if [ -L "$TARGET_DIR/$LINK" ]; then
+                if [ -L "$DEST" ]; then
                     if [ "$VERBOSE_ENABLED" = "true" ]; then
-                        rm -v "$TARGET_DIR/$LINK" \
-                            && echo "$LINK_ICON$BLUE $TARGET_DIR/$LINK$RESET" \
-                            || echo "${RED}Failed to unlink $TARGET_DIR/$LINK$LINK_ICON$RESET" >&2
+                        rm -v "$DEST" \
+                            && echo "$LINK_ICON$BLUE $DEST$RESET" \
+                            || echo "${RED}Failed to unlink $DEST$LINK_ICON$RESET" >&2
                     else
-                        rm "$TARGET_DIR/$LINK" \
-                            && echo "$LINK_ICON$BLUE $TARGET_DIR/$LINK$RESET" \
-                            || echo "${RED}Failed to unlink $TARGET_DIR/$LINK$LINK_ICON$RESET" >&2
+                        rm "$DEST" \
+                            && echo "$LINK_ICON$BLUE $DEST$RESET" \
+                            || echo "${RED}Failed to unlink $DEST$LINK_ICON$RESET" >&2
                     fi
                 else
-                    echo "$FAILURE_ICON $RED$LINK$LINK_ICON cannot be removed or is not a link$RESET" >&2
+                    echo "$FAILURE_ICON $RED$DEST$LINK_ICON cannot be removed or is not a link$RESET" >&2
                 fi
                 continue
             fi
@@ -205,13 +262,13 @@ function package_show_files() {
             # Enable available files from the package
             if [ "$ENABLE_PACKAGES" = "true" ]; then
                 # Skip if something already exists at the target location
-                if [ -e "$TARGET_DIR/$LINK" ] || [ -L "$TARGET_DIR/$LINK" ]; then
-                    echo "$LINK$LINK_ICON... ${BLUE}SKIPPING$RESET" >&2
+                if [ -e "$DEST" ] || [ -L "$DEST" ]; then
+                    echo "$DEST$LINK_ICON... ${BLUE}SKIPPING$RESET" >&2
                     continue
                 fi
 
                 # Generate the directory path for the link
-                DIR=$(dirname "$TARGET_DIR/$LINK")
+                DIR=$(dirname "$DEST")
                 if [ ! -d "$DIR" ]; then
                     if [ "$VERBOSE_ENABLED" = "true" ]; then
                         mkdir -pv "$DIR" \
@@ -225,13 +282,13 @@ function package_show_files() {
 
                 # Link the file to that location
                 if [ "$VERBOSE_ENABLED" = "true" ]; then
-                    ln -sv "$FILE" "$TARGET_DIR/$LINK"
+                    ln -sv "$FILE" "$DEST"
                 else
-                    ln -s "$FILE" "$TARGET_DIR/$LINK"
+                    ln -s "$FILE" "$DEST"
                 fi
 
                 if [ $? -eq 0 ]; then
-                    echo "$LINK_ICON ${GREEN}$TARGET_DIR/$LINK$RESET"
+                    echo "$LINK_ICON ${GREEN}$DEST$RESET"
                     mkdir -p "$(dirname "$INVENTORY")"
 
                     if [ ! -f "$INVENTORY" ]; then
@@ -245,11 +302,11 @@ function package_show_files() {
 EOF
                     fi
 
-                    if ! grep -Fxq "$TARGET_DIR/$LINK" "$INVENTORY"; then
-                        printf '%s\n' "$TARGET_DIR/$LINK" >> "$INVENTORY"
+                    if ! grep -Fxq "$DEST" "$INVENTORY"; then
+                        printf '%s\n' "$DEST" >> "$INVENTORY"
                     fi
                 else
-                    echo "${RED}Failed to link $TARGET_DIR/$LINK$RESET"
+                    echo "${RED}Failed to link $DEST$RESET"
                 fi
             fi
         done

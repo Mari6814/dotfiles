@@ -33,6 +33,20 @@ TARGET_DIR=~/.local/bin ./install tmux-sessionizer
 ```
 
 
+# Package paths
+Inside a package, a path component can reference an environment variable by wrapping its name in braces:
+
+```text
+packages/bash/{XDG_DATA_HOME}/bash-completion/completions/example.bash
+```
+
+`XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, and `XDG_CACHE_HOME` fall back to their standard locations when unset or empty. Files whose path references any other empty variable are skipped with a warning.
+
+The `dot-` placeholder is replaced with `.`, so `dot-bashrc` is linked as `.bashrc`.
+
+Paths that resolve to an absolute location are linked there directly. Relative paths are linked under `TARGET_DIR`.
+
+
 # Debugging
 
 The install script accepts a `-v` flag for verbose output, which will detail

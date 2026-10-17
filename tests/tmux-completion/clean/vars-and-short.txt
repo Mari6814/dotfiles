@@ -1,0 +1,6 @@
+$HOME ${APP_KEY}
+LOG_LEVEL=debug
+NODE_ENV=production
+SOME_SHORT_TOKEN=abc
+abc abcd abcde
+(the quick) foo, bar;

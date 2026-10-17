@@ -1,0 +1,14 @@
+$ npm run build -- --mode=production --outDir=./dist
+> web@2.14.0 build
+> vite build --mode=production --outDir=./dist
+vite v5.4.2 building for production...
+✓ 1873 modules transformed.
+dist/assets/index-D8f3kL2m.js   412.77 kB │ gzip: 131.42 kB
+dist/assets/vendor-q7Wn4XbT.js  892.11 kB │ gzip: 287.03 kB
+$ pytest -q tests/integration/test_orders.py::test_checkout -k 'not slow'
+FAILED tests/integration/test_orders.py::test_checkout - AssertionError: expected "ord_01HZX9K4T7" but got "ord_01HZX9K4T8"
+  File "/home/ci/runner/work/web/web/tests/integration/test_orders.py", line 87, in test_checkout
+    assert payload["id"] == "ord_01HZX9K4T7"
+E   KeyError: 'X-Request-Id'
+1 failed, 24 passed in 12.84s
+$ docker build -t registry.example.com:5000/team/web:2.14.0-rc.1 --build-arg NODE_ENV=production .

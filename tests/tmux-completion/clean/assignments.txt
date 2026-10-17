@@ -1,0 +1,5 @@
+APP_KEY=SOME:TOKEN
+DATABASE_URL=postgres://app:secret@db.internal:5432/production
+export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+--token=abc:def
+--endpoint=https://api.example.com/v1/items

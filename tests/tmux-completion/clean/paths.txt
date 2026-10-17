@@ -1,0 +1,6 @@
+/srv/apps/current/releases/2026-10-17/artifacts/service-bundle.tar.gz
+/home/m/.local/state/dotfiles/inventory.
+./scripts/build/release.sh
+~/projects/dotfiles/packages/tmux/dot-local/bin/tmux-sessionizer
+/var/log/nginx/error.log
+relative/path/to/some/file.txt

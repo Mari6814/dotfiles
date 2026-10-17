@@ -1,0 +1,7 @@
+SGVsbG8rd29ybGQvZm9vYmFy==
+eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc123
+sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+git clone git@github.com:junegunn/fzf.git
+curl https://example.com/path?x=1
+ssh deploy@localhost:2222
+cache.internal:6379

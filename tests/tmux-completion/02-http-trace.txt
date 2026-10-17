@@ -1,0 +1,10 @@
+$ curl -sv -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc123' 'https://api.example.com/v1/orders?limit=25&status=failed'
+*   Trying 10.20.30.40:443...
+* Connected to api.example.com (10.20.30.40) port 443
+> GET /v1/orders?limit=25&status=failed HTTP/2
+> Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc123
+< HTTP/2 200
+< x-request-id: 8f14e45f-ceea-407b-a9e8-5c2e8b3d4a11
+{"data":[{"id":"ord_01HZX9K4T7","amount":"129.99","customer":"Acme Corp","callback":"https://hooks.example.com/orders/ord_01HZX9K4T7?token=SGVsbG8rd29ybGQvZm9vYmFy=="}],"next":"/v1/orders?cursor=eyJvZmZzZXQiOjI1fQ=="}
+$ echo "$HOME/.config/acme/credentials.json" | xargs cat
+{"client_id":"acme-cli","client_secret":"s3cr3t-with-dash_and.dot","redirect_uri":"http://localhost:8080/callback"}

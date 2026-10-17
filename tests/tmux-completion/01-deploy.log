@@ -1,0 +1,9 @@
+2026-10-17T14:42:03.911Z INFO  deploy: pulling image registry.example.com:5000/team/payments-api:v2.8.3
+2026-10-17T14:42:05.204Z INFO  deploy: target prod-eu-west-1 node ip-10-0-14-23.internal:10250
+2026-10-17T14:42:06.778Z WARN  deploy: DATABASE_URL=postgres://payments:Zx9!kLm2@db-prod.internal:5432/payments sslmode=require
+2026-10-17T14:42:07.310Z INFO  deploy: APP_KEY=SOME:TOKEN
+2026-10-17T14:42:08.002Z INFO  deploy: fetched config from https://vault.internal:8200/v1/secret/data/payments?version=42
+2026-10-17T14:42:09.441Z ERROR deploy: healthcheck failed: Get "https://payments-api.prod.example.com/healthz": dial tcp 10.0.14.23:8443: i/o timeout
+2026-10-17T14:42:10.120Z INFO  deploy: rolled back to registry.example.com:5000/team/payments-api:v2.8.2
+2026-10-17T14:42:11.888Z INFO  deploy: wrote /home/deploy/.cache/rollouts/2026-10-17/payments-api-7d9f8c6b5-x2k4m.rollback
+2026-10-17T14:42:12.001Z INFO  deploy: artifact sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08

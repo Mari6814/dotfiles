@@ -1,0 +1,5 @@
+"my file.txt"
+'/var/a b'
+echo "path with a \"quote\" inside /home/m/test"
+single='my other file'
+"build output: /tmp/build/2026-10-17/artifact.tar.gz"

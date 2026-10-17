@@ -1,0 +1,11 @@
+$ export DATABASE_URL='postgres://app:secret@db.internal:5432/production' APP_KEY=SOME:TOKEN
+$ ssh -i ~/.ssh/id_ed25519 -p 2222 deploy@bastion.prod.example.com 'docker ps --format "{{.Names}}\t{{.Image}}"'
+api-7d9f8c6b5-x2k4m   registry.example.com:5000/team/api:v2.8.3
+redis-0               redis:7.2.4-alpine
+$ tar -czf /tmp/backups/2026-10-17/payments-api-7d9f8c6b5-x2k4m.tar.gz -C /srv/apps/current .
+$ grep -RIn --exclude-dir=node_modules "APP_KEY=SOME:TOKEN" /home/deploy/.config/acme
+/home/deploy/.config/acme/prod.env:12:APP_KEY=SOME:TOKEN
+$ mysql --host=db.internal --port=3306 -u app -p"Zx9!kLm2" production -e 'select id,email from users limit 2'
+$ jq -r '.items[] | "\(.name)\t\(.url)"' /tmp/acme-response.json
+orders  https://api.example.com/v1/orders?limit=25
+users   https://api.example.com/v1/users?status=active&page=2

@@ -1,0 +1,5 @@
+[32mINFO[0m  deploy ok [1mpayments-api[0m image=[36mregistry.example.com:5000/team/payments-api:v2.8.3[0m
+[33mWARN[0m  retrying [1m3[0m times: [4mhttps://api.example.com/healthz[0m
+[31mERROR[0m failed: dial tcp [1m10.0.14.23:8443[0m: i/o timeout
+[32mINFO[0m  token=[35mSGVsbG8rd29ybGQvZm9vYmFy==[0m
+[32mINFO[0m  wrote [1m/home/deploy/.cache/rollouts/2026-10-17/payments-api-7d9f8c6b5-x2k4m.rollback[0m

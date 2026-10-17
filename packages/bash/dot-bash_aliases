@@ -59,13 +59,6 @@ md() {
     mkdir -p "$@" && cd "$@";
 }
 
-etmp() {
-    # Open a temporary file in the default editor
-    local file="$(mktemp)$1";
-    e "$file";
-    echo "$file";
-}
-
 should_print_help() {
     # Returns 0 in case that --help|-h was detected in arguments
     # Usage: `if should_print_help "$@"; then echo ...; return; fi`
@@ -76,7 +69,19 @@ should_print_help() {
     return 1
 }
 
+etmp() {
+    # Open a temporary file in the default editor
+    if should_print_help "$@"; then
+        echo "Usage: etmp [SUFFIX]";
+        return 0
+    fi
+    local file="$(mktemp)$1";
+    "${EDITOR:-vim}" "$file";
+    echo "$file";
+}
+
 mkcmd() {
+    # Open a new file in EDITOR, prefilled with bash shebang & executable flag set
     local name="${1:?Usage: cmd <PATH>}"
 
     if ! (set -o noclobber; printf '#!/usr/bin/env bash\n\n' > "$name"); then
@@ -85,7 +90,7 @@ mkcmd() {
     fi
 
     chmod +x -- "$name" || return 1
-    "${EDITOR:-vim}" "$name" +startinsert
+    "${EDITOR:-vim}" "$name"
 }
 
 taildate() {
@@ -99,7 +104,5 @@ watch-files() {
 }
 
 # Load machine-local aliases that are not commited into git
-if [ -f "$LOCAL/bash_aliases.local" ]; then
-    export SOURCED="$LOCAL/bash_aliases.local@`date +%H%m%S`:$SOURCED"
-    source "$LOCAL/bash_aliases.local"
-fi
+[ -s "$HOME/.bash_aliases.local" ] && \. "$HOME/.bash_aliases.local"
+[ -s "$LOCAL/bash_aliases" ] && \. "$LOCAL/bash_aliases"

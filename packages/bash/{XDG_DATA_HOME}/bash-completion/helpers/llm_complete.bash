@@ -83,7 +83,9 @@
 #   LLM_COMPLETE_SKIP="foo bar"          leave these to filename completion
 #   LLM_COMPLETE_LOGFILE=/tmp/llm.log    enable the debug log
 
-# Requires bash >= 4.2 (associative arrays, mapfile).
+# Requires bash >= 4.2 (associative arrays, mapfile), curl, and jq.
+# `compmerge` is used when available; otherwise each model line is used as a
+# completion candidate directly.
 
 # --------------------------------------------------
 # Configuration
@@ -143,7 +145,6 @@ _LLM_CTX_PROMPT=
 _LLM_CTX_MS=0
 _LLM_PATH=
 _LLM_PATH_TOKENS=()
-_LLM_LINE_WORDS=()
 _LLM_HELP_ARGV=()
 _LLM_HELP_TARGET_TOKENS=()
 _LLM_HELP_CMD_DISPLAY=
@@ -921,20 +922,14 @@ _llm_fzf_select() {
 }
 
 _llm_emit() {
-    local w
     if (( ${#_LLM_OUT[@]} > 1 )); then
         _llm_fzf_select || true
     fi
 
-    # Phrases and anything else with shell-special characters must be quoted
-    # on insertion; `-o filenames` makes readline do that.
-    for w in "${_LLM_OUT[@]}"; do
-        if [[ $w == *[[:space:]]* || $w == *\'* || $w == *\"* ]]; then
-            compopt -o filenames 2>/dev/null
-            break
-        fi
-    done
-
+    # compmerge --format=word returns shell-word replacements. Multi-word
+    # replacements such as "on 8080" must be inserted literally, not escaped
+    # as a single filename argument.
+    compopt +o filenames 2>/dev/null
     COMPREPLY=("${_LLM_OUT[@]}")
 }
 
@@ -947,107 +942,12 @@ _llm_emit_original() {
     return 0
 }
 
-# Reduce a model line to the next new token after the longest suffix of the
-# command line that the line repeats. For example, with line words `a b c d`
-# and model output `b c d e f g`, return `e`.
-_llm_merge_line() {
-    local line=$1 cur=$2 present=$3 prev_opt=$4
-    shift 4
-    local -a line_words=("$@") toks=()
-    local n=${#line_words[@]} k m best=0 match t
-
-    if [[ -n $prev_opt && $prev_opt == -* && $prev_opt != -- && $line == "$prev_opt="* ]]; then
-        line=${line#"$prev_opt="}
-    fi
-    # An option followed by aligned description text is not a value.
-    if [[ -n $prev_opt && $prev_opt != -- &&
-        $line =~ ^"$prev_opt"[[:space:]][[:space:]] ]]; then
-        return 1
-    fi
-
-    read -r -a toks <<<"$line"
-    (( ${#toks[@]} )) || return 1
-
-    for (( k = 1; k <= ${#toks[@]} && k <= n; k++ )); do
-        match=1
-        for (( m = 0; m < k; m++ )); do
-            if [[ ${toks[m]} != "${line_words[n - k + m]}" ]]; then
-                match=0
-                break
-            fi
-        done
-        (( match )) && best=$k
-    done
-
-    for (( m = best; m < ${#toks[@]}; m++ )); do
-        t=${toks[m]}
-        [[ -n $t ]] || continue
-        [[ $t == "$cur" ]] && continue
-        [[ $present == *" $t "* ]] && continue
-        printf '%s\n' "$t"
-        return 0
-    done
-    return 1
-}
-
-# Read candidate lines on stdin and print one merged token per line.
-# Usage: _llm_merge_completions <cur> <present> <prev_opt> <line-word...>
-_llm_merge_completions() {
-    local cur=$1 present=$2 prev_opt=$3
-    shift 3
-    local line candidate
-    local -A seen=()
-
-    while IFS= read -r line; do
-        line=${line%$'\r'}
-        [[ ${line,,} == *no_think* ]] && continue
-
-        line=${line#"${line%%[![:space:]]*}"}
-        line=${line%"${line##*[![:space:]]}"}
-        line=${line#- }
-        line=${line#\* }
-        line=${line#\`}
-        line=${line#\"}
-        line=${line#\'}
-        [[ -z $line ]] && continue
-
-        if ! candidate=$(_llm_merge_line "$line" "$cur" "$present" "$prev_opt" "$@"); then
-            continue
-        fi
-
-        candidate=${candidate%[.,;:]}
-        candidate=${candidate%\`}
-        candidate=${candidate%\"}
-        candidate=${candidate%\'}
-        candidate=${candidate#\`}
-        candidate=${candidate#\"}
-        candidate=${candidate#\'}
-
-        [[ -n $candidate ]] || continue
-        [[ $candidate == "$cur"* ]] || continue
-        [[ $candidate == *[[:alnum:]]* || $candidate == '--' ]] || continue
-        [[ -n ${seen[$candidate]+set} ]] && continue
-        seen[$candidate]=1
-        printf '%s\n' "$candidate"
-    done
-}
-
-# Convenience wrapper for testing the merge rule:
-#   printf '%s\n' 'b c d e f g' | _merge_llm_completion '' 'a b c d'
-_merge_llm_completion() {
-    local cur=$1 line=$2 prev_opt=${3:-}
-    local -a words=()
-    read -r -a words <<<"$line"
-    local present=" ${words[*]} "
-    _llm_merge_completions "$cur" "$present" "$prev_opt" "${words[@]}"
-}
-
 # --------------------------------------------------
 # Completion
 # --------------------------------------------------
 _llm_complete() {
     local cur cmd prev base mode prev_opt cur_display prev_display
-    local line_before line_after i j w end help_key help_target
+    local line_before line_after i j w help_key help_target
     local -a candidates=() path_words=()
 
     local t_start
@@ -1066,8 +966,7 @@ _llm_complete() {
     _LLM_HELP_CMD_DISPLAY=
     _LLM_PATH=
     _LLM_PATH_TOKENS=()
-    _LLM_LINE_WORDS=()
-    _LLM_HELP_ARGV=()
+        _LLM_HELP_ARGV=()
     _LLM_HELP_TARGET_TOKENS=()
 
     # After a command separator (`&&`, `;`, `|`) bash may call a -D/-I handler
@@ -1147,16 +1046,7 @@ _llm_complete() {
         _llm_collect_original "$cmd" "$cur" "$prev"
     fi
 
-    # 5. Build the line words used by the merge helper, and the
-    #    command-relative path used for help/context rules.
-    end=$COMP_CWORD
-    if [[ $prev == '=' ]] && (( end >= 2 )); then
-        (( end -= 2 ))
-    fi
-    for (( j = i; j < end; j++ )); do
-        _LLM_LINE_WORDS+=("${COMP_WORDS[j]}")
-    done
-
+    # 5. Build the command-relative path used for help/context rules.
     path_words=()
     for (( j = i + 1; j < COMP_CWORD; j++ )); do
         path_words+=("${COMP_WORDS[j]}")
@@ -1352,14 +1242,50 @@ Completion rules:
     text=$(jq -r '.response // empty' <<<"$raw" 2>/dev/null) || text=
     text=${text//\/no_think/}
 
-    # 15. Merge the model's output into usable candidates.
-    local candidate
-    while IFS= read -r candidate; do
-        _llm_offer "$candidate" "$cur" "$present"
-    done < <(
-        _llm_merge_completions "$cur" "$present" "$prev_opt" \
-            "${_LLM_LINE_WORDS[@]}" <<<"$text"
-    )
+    # 15. Convert model lines to attempts and merge them. compmerge is used
+    #     when available; otherwise each model line is a candidate.
+    local -a attempts=()
+    local line candidate merged= merge_format merger=none
+    while IFS= read -r line; do
+        line=${line%$'\r'}
+        [[ ${line,,} == *no_think* ]] && continue
+
+        line=${line#"${line%%[![:space:]]*}"}
+        line=${line%"${line##*[![:space:]]}"}
+        line=${line#- }
+        line=${line#\* }
+        line=${line#\`}
+        line=${line#\"}
+        line=${line#\'}
+        [[ -n $line ]] || continue
+        [[ $line == *[[:alnum:]]* || $line == '--' ]] || continue
+        attempts+=("$line")
+    done <<<"$text"
+
+    if (( ${#attempts[@]} )); then
+        merge_format=word
+        [[ $prev == '=' ]] && merge_format=token
+
+        if command -v compmerge >/dev/null 2>&1; then
+            if merged=$(compmerge --format="$merge_format" \
+                --cursor="$COMP_POINT" "$COMP_LINE" -- "${attempts[@]}" 2>/dev/null); then
+                merger=compmerge
+            else
+                _llm_log "compmerge failed format=$merge_format attempts=${#attempts[@]}"
+                merged=
+            fi
+        fi
+
+        if [[ -z $merged ]]; then
+            merger=lines
+            merged=$(printf '%s\n' "${attempts[@]}")
+        fi
+
+        while IFS= read -r candidate; do
+            _llm_offer "$candidate" "$cur" "$present"
+        done <<<"$merged"
+    fi
+    _llm_log "merger=$merger format=${merge_format:-none} attempts=${#attempts[@]} candidates=${#_LLM_OUT[@]}"
 
     if [[ $mode == llm-first ]] && (( ${#_LLM_OUT[@]} == 0 )); then
         _llm_add_orig

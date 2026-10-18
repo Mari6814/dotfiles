@@ -7,6 +7,10 @@ Test how llm_complete behaves using a fake container CLI with fake help and
 state. There are no real containers, downloads, Docker/Ollama calls, or tmux
 commands in the completion targets.
 
+If `compmerge` is on PATH, llm_complete uses it to merge model attempts with
+the current command line. Without it, each model line is used as a completion
+candidate directly.
+
 Files
 -----
   fixtures/fakectl    fake container CLI and state machine

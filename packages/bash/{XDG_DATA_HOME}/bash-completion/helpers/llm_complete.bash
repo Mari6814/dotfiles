@@ -7,11 +7,10 @@
 # (for example _longopt or Docker's __start_docker) and installs _llm_complete.
 #
 #   register_llm_completion fakectl --mode efficient \
-#       --allow-help 'fakectl image*' \
-#       --deny-help  'fakectl image rm*' \
-#       --allow-help 'fakectl image rm' \
-#       --allow-help 'fakectl container stop' \
-#       --context 'fakectl container stop*' 'fakectl container ps --quiet'
+#       --allow-help '*' \
+#       --deny-help  'container stop *' \
+#       --deny-help  'image rm *' \
+#       --context 'container stop' 'fakectl container ps --quiet'
 #
 # Modes:
 #   efficient  use the existing completion when it returns candidates; fall
@@ -21,29 +20,43 @@
 #   merge      always run the existing completion and the model, then merge
 #   override   forget the existing completion and use only the model
 #
+# Paths:
+#   Help and context patterns are relative to the registered command. Words
+#   starting with "-" and VAR=value assignments are ignored; the remaining
+#   words form the path. An empty path is the root command.
+#
+#   Patterns are prefix matches:
+#       ''          root only
+#       '*'         any path, including root
+#       'image'     image and anything below it
+#       'image rm'  image rm and anything below it
+#       'image rm *' anything strictly below image rm
+#
 # Help rules:
 #   --allow-help and --deny-help are evaluated in declaration order. The last
-#   matching rule wins; the default is deny. The example above allows all
-#   fakectl image help except `fakectl image rm ...`, then re-allows the bare
-#   `fakectl image rm` position. That keeps
-#   `fakectl image rm target <Tab>` from running
-#   `fakectl image rm target --help`, while `fakectl image rm <Tab>` still
-#   runs `fakectl image rm --help`.
+#   matching rule wins; the default is deny. Help is only used on the model
+#   path; it is never used to generate deterministic candidates.
+#
+#   Resolution walks from the current path up to the root and uses the nearest
+#   path whose effective rule is allow. A deny means that path's help is
+#   unsupported, so its parent is tried. The help command is the command plus
+#   the target path plus --help.
+#
+#   '--allow-help ""' therefore behaves like _longopt: every path falls back
+#   to root help. '--allow-help "*"' instead uses path help at every path.
 #
 # Context:
 #   --context PATTERN COMMAND runs COMMAND and adds its output to the model
-#   prompt when the base line matches PATTERN. It is repeatable; each flag
-#   takes exactly two arguments. It applies to every command named on the same
-#   register_llm_completion invocation. Context commands run only when the model
-#   path is reached.
+#   prompt when the path matches PATTERN. It is repeatable; each flag takes
+#   exactly two arguments. It applies to every command named on the same
+#   register_llm_completion invocation. Context commands run only when the
+#   model path is reached.
 #
 #   register_llm_completion fakectl --mode efficient \
-#       --context 'fakectl container stop*' \
-#           'fakectl container ps --quiet' \
-#       --context 'fakectl container start*' \
+#       --context 'container stop' 'fakectl container ps --quiet' \
+#       --context 'container start' \
 #           'fakectl container ps -a -f state=stopped --quiet' \
-#       --context 'fakectl image rm*' \
-#           'fakectl image list --quiet'
+#       --context 'image rm' 'fakectl image list --quiet'
 #
 #   Repeat --context for each rule. All context is supplied directly to
 #   register_llm_completion.
@@ -57,7 +70,7 @@
 #   LLM_COMPLETE_URL=http://localhost:11434
 #   LLM_COMPLETE_TIMEOUT=3               seconds for the model request
 #   LLM_COMPLETE_KEEP_ALIVE=30m          how long Ollama pins the model
-#   LLM_COMPLETE_HELP_TIMEOUT=2          seconds for `<base> --help`
+#   LLM_COMPLETE_HELP_TIMEOUT=2          seconds for `<path> --help`
 #   LLM_COMPLETE_MAX_HELP=8192           bytes of help sent to the model
 #   LLM_COMPLETE_CONTEXT_TIMEOUT=1       seconds for a --context command
 #   LLM_COMPLETE_CONTEXT_BYTES=2048      bytes per context command
@@ -92,8 +105,9 @@
 : "${LLM_COMPLETE_SKIP:=}"
 : "${LLM_COMPLETE_LOGFILE:=}"
 
-# Commands whose main argument is a filename: options still complete, but the
-# model is not asked for arguments. Add your own with LLM_COMPLETE_SKIP.
+# Commands whose main argument is a filename: leave them to the previous
+# completion / bash filename completion; do not ask the model. Add your own
+# with LLM_COMPLETE_SKIP.
 _LLM_SKIP_CMDS=' cd pushd popd dirs pwd ls cat tac cp mv rm rmdir mkdir mktemp
     touch ln link chmod chown chgrp stat file readlink realpath basename dirname
     du df tree find locate updatedb which whereis
@@ -127,9 +141,11 @@ _LLM_ORIG_OUT=()
 _LLM_CTX_CMDS=()
 _LLM_CTX_PROMPT=
 _LLM_CTX_MS=0
-_LLM_BASE_MATCH=
-_LLM_BASE_WORDS=()
+_LLM_PATH=
+_LLM_PATH_TOKENS=()
+_LLM_LINE_WORDS=()
 _LLM_HELP_ARGV=()
+_LLM_HELP_TARGET_TOKENS=()
 _LLM_HELP_CMD_DISPLAY=
 
 # --------------------------------------------------
@@ -162,8 +178,9 @@ _llm_timeout_cmd() {
 # Debug log
 # --------------------------------------------------
 # Enabled only when LLM_COMPLETE_LOGFILE is set. Writes a readable block per
-# model call and one line per fast path; never writes to stdout/stderr. The
-# path is read on every write, so setting/changing it takes effect immediately.
+# model call and one line per completion decision; never writes to stdout or
+# stderr. The path is read on every write, so changing it takes effect
+# immediately.
 _llm_debug_on() { [[ -n $LLM_COMPLETE_LOGFILE ]]; }
 
 _llm_log_init() {
@@ -216,7 +233,7 @@ _LLM_HELP_TEXT=
 
 # Sets _LLM_HELP_TEXT. Never call this with command substitution: the cache
 # assignment has to happen in the current shell. The first argument is the
-# cache key, the rest is the argv to run (normally `<base> --help`).
+# cache key, the rest is the argv to run (normally `<path> --help`).
 _llm_help() {
     local key=$1
     shift
@@ -344,9 +361,65 @@ _llm_error() {
     printf 'llm_complete: %s\n' "$*" >&2
 }
 
+# Build the command-relative path from words after the real command, before
+# the token under the cursor. Options and assignments are ignored.
+_llm_path_from_words() {
+    local w
+    _LLM_PATH_TOKENS=()
+    for w in "$@"; do
+        [[ -n $w ]] || continue
+        [[ $w == -* ]] && continue
+        [[ $w == *=* ]] && continue
+        _LLM_PATH_TOKENS+=("$w")
+    done
+    _LLM_PATH="${_LLM_PATH_TOKENS[*]}"
+}
+
+# Match a command-relative path against a pattern.
+#   ''          -> root path only
+#   '*'         -> any path, including root
+#   'image'     -> image and any path below it (prefix match)
+#   'image rm'  -> image rm and any path below it
+#   'image rm *'-> paths strictly below image rm
+_llm_path_matches_pattern() {
+    local path=$1 pattern=$2
+    local -a ptokens=() pats=()
+    local n star=0 k
+
+    read -r -a ptokens <<<"$path"
+    if [[ -z $pattern ]]; then
+        (( ${#ptokens[@]} == 0 ))
+        return
+    fi
+    read -r -a pats <<<"$pattern"
+    n=${#pats[@]}
+    (( n )) || return 1
+
+    if (( n == 1 )) && [[ ${pats[0]} == '*' ]]; then
+        return 0
+    fi
+    if [[ ${pats[n - 1]} == '*' ]]; then
+        star=1
+        (( n-- ))
+    fi
+    (( n > 0 )) || return 1
+
+    for (( k = 0; k < n; k++ )); do
+        [[ ${pats[k]} == '*' ]] && return 1
+        [[ ${ptokens[k]:-} == "${pats[k]}" ]] || return 1
+    done
+    (( n <= ${#ptokens[@]} )) || return 1
+
+    if (( star )); then
+        (( ${#ptokens[@]} > n ))
+        return
+    fi
+    return 0
+}
+
 _llm_add_help_rule() {
     local cmd=$1 action=$2 pattern=$3 key
-    [[ -n $action && -n $pattern ]] || return 0
+    [[ -n $action ]] || return 0
     key=${cmd##*/}
     if [[ -n ${_LLM_HELP_RULES[$key]:-} ]]; then
         _LLM_HELP_RULES[$key]+=$'\n'
@@ -355,7 +428,7 @@ _llm_add_help_rule() {
     return 0
 }
 
-# Allow `<base> --help` for this command when the base line matches PATTERN.
+# Allow `<path> --help` for this command when the path matches PATTERN.
 _allow_llm_completion_help() {
     if (( $# != 2 )); then
         _llm_error "usage: _allow_llm_completion_help <command> <pattern>"
@@ -364,7 +437,7 @@ _allow_llm_completion_help() {
     _llm_add_help_rule "$1" allow "$2"
 }
 
-# Deny `<base> --help` for this command when the base line matches PATTERN.
+# Deny `<path> --help` for this command when the path matches PATTERN.
 _deny_llm_completion_help() {
     if (( $# != 2 )); then
         _llm_error "usage: _deny_llm_completion_help <command> <pattern>"
@@ -375,28 +448,52 @@ _deny_llm_completion_help() {
 
 # Ordered rules; the last matching rule wins. Default is deny.
 _llm_help_allowed() {
-    local key=$1 base=$2 action pattern decision=1
+    local key=$1 path=$2 action pattern decision=1
     local rules=${_LLM_HELP_RULES[$key]-}
     [[ -n $rules ]] || return 1
 
     while IFS=$'\t' read -r action pattern; do
-        [[ -n $action && -n $pattern ]] || continue
-        [[ $base == $pattern ]] || continue
+        [[ -n $action ]] || continue
+        _llm_path_matches_pattern "$path" "$pattern" || continue
         [[ $action == allow ]] && decision=0 || decision=1
     done <<<"$rules"
 
     return "$decision"
 }
 
-# Run COMMAND and add its output to the model prompt when the base line
-# matches PATTERN.
+# Walk from the full path down to the root and use the nearest allowed path.
+# A denied path means its help is unsupported, so the parent is tried.
+_llm_help_target() {
+    local key=$1
+    shift
+    local -a tokens=("$@") cand=()
+    local k path
+
+    _LLM_HELP_TARGET_TOKENS=()
+    for (( k = ${#tokens[@]}; k >= 0; k-- )); do
+        if (( k == 0 )); then
+            cand=()
+        else
+            cand=("${tokens[@]:0:k}")
+        fi
+        path="${cand[*]}"
+        if _llm_help_allowed "$key" "$path"; then
+            _LLM_HELP_TARGET_TOKENS=("${cand[@]}")
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Run COMMAND and add its output to the model prompt when the path matches
+# PATTERN.
 _add_llm_completion_context() {
     if (( $# != 3 )); then
         _llm_error "usage: _add_llm_completion_context <command> <pattern> <command-to-run>"
         return 2
     fi
     local key=${1##*/}
-    [[ -n $2 && -n $3 ]] || return 0
+    [[ -n $3 ]] || return 0
     if [[ -n ${_LLM_CONTEXT_RULES[$key]:-} ]]; then
         _LLM_CONTEXT_RULES[$key]+=$'\n'
     fi
@@ -435,72 +532,72 @@ Options:
   --mode MODE                override, efficient, llm-first, or merge. Applies
                              to every command named on this invocation.
                              Default: efficient.
-  --allow-help PATTERN       Allow `<base> --help` when the base line matches
-                             PATTERN. Repeatable.
-  --deny-help PATTERN        Deny `<base> --help` when the base line matches
+  --allow-help PATTERN       Allow `<path> --help` when the command-relative
+                             path matches PATTERN. Repeatable.
+  --deny-help PATTERN        Deny `<path> --help` when the path matches
                              PATTERN. Repeatable.
   --context PATTERN COMMAND  Run COMMAND and add its output to the model prompt
-                             when the base line matches PATTERN. Repeatable;
-                             each occurrence takes exactly two arguments and
-                             applies to every command named on this invocation.
+                             when the path matches PATTERN. Repeatable; each
+                             occurrence takes exactly two arguments and applies
+                             to every command named on this invocation.
   --                         End options; remaining arguments are commands.
 
-  Help rules are evaluated in declaration order. The last matching rule wins.
-  The default is deny. Use a broad allow, then a narrower deny, then a
-  narrower allow to re-enable a safe position.
+  Help and context paths are relative to the registered command. Words
+  starting with "-" and VAR=value assignments are ignored; the remaining
+  words form the path. The token under the cursor is never included.
 
-Patterns:
-  Patterns are bash globs matched against the base line: the command line from
-  the real command up to the token being completed, with that token removed
-  and trailing whitespace trimmed. The first word is normalized to its
-  basename, so `/usr/bin/docker stop` matches `docker stop`. `*` matches
-  spaces too: `docker stop*` matches `docker stop` and `docker stop xyz`;
-  `docker stop` matches only the former.
+  Path patterns are prefix matches:
+    ''           root path only
+    '*'          any path, including root
+    'image'      image and any path below it
+    'image rm'   image rm and any path below it
+    'image rm *' any path strictly below image rm
 
-  The token under the cursor is never included:
-    `some -cm<Tab>`  -> base `some`        -> runs `some --help`
-    `some cmd<Tab>`  -> base `some`        -> runs `some --help`
-    `docker stop <Tab>` -> base `docker stop` -> runs `docker stop --help`
+  Help rules are evaluated in declaration order. The last matching rule wins;
+  the default is deny. Help is only used on the model path and never
+  generates deterministic candidates.
 
-Examples:
-  # Docker's own completion wins; the model is a fallback.
-  register_llm_completion docker --mode efficient \
-    --allow-help 'docker' \
-    --allow-help 'docker stop'
+  Resolution walks from the full path up to the root and uses the nearest
+  allowed path. A deny means that path's help is unsupported, so its parent
+  is tried. `--allow-help ''` is root-only fallback, like _longopt;
+  `--allow-help '*'` uses path help everywhere.
 
-  # Broad allow, narrow deny, narrow re-allow.
-  register_llm_completion fakectl --mode efficient \
-    --allow-help 'fakectl image*' \
-    --deny-help 'fakectl image rm*' \
-    --allow-help 'fakectl image rm'
+  Examples:
+    # Run `cmd --help` for every path, like _longopt.
+    register_llm_completion cmd --allow-help ''
 
-  # Multiple contexts; each --context takes PATTERN and COMMAND.
-  register_llm_completion fakectl --mode efficient \
-    --allow-help 'fakectl container stop' \
-    --context 'fakectl container stop*' \
-        'fakectl container ps --quiet' \
-    --context 'fakectl container start*' \
-        'fakectl container ps -a -f state=stopped --quiet'
+    # Use path help, but fall back to the parent when a target is present.
+    register_llm_completion fakectl --mode efficient \
+      --allow-help '*' \
+      --deny-help 'container stop *' \
+      --deny-help 'image rm *'
 
-  # Merge the model into a command's completion.
-  register_llm_completion mycmd --mode merge \
-    --allow-help 'mycmd' \
-    --context 'mycmd list*' 'mycmd list --quiet'
+    # If image rm does not support help at all, fall back to image.
+    register_llm_completion fakectl --mode efficient \
+      --allow-help 'image' \
+      --deny-help 'image rm'
 
-  # Use the LLM first; fall back to the recorded completion when it is empty.
-  register_llm_completion mycmd --mode llm-first \
-    --allow-help 'mycmd'
+    # Multiple contexts; each --context takes PATTERN and COMMAND.
+    register_llm_completion fakectl --mode efficient \
+      --allow-help '*' \
+      --context 'container stop' 'fakectl container ps --quiet' \
+      --context 'container start' \
+          'fakectl container ps -a -f state=stopped --quiet'
 
-  # Forget the previous completion and use only the LLM path.
-  register_llm_completion another --mode override \
-    --allow-help 'another'
+    # Use the LLM first; fall back to the recorded completion when it is empty.
+    register_llm_completion mycmd --mode llm-first \
+      --allow-help 'list'
+
+    # Forget the previous completion and use only the LLM path.
+    register_llm_completion another --mode override \
+      --allow-help 'sub'
 
 Global environment options (all optional):
   LLM_COMPLETE_MODEL=qwen3:latest      model; must honour think:false
   LLM_COMPLETE_URL=http://localhost:11434
   LLM_COMPLETE_TIMEOUT=3               seconds for the model request
   LLM_COMPLETE_KEEP_ALIVE=30m          how long Ollama pins the model
-  LLM_COMPLETE_HELP_TIMEOUT=2          seconds for `<base> --help`
+  LLM_COMPLETE_HELP_TIMEOUT=2          seconds for `<path> --help`
   LLM_COMPLETE_MAX_HELP=8192           bytes of help sent to the model
   LLM_COMPLETE_CONTEXT_TIMEOUT=1       seconds for a --context command
   LLM_COMPLETE_CONTEXT_BYTES=2048      bytes per --context command
@@ -517,7 +614,7 @@ Other functions:
   reset_llm_completion       clear the help cache
 
 Notes:
-  * `<base> --help` is executed as an argv (no shell expansion) and only when
+  * `<path> --help` is executed as an argv (no shell expansion) and only when
     the ordered help rules allow it. Declare patterns only for commands where
     `--help` is safe and does not perform the command itself.
   * Context commands run only when the model is about to be called. They run
@@ -710,46 +807,19 @@ _llm_add_orig() {
     done
 }
 
-# Some existing completions (notably docker's __start_docker) return entries
-# like "--config     (Location of client config files)". Trim those to the
-# actual word for deterministic flag/command stages.
-_llm_add_orig_trim() {
-    local c
-    for c in "${_LLM_ORIG_OUT[@]}"; do
-        [[ -n $c ]] || continue
-        c=${c%%[[:space:]]*}
-        [[ -n $c ]] || continue
-        [[ -n ${_LLM_SEEN[$c]+set} ]] && continue
-        _LLM_SEEN[$c]=1
-        _LLM_OUT+=("$c")
-    done
-}
-
-_llm_add_orig_flags() {
-    local c
-    for c in "${_LLM_ORIG_OUT[@]}"; do
-        [[ $c == -* ]] || continue
-        c=${c%%[[:space:]]*}
-        [[ -n $c ]] || continue
-        [[ -n ${_LLM_SEEN[$c]+set} ]] && continue
-        _LLM_SEEN[$c]=1
-        _LLM_OUT+=("$c")
-    done
-}
-
 # --------------------------------------------------
 # Extra context commands
 # --------------------------------------------------
 _llm_context_for() {
-    local key=$1 base=$2 rules pat cmd c
+    local key=$1 path=$2 rules pat cmd c
     local seen
     _LLM_CTX_CMDS=()
     rules=${_LLM_CONTEXT_RULES[$key]-}
     [[ -n $rules ]] || return 0
 
     while IFS=$'\t' read -r pat cmd; do
-        [[ -n $pat && -n $cmd ]] || continue
-        [[ $base == $pat ]] || continue
+        [[ -n $cmd ]] || continue
+        _llm_path_matches_pattern "$path" "$pat" || continue
         seen=0
         for c in "${_LLM_CTX_CMDS[@]}"; do
             [[ $c == "$cmd" ]] && seen=1 && break
@@ -797,76 +867,6 @@ _llm_run_context() {
     printf -v section $'\n<context source="%s">\n%s\n</context>\n' "$label" "$out"
     _LLM_CTX_PROMPT+=$section
     _llm_log "context cmd=$(printf '%q' "$cmd") ms=${ms} chars=${#out}"
-}
-
-# --------------------------------------------------
-# Help-derived candidate pools
-# --------------------------------------------------
-# Subcommands: indented `name [<arg>]   description` rows. Prose lines have
-# single spaces between words, so they do not match.
-_LLM_CMDS=
-_llm_extract_commands() {
-    _LLM_CMDS=$(
-        awk '
-            /^[[:space:]]+-/ { next }
-            /^[[:space:]]+[A-Za-z][A-Za-z0-9_.*-]*([[:space:]]+<[^>]+>)?[[:space:]]{2,}/ {
-                line = $0
-                sub(/^[[:space:]]+/, "", line)
-                split(line, a, /[[:space:]]+/)
-                sub(/\*$/, "", a[1])
-                print a[1]
-            }
-        ' <<<"$_LLM_HELP_TEXT" | sort -u
-    )
-}
-
-# Options: long and short flags parsed out of the help text.
-_LLM_OPTS=
-_llm_extract_options() {
-    local opt='--?[[:alnum:]][[:alnum:]_-]*' tok
-    _LLM_OPTS=$(
-        printf '%s\n' --help
-        {
-            grep -E '^[[:space:]]' <<<"$_LLM_HELP_TEXT" |
-                grep -oE "(^|[[:space:]|,/([])($opt)"
-            grep -vE '^[[:space:]]' <<<"$_LLM_HELP_TEXT" |
-                grep -oE "(^|[|,/([])[[:space:]]*($opt)"
-        } | while IFS= read -r tok; do
-            tok=${tok#"${tok%%[[:alpha:]-]*}"}
-            tok=${tok%%=*}
-            [[ $tok == -* ]] && printf '%s\n' "$tok"
-        done | sort -u
-    )
-}
-
-# Values: enumerations on the help line of an option, such as
-# `--output <format>   Output format: text, json, yaml`.
-_LLM_VALS=
-_llm_extract_values() {
-    local opt=$1 line rest tok
-    local -a vals=()
-    _LLM_VALS=
-    while IFS= read -r line; do
-        [[ $line =~ (^|[^[:alnum:]_-])"$opt"([^[:alnum:]_-]|$) ]] || continue
-        if [[ $line == *"$opt="* ]]; then
-            rest=${line#*"$opt="}
-            rest=${rest%%[[:space:]]*}
-        elif [[ $line == *:* ]]; then
-            rest=${line##*:}
-        else
-            continue
-        fi
-        while IFS= read -r tok; do
-            tok=${tok#"${tok%%[![:space:]]*}"}
-            tok=${tok%"${tok##*[![:space:]]}"}
-            [[ $tok =~ ^[A-Za-z][A-Za-z0-9_.-]*$ ]] || continue
-            vals+=("$tok")
-        done < <(tr ',|/' '\n' <<<"$rest")
-    done < <(grep -F -- "$opt" <<<"$_LLM_HELP_TEXT")
-
-    if (( ${#vals[@]} >= 2 )); then
-        _LLM_VALS=$(printf '%s\n' "${vals[@]}" | sort -u)
-    fi
 }
 
 # --------------------------------------------------
@@ -1047,8 +1047,8 @@ _merge_llm_completion() {
 # --------------------------------------------------
 _llm_complete() {
     local cur cmd prev base mode prev_opt cur_display prev_display
-    local line_before line_after i j w first help_allowed bad end help_key
-    local -a candidates=()
+    local line_before line_after i j w end help_key help_target
+    local -a candidates=() path_words=()
 
     local t_start
     t_start=$(_llm_us)
@@ -1060,13 +1060,15 @@ _llm_complete() {
     _LLM_CTX_CMDS=()
     _LLM_CTX_PROMPT=
     _LLM_CTX_MS=0
-        _LLM_HELP_TEXT=
+    _LLM_HELP_TEXT=
     _LLM_HELP_MS=0
     _LLM_HELP_FROM_CACHE=0
     _LLM_HELP_CMD_DISPLAY=
-    _LLM_BASE_MATCH=
-    _LLM_BASE_WORDS=()
+    _LLM_PATH=
+    _LLM_PATH_TOKENS=()
+    _LLM_LINE_WORDS=()
     _LLM_HELP_ARGV=()
+    _LLM_HELP_TARGET_TOKENS=()
 
     # After a command separator (`&&`, `;`, `|`) bash may call a -D/-I handler
     # with COMP_CWORD=-1 and an empty COMP_WORDS.
@@ -1145,31 +1147,31 @@ _llm_complete() {
         _llm_collect_original "$cmd" "$cur" "$prev"
     fi
 
-    # 5. Build the base line: from the real command through the word before
-    #    the token under the cursor. The token under the cursor is always
-    #    excluded, even when it is empty.
+    # 5. Build the line words used by the merge helper, and the
+    #    command-relative path used for help/context rules.
     end=$COMP_CWORD
     if [[ $prev == '=' ]] && (( end >= 2 )); then
         (( end -= 2 ))
     fi
     for (( j = i; j < end; j++ )); do
-        _LLM_BASE_WORDS+=("${COMP_WORDS[j]}")
+        _LLM_LINE_WORDS+=("${COMP_WORDS[j]}")
     done
-    _LLM_BASE_MATCH="${_LLM_BASE_WORDS[*]}"
-    if (( ${#_LLM_BASE_WORDS[@]} )); then
-        first=${_LLM_BASE_WORDS[0]}
-        _LLM_BASE_MATCH="${first##*/}${_LLM_BASE_MATCH#"$first"}"
-    fi
+
+    path_words=()
+    for (( j = i + 1; j < COMP_CWORD; j++ )); do
+        path_words+=("${COMP_WORDS[j]}")
+    done
+    _llm_path_from_words "${path_words[@]}"
 
     # 6. In efficient mode a registered completion takes over when it produces
-    #    candidates. In merge mode its candidates are kept for the LLM path.
+    #    candidates.
     if [[ $mode == efficient ]] && (( ${#_LLM_ORIG_OUT[@]} )); then
-        _llm_log "stage=original (prefer) cmd=$cmd mode=$mode base=$(printf '%q' "$_LLM_BASE_MATCH") n=${#_LLM_ORIG_OUT[@]}"
+        _llm_log "stage=original (prefer) cmd=$cmd mode=$mode path=$(printf '%q' "$_LLM_PATH") n=${#_LLM_ORIG_OUT[@]}"
         _llm_emit_original "$base"
         return 0
     fi
 
-    # 7. User exclusions: leave these to the old completion/filename completion.
+    # 7. User exclusions.
     local skip=" ${LLM_COMPLETE_SKIP//:/ } "
     if [[ -n $LLM_COMPLETE_SKIP && $skip == *" $base "* ]]; then
         _llm_log "skip cmd=$cmd: in LLM_COMPLETE_SKIP"
@@ -1177,29 +1179,33 @@ _llm_complete() {
         return 0
     fi
 
-    # 8. Help is opt-in per command and per base-line pattern.
-    help_allowed=0
-    if _llm_help_allowed "$base" "$_LLM_BASE_MATCH"; then
-        help_allowed=1
+    # 8. File-oriented commands: previous completion or bash filename
+    #    completion only.
+    if [[ $_LLM_SKIP_CMDS == *" $base "* ]]; then
+        _llm_log "skip cmd=$cmd: file-oriented command"
+        _llm_add_orig
+        _llm_emit
+        return 0
     fi
-    bad=0
-    for w in "${_LLM_BASE_WORDS[@]}"; do
-        case $w in
-            *';'* | *'|'* | *'&'* | *'<'* | *'>'* | *'$('* | *'`'*)
-                bad=1
-                ;;
-        esac
-    done
-    (( bad )) && help_allowed=0
 
-    if (( help_allowed )); then
-        _LLM_HELP_ARGV=("${_LLM_BASE_WORDS[@]}" --help)
+    # 9. Help/context only matter when the model can run.
+    if ! _llm_check_deps; then
+        _llm_add_orig
+        _llm_emit
+        return 0
+    fi
+
+    # 10. Help resolves to the nearest allowed ancestor path.
+    if _llm_help_target "$base" "${_LLM_PATH_TOKENS[@]}"; then
+        _LLM_HELP_ARGV=("$cmd" "${_LLM_HELP_TARGET_TOKENS[@]}" --help)
+        help_target="${_LLM_HELP_TARGET_TOKENS[*]}"
+        [[ -n $help_target ]] || help_target='<root>'
         help_key=$(printf '%q ' "${_LLM_HELP_ARGV[@]}")
         help_key=${help_key%" "}
         _llm_help "$help_key" "${_LLM_HELP_ARGV[@]}"
-        _llm_log "help allowed base=$(printf '%q' "$_LLM_BASE_MATCH") cmd=$(printf '%q' "$_LLM_HELP_CMD_DISPLAY") chars=${#_LLM_HELP_TEXT} ms=$_LLM_HELP_MS cached=$_LLM_HELP_FROM_CACHE"
+        _llm_log "help allowed path=$(printf '%q' "$_LLM_PATH") target=$(printf '%q' "$help_target") cmd=$(printf '%q' "$_LLM_HELP_CMD_DISPLAY") chars=${#_LLM_HELP_TEXT} ms=$_LLM_HELP_MS cached=$_LLM_HELP_FROM_CACHE"
     else
-        _llm_log "help skipped base=$(printf '%q' "$_LLM_BASE_MATCH")"
+        _llm_log "help skipped path=$(printf '%q' "$_LLM_PATH")"
     fi
 
     # Words already on the line, except the one being completed.
@@ -1211,84 +1217,14 @@ _llm_complete() {
         present+="${COMP_WORDS[j]} "
     done
 
-    # 9a. Options, straight out of the help text. Exact, instant, no model.
-    if [[ -n $_LLM_HELP_TEXT && $cur == -* ]]; then
-        _llm_extract_options
-        _llm_add_orig_flags
-        while IFS= read -r w; do
-            _llm_offer "$w" "$cur" "$present"
-        done <<<"$_LLM_OPTS"
-        if (( ${#_LLM_OUT[@]} )); then
-            _llm_emit
-            _llm_log "stage=options cmd=$cmd cur=$(printf '%q' "$cur") help_chars=${#_LLM_HELP_TEXT}" \
-                "help_ms=$_LLM_HELP_MS help_cached=$_LLM_HELP_FROM_CACHE orig=${#_LLM_ORIG_OUT[@]}" \
-                "n=${#_LLM_OUT[@]} out=$(printf '%q' "${_LLM_OUT[*]}")"
-            return 0
-        fi
-    fi
-
-    # 9b. Flags with no help: the old completion still knows them.
-    if [[ $cur == -* ]]; then
-        _llm_add_orig_flags
-        if (( ${#_LLM_OUT[@]} )); then
-            _llm_emit
-            _llm_log "stage=flags-original cmd=$cmd n=${#_LLM_OUT[@]}" \
-                "out=$(printf '%q' "${_LLM_OUT[*]}")"
-            return 0
-        fi
-    fi
-
-    # 9c. File-oriented commands stop here; Bash's filename completion is
-    #     better for their arguments, but options above still work.
-    if [[ $_LLM_SKIP_CMDS == *" $base "* ]]; then
-        _llm_log "skip cmd=$cmd: file-oriented command"
-        _llm_add_orig
-        _llm_emit
-        return 0
-    fi
-
-    # 9d. Values enumerated on the option's own help line.
-    if [[ $prev_opt == -* && -n $_LLM_HELP_TEXT ]]; then
-        _llm_extract_values "$prev_opt"
-        if [[ -n $_LLM_VALS ]]; then
-            _llm_add_orig
-            while IFS= read -r w; do
-                _llm_offer "$w" "$cur" "$present"
-            done <<<"$_LLM_VALS"
-            if (( ${#_LLM_OUT[@]} )); then
-                _llm_emit
-                _llm_log "stage=values cmd=$cmd opt=$prev_opt orig=${#_LLM_ORIG_OUT[@]} n=${#_LLM_OUT[@]}" \
-                    "out=$(printf '%q' "${_LLM_OUT[*]}")"
-                return 0
-            fi
-        fi
-    fi
-
-    # 9e. Subcommands, when the help for this base line has a Commands section.
-    if [[ -n $_LLM_HELP_TEXT ]]; then
-        _llm_extract_commands
-        if [[ -n $_LLM_CMDS ]]; then
-            _llm_add_orig_trim
-            while IFS= read -r w; do
-                _llm_offer "$w" "$cur" "$present"
-            done <<<"$_LLM_CMDS"
-            if (( ${#_LLM_OUT[@]} )); then
-                _llm_emit
-                _llm_log "stage=commands cmd=$cmd orig=${#_LLM_ORIG_OUT[@]} n=${#_LLM_OUT[@]}" \
-                    "out=$(printf '%q' "${_LLM_OUT[*]}")"
-                return 0
-            fi
-        fi
-    fi
-
-    # 10. Terminal context.
+    # 11. Terminal context.
     _llm_screen
 
-    # 11. Extra context commands, only when the model will actually run.
-    _llm_context_for "$base" "$_LLM_BASE_MATCH"
+    # 12. Extra context commands, only when the model will actually run.
+    _llm_context_for "$base" "$_LLM_PATH"
     if (( ${#_LLM_CTX_CMDS[@]} )); then
         for w in "${_LLM_CTX_CMDS[@]}"; do
-            _llm_run_context "$w" "$base" "$_LLM_BASE_MATCH" "$cur" "$prev"
+            _llm_run_context "$w" "$base" "$_LLM_PATH" "$cur" "$prev"
         done
     fi
 
@@ -1298,48 +1234,49 @@ _llm_complete() {
         _llm_add_orig
     fi
 
-    # 12. The model is the only stage that needs curl/jq.
-    if ! _llm_check_deps; then
-        [[ $mode == llm-first ]] && _llm_add_orig
-        _llm_emit
-        return 0
-    fi
-
     # 13. Static instructions, then the current context, help, pane, context
     #     commands, candidates.
     local system prompt
-    system='You are a Bash completion engine. Complete the token under the cursor.
-Output only completion candidates, one per line, nothing else.
-Rules:
+    system='SYSTEM INSTRUCTIONS
+- You are a Bash completion engine.
+- Output only completion candidates, one per line, nothing else.
+- Be accurate and distinguish facts from assumptions.
+- Never invent commands, options, values, paths, or identifiers that are not supported by the command line, help, or context.
 - No markdown, no numbering, no explanations, no code fences.
+
+Completion rules:
 - The current token is the text that will be replaced; return whole replacement tokens.
 - Every candidate MUST begin with the current token.
 - Unless the current token is <NEW ARGUMENT> or <VALUE>: those markers mean the user typed a space or "=", so return whole arguments or values instead.
 - Never repeat a word that already appears anywhere on the command line, before or after the cursor. The token being completed is the only exception.
 - Do not return the current token by itself.
 - When the Previous argument line names an option, return only its value; do not repeat the option name.
-- Return exactly one token per candidate. Do not return multi-word phrases.
-- A candidate may be a value for the preceding option, a new option, or a positional argument. If more than one is plausible here, return candidates of each kind.
+- Return exactly one candidate per line. Never put multiple independent candidates on the same line.
+- Do not use spaces or any other separator to combine candidates.
+- If more than one candidate is plausible, put each candidate on its own line.
+- A candidate is one replacement value, not a list of values.
+- A candidate may be a value for the preceding option, a new option, or a positional argument. If more than one is plausible, return candidates of each kind.
 - When the current token is <VALUE>, return values for the option named on the Option line.
-- Otherwise, suggest the subcommands, options or arguments that fit the command line.
-- Use the help output as the source of truth for commands and options.
-- Help sections describe syntax. Context sections are live output from commands such as docker ps; use names, IDs, and values from them verbatim.
+- Otherwise, suggest the subcommands, options, or arguments that fit the command line.
+- Help sections describe syntax. Context sections are live output from commands; use values from them verbatim.
 - If help and context disagree, use help for flags and subcommands and context for live values.
-- Use the terminal output for values visible there, such as container names, paths or uptimes.
-- If the command help is not available, infer from the command name and the terminal output.
+- Use the terminal output for values visible there.
+- If help is not available, infer from the command name and terminal output.
 - If you have no good candidate, output nothing.'
 
     prompt=$(
-        printf 'Before cursor: %s\n' "$line_before"
-        [[ -n $line_after ]] && printf 'After cursor (already typed, never suggest it): %s\n' "$line_after"
-        printf 'Current token: %s\n' "$cur_display"
-        [[ $prev == '=' && -n $prev_opt ]] && printf 'Option: %s\n' "$prev_opt"
-        (( COMP_CWORD > i + 1 )) && [[ -n $prev_display ]] && printf 'Previous argument: %s\n' "$prev_display"
+        printf 'RELEVANT CONTEXT\n'
+        printf -- '- Program: %s\n' "$base"
+        printf -- '- Path: %s\n' "${_LLM_PATH:-<root>}"
+        printf -- '- Before cursor: %s\n' "$line_before"
+        [[ -n $line_after ]] && printf -- '- After cursor (already typed, never suggest it): %s\n' "$line_after"
+        printf -- '- Current token: %s\n' "$cur_display"
+        [[ $prev == '=' && -n $prev_opt ]] && printf -- '- Option: %s\n' "$prev_opt"
+        (( COMP_CWORD > i + 1 )) && [[ -n $prev_display ]] &&
+            printf -- '- Previous argument: %s\n' "$prev_display"
         if [[ $prev_display == -* ]]; then
-            printf 'Possible: a value for %s, or another option.\n' "$prev_display"
+            printf -- '- Possible: a value for %s, or another option.\n' "$prev_display"
         fi
-        printf 'Program: %s\n' "$base"
-        [[ -n $_LLM_BASE_MATCH ]] && printf 'Base line: %s\n' "$_LLM_BASE_MATCH"
         printf '\n'
         if [[ -n $_LLM_HELP_TEXT ]]; then
             printf '<help command="%s">\n%s\n</help>\n\n' "$_LLM_HELP_CMD_DISPLAY" "$_LLM_HELP_TEXT"
@@ -1352,6 +1289,9 @@ Rules:
         if [[ -n $_LLM_SCREEN ]]; then
             printf 'Terminal output (visible pane; noisy, use only relevant lines):\n<terminal_output>\n%s\n</terminal_output>\n\n' "$_LLM_SCREEN"
         fi
+        printf 'CURRENT TASK\n'
+        printf 'Complete the token under the cursor.\n'
+        printf 'Return only completion candidates, one per line, after "Candidates:".\n'
         printf 'Candidates:\n'
     )
     _llm_log "prompt-lines: $(printf '%s' "$prompt" | wc -l)" 2>/dev/null
@@ -1418,7 +1358,7 @@ Rules:
         _llm_offer "$candidate" "$cur" "$present"
     done < <(
         _llm_merge_completions "$cur" "$present" "$prev_opt" \
-            "${_LLM_BASE_WORDS[@]}" <<<"$text"
+            "${_LLM_LINE_WORDS[@]}" <<<"$text"
     )
 
     if [[ $mode == llm-first ]] && (( ${#_LLM_OUT[@]} == 0 )); then
@@ -1432,7 +1372,7 @@ Rules:
         printf 'cur: %q\n' "$cur"
         printf 'line: %q\n' "$COMP_LINE"
         printf 'cword: %s\n' "$COMP_CWORD"
-        printf 'base: %s\n' "$_LLM_BASE_MATCH"
+        printf 'path: %s\n' "${_LLM_PATH:-<root>}"
         printf 'mode: %s\n' "$mode"
         printf 'model: %s\n' "$LLM_COMPLETE_MODEL"
         printf 'original: %s candidates, func=%s\n' \

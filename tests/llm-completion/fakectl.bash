@@ -14,28 +14,20 @@ source "$_llm_repo_root/packages/bash/{XDG_DATA_HOME}/bash-completion/helpers/ll
 unset _llm_test_dir _llm_repo_root
 
 register_llm_completion fakectl --mode efficient \
-    --allow-help 'fakectl' \
-    --allow-help 'fakectl container' \
-    --allow-help 'fakectl container run' \
-    --allow-help 'fakectl container ps' \
-    --allow-help 'fakectl container stop' \
-    --allow-help 'fakectl container start' \
-    --allow-help 'fakectl container rm' \
-    --allow-help 'fakectl container inspect' \
-    --allow-help 'fakectl image*' \
-    --deny-help 'fakectl image rm*' \
-    --allow-help 'fakectl image rm' \
-    --context 'fakectl container stop*' \
+    --allow-help '*' \
+    --deny-help 'container stop *' \
+    --deny-help 'image rm *' \
+    --context 'container stop' \
         'fakectl container ps --quiet' \
-    --context 'fakectl container start*' \
+    --context 'container start' \
         'fakectl container ps -a -f state=stopped --quiet' \
-    --context 'fakectl container rm*' \
+    --context 'container rm' \
         'fakectl container ps -a --quiet' \
-    --context 'fakectl container inspect*' \
+    --context 'container inspect' \
         'fakectl container ps -a --quiet' \
-    --context 'fakectl container run*' \
+    --context 'container run' \
         'fakectl image list --quiet' \
-    --context 'fakectl image rm*' \
+    --context 'image rm' \
         'fakectl image list --quiet' \
-    --context 'fakectl image inspect*' \
+    --context 'image inspect' \
         'fakectl image list --quiet'

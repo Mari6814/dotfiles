@@ -49,10 +49,14 @@ Reset it at any time:
 Test cases
 ----------
   fakectl --<Tab>
-      Deterministic root options from `fakectl --help`.
+      No previous completion exists, so the LLM path runs with
+      `fakectl --help` as context.
+
+  fakectl container <Tab>
+      LLM path with `fakectl container --help` as context.
 
   fakectl container stop --<Tab>
-      Deterministic options from `fakectl container stop --help`.
+      LLM path with `fakectl container stop --help` as context.
 
   fakectl container stop <Tab>
       Runs `fakectl container ps --quiet` as context and asks the model for a
@@ -71,24 +75,53 @@ Test cases
       Runs `fakectl image list --quiet` as context.
 
   fakectl container stop web <Tab>
-      Context still runs, but `fakectl container stop web --help` must not.
+      Context still runs, and help falls back to
+      `fakectl container stop --help`.
 
   fakectl image rm some-image <Tab>
-      Context still runs, but help is denied by the ordered image rules.
+      Context still runs, and help falls back to
+      `fakectl image rm --help`.
 
-Help rules for images
----------------------
+Help rules
+----------
+Help paths are relative to the registered command. Patterns are prefix
+matches; `*` matches any path, and a trailing `*` requires at least one more
+path segment.
+
 The config uses:
 
-  --allow-help 'fakectl image*'
-  --deny-help  'fakectl image rm*'
-  --allow-help 'fakectl image rm'
+  --allow-help '*'
+  --deny-help  'container stop *'
+  --deny-help  'image rm *'
 
-Last matching rule wins:
+Last matching rule wins, and help resolves to the nearest allowed ancestor:
 
-  fakectl image rm          -> allowed
-  fakectl image rm target   -> denied
-  fakectl image list        -> allowed
+  fakectl container stop web     -> help target container stop
+  fakectl image rm target        -> help target image rm
+  fakectl image rm               -> help target image rm
+  fakectl image list             -> help target image list
+  fakectl                        -> help target root
+
+So `fakectl image rm <Tab>` runs:
+
+  fakectl image rm --help
+
+`fakectl image rm some-image <Tab>` also runs:
+
+  fakectl image rm --help
+
+The target argument is never passed into `--help`.
+
+Pattern notes:
+
+  --allow-help ''        root help everywhere, like _longopt
+  --allow-help '*'       path help everywhere
+  --deny-help 'image rm *'  reject only deeper paths; bare image rm still has help
+  --deny-help 'image rm'    reject image rm and deeper; fall back to image help
+
+Paths ignore options and assignments. The path extractor is intentionally
+simple: a separate option value that is not an option may appear as a path
+segment.
 
 State transitions
 -----------------
@@ -144,6 +177,6 @@ Look for:
 
 Mode note
 ---------
-fakectl has no built-in completion, so `efficient` falls through to the help
-and model stages. `efficient`, `llm-first`, `merge`, and `override` therefore
-reach the same path for this fixture.
+fakectl has no built-in completion, so `efficient` falls through to the model
+path. `efficient`, `llm-first`, `merge`, and `override` therefore reach the
+same path for this fixture.

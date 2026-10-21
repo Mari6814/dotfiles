@@ -44,6 +44,7 @@
 #     --db=<DB_NAME>                          Target Database name (PSQL/MySQL)
 #     --redis-key=<REDIS_KEY>                 Target Redis key
 #     --target=<MAKE_TARGET>                  Makefile target
+#     --mode=debug|info|warn                  Fixed set of choices
 #
 #     --env=<ENV_VAR>                         Environment variable
 #     --unit=<SYSTEMD_SERVICE>                Systemd unit service
@@ -66,6 +67,11 @@
 #     --archive=<ARCHIVE_FILE>                Archive file (.tar.gz/.zip/...)
 #     --config=<FILE>                         Configuration file
 #     --out=<DIR>                             Output directory
+#
+# Options documented as `--opt=a|b|c` (also `<a|b|c>` or `[a|b|c]`) complete
+# to each listed value, so `--mode=debug|info|warn` offers debug, info and warn.
+# A list made up entirely of uppercase placeholders, such as `<FILE|DIR>`, is
+# not a choice list and is left to the regular file/dir completion.
 #
 # To enable better longopts for that command, use
 #
@@ -95,8 +101,53 @@ _better_longopt() {
     fi
 
     if [[ "$clean_prev" == --* ]]; then
-        local argtype
-        argtype=$(LC_ALL=C "$1" --help 2>&1 | command sed -ne "s|.*$clean_prev\[\{0,1\}=[<[]\{0,1\}\([-A-Za-z0-9_]\{1,\}\).*|\1|p")
+        local help_text choice_spec="" spec line rest before after argtype
+        help_text=$(LC_ALL=C "$1" --help 2>&1)
+
+        # Enumerated values: `--opt=a|b|c`, also written `<a|b|c>` or `[a|b|c]`.
+        # Only the `=` form is considered, so prose mentioning the option is not
+        # mistaken for a choice list. The first list containing a `|` wins.
+        while IFS= read -r line; do
+            rest=$line
+            while [[ "$rest" == *"$clean_prev"* ]]; do
+                before=${rest%%"$clean_prev"*}
+                after=${rest#*"$clean_prev"}
+                rest=$after
+                [[ "$after" == =* ]] || continue
+                # Require a word boundary so `--color` does not match `--color-mode`.
+                [[ "$before" == *[[:alnum:]_-] ]] && continue
+                spec=${after#=}
+                spec=${spec#"${spec%%[![:space:]]*}"}  # strip leading whitespace
+                spec=${spec%%[[:space:]]*}             # value ends at whitespace
+                spec=${spec%,}
+                spec=${spec#<}
+                spec=${spec#\[}
+                spec=${spec%>}
+                spec=${spec%\]}
+                if [[ "$spec" == *'|'* ]]; then
+                    choice_spec=$spec
+                    break 2
+                fi
+            done
+        done <<<"$help_text"
+
+        if [[ -n "$choice_spec" ]]; then
+            local choices=() choice choice_words="" placeholders=1
+            IFS='|' read -r -a choices <<<"$choice_spec"
+            for choice in "${choices[@]}"; do
+                [[ -n "$choice" ]] || continue
+                [[ "$choice" =~ ^[A-Z][A-Z0-9_]*$ ]] || placeholders=0
+                choice_words+="$choice "
+            done
+            # Skip placeholder lists such as `<FILE|DIR>`; they are argtypes,
+            # not literal values to offer.
+            if [[ -n "$choice_words" && "$placeholders" -eq 0 ]]; then
+                COMPREPLY=($(compgen -W "$choice_words" -- "$cur"))
+                return 0
+            fi
+        fi
+
+        argtype=$(command sed -ne "s|.*$clean_prev\[\{0,1\}=[<[]\{0,1\}\([-A-Za-z0-9_]\{1,\}\).*|\1|p" <<<"$help_text")
 
         case "${argtype^^}" in
             # --- PODMAN ---

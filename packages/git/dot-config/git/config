@@ -12,28 +12,29 @@
 [diff]
 	tool = vimdiff
 [alias]
+    A = add -A
+    a = add
+    amend = commit --amend
+    b = branch
+    c = commit
+    cam = commit -am
+    cm = commit -m
     conflicts = diff --check
+    dt = difftool
     l = log --oneline --decorate --graph
     la = log --oneline --decorate --graph --all
-    s = status
-    dt = difftool
-    c = commit
-    cm = commit -m
-    cam = commit -am
-    amend = commit --amend
-    pick = cherry-pick
-    a = add
-    A = add -A
-    b = branch
-    t = tag
-    p = pull
     m = merge
+    p = pull
+    pick = cherry-pick
     r = rebase
+    s = status
+    t = tag
+    unstage = restore --staged
+    worktrees = worktree list
     wt = worktree
     wta = worktree add
-    wtr = worktree remove
     wtl = worktree list
-    worktrees = worktree list
+    wtr = worktree remove
     bump = "!f_git_alias_bump() { \
       part=$1; \
       shift; \

@@ -92,6 +92,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
+    { "shortcuts/no-neck-pain.nvim", commit = "55f69b7ff536303dcd37460d7cbced9691b3f0a2" },
     { 'nvim-treesitter/nvim-treesitter' },
     -- $ sudo apt install ripgrep fd-find
     -- $ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
@@ -233,6 +234,12 @@ require'nvim-treesitter.configs'.setup{
       end
   end,
 }
+
+require("no-neck-pain").setup({
+    width = 120,
+    mappings = { enabled = true },
+    autocmds = { enableOnVimEnter = true },
+})
 
 if vim.fn.executable("rg") == 1 then
   vim.o.grepprg = "rg --vimgrep --smart-case"

@@ -67,11 +67,20 @@
 #     --archive=<ARCHIVE_FILE>                Archive file (.tar.gz/.zip/...)
 #     --config=<FILE>                         Configuration file
 #     --out=<DIR>                             Output directory
+#     --include=<FILE>...                     Repeatable include pattern
+#     --exclude=<FILE>                        Single-use exclude pattern
 #
 # Options documented as `--opt=a|b|c` (also `<a|b|c>` or `[a|b|c]`) complete
 # to each listed value, so `--mode=debug|info|warn` offers debug, info and warn.
 # A list made up entirely of uppercase placeholders, such as `<FILE|DIR>`, is
 # not a choice list and is left to the regular file/dir completion.
+#
+# Repetition is inferred only when the help documents it: a run of two or more
+# dots attached to the option or its value (`--verbose...`, `--include=<FILE>..`)
+# marks that option repeatable and signals that the convention is in use. Once
+# one option is marked, every unmarked option is treated as single-use and is
+# no longer offered after it has been given. With no such marker anywhere in
+# the help, all options keep being offered, as before.
 #
 # To enable better longopts for that command, use
 #
@@ -82,6 +91,46 @@
 # Context variable for storing selected DB user across completions
 _BETTER_LONGOPT_DB_USER=""
 
+# Print the long options that the help text marks as repeatable.
+# The accepted convention is a run of two or more dots attached either to the
+# option itself (`--verbose...`) or to its value placeholder (`--include=<FILE>..`).
+# A `[OPTIONS]...` on a usage line matches no option and is therefore ignored.
+_better_longopt_repeatable() {
+    command awk '
+        {
+            line = $0
+            while (match(line, /--[A-Za-z0-9][A-Za-z0-9_-]*/)) {
+                name = substr(line, RSTART, RLENGTH)
+                rest = substr(line, RSTART + RLENGTH)
+                marked = 0
+                if (rest ~ /^\.\./) {
+                    marked = 1
+                } else if (rest ~ /^\[?=/) {
+                    spec = rest
+                    sub(/^\[?=/, "", spec)
+                    sub(/[[:space:]].*$/, "", spec)
+                    sub(/\]$/, "", spec)
+                    if (spec ~ /\.\.$/) marked = 1
+                }
+                if (marked) print name
+                line = substr(line, RSTART + RLENGTH)
+            }
+        }
+    ' <<<"$1"
+}
+
+# Print the long options already given before the word being completed.
+# Stops at `--` because everything after it is positional.
+_better_longopt_used() {
+    local cword=${1:-${COMP_CWORD:-0}} i w
+    for ((i = 1; i < cword; i++)); do
+        w=${COMP_WORDS[i]}
+        [[ "$w" == -- ]] && break
+        [[ "$w" == --?* ]] || continue
+        printf '%s\n' "${w%%=*}"
+    done
+}
+
 _better_longopt() {
     local cur prev words cword split
 
@@ -90,6 +139,7 @@ _better_longopt() {
     else
         cur="${COMP_WORDS[COMP_CWORD]}"
         prev="${COMP_WORDS[COMP_CWORD-1]}"
+        cword=$COMP_CWORD
     fi
 
     local clean_prev="${prev%=}"
@@ -100,7 +150,11 @@ _better_longopt() {
         _BETTER_LONGOPT_DB_USER="${BASH_REMATCH[1]}"
     fi
 
-    if [[ "$clean_prev" == --* ]]; then
+    # Value completion applies only while the user is at the option's value:
+    # `--opt <TAB>`, `--opt=<TAB>` or `--opt=val<TAB>`. A finished `--opt=val`
+    # followed by a new word must fall through to flag/file completion, and a
+    # word starting with `-` is a new option, not a value.
+    if [[ "$clean_prev" == --* && "$prev" != *=* && "$cur" != -* ]]; then
         local help_text choice_spec="" spec line rest before after argtype
         help_text=$(LC_ALL=C "$1" --help 2>&1)
 
@@ -489,4 +543,28 @@ _better_longopt() {
 
     # Fall back to standard _longopt for FILE, DIR, PATH, and flag listings
     _longopt "$@"
+
+    # "Smart" repeatability: only when the help marks at least one option with
+    # the repeatable convention (`--verbose...`, `--include=<FILE>..`) do we
+    # assume that convention is in use. Unmarked options are then single-use
+    # and disappear once already given. Without any marker the help simply
+    # does not document repetition, so every option stays on offer.
+    if [[ "$cur" == -* && ${#COMPREPLY[@]} -gt 0 ]]; then
+        local rep_help rep_opts used_opts entry name filtered=()
+        rep_help=$(LC_ALL=C "$1" --help 2>&1)
+        rep_opts=$(_better_longopt_repeatable "$rep_help")
+        if [[ -n "$rep_opts" ]]; then
+            used_opts=$(_better_longopt_used "$cword")
+            for entry in "${COMPREPLY[@]}"; do
+                name=${entry%%=*}
+                if [[ "$name" == --* ]] &&
+                    [[ $'\n'"$used_opts"$'\n' == *$'\n'"$name"$'\n'* ]] &&
+                    [[ $'\n'"$rep_opts"$'\n' != *$'\n'"$name"$'\n'* ]]; then
+                    continue
+                fi
+                filtered+=("$entry")
+            done
+            COMPREPLY=("${filtered[@]}")
+        fi
+    fi
 }

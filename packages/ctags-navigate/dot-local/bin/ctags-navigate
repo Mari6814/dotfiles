@@ -1,0 +1,435 @@
+#!/usr/bin/env bash
+# ctags-navigate - pick a symbol from the current project and print its location.
+#
+# Builds an ad-hoc ctags index for the current Git root (or the current
+# directory outside Git) in /tmp, lets fzf pick a symbol, and prints the
+# symbol's location. Nothing is written into the project.
+#
+# The ctags-navigate package binds C-x C-t in Bash. The tmux fragment sends
+# that key to the current pane; inside tmux, fzf opens its own popup via
+# --tmux.
+#
+# The index is cached under /tmp/ctags-navigate/<sha256-of-root>.tags.
+# Rebuild it with --rebuild.
+
+set -euo pipefail
+
+PROG=${0##*/}
+STATE_DIR=/tmp/ctags-navigate
+# Unit separator: fzf's and read's default tab handling would collapse empty
+# fields (scope is often empty), shifting the following columns.
+FIELD_SEP=$'\x1f'
+
+# Directory names that are never useful for symbol navigation. Git's ignore
+# rules are applied separately via `git ls-files`.
+DEFAULT_EXCLUDES=(
+    .git .hg .svn
+    node_modules vendor
+    build dist target
+    .venv venv
+    __pycache__ .mypy_cache .pytest_cache .ruff_cache .tox
+    .next .nuxt .svelte-kit coverage
+    .idea .vscode
+    .gradle
+    Pods DerivedData
+    .terraform
+)
+
+usage() {
+    cat <<EOF
+Usage: $PROG [OPTIONS] [QUERY...]
+
+Pick a symbol from the current project and print its location.
+
+The tags index is built once per project root and cached in
+/tmp/ctags-navigate. Inside a Git repository it contains tracked and untracked
+(non-ignored) files; outside Git the current directory is used as the root and
+only the default filters apply.
+
+Inside fzf:
+  Enter            Full location: FILE:LINE
+  Alt-p            Path only
+  Alt-f            Filename only
+  Alt-d            Directory only
+  Alt-s            Symbol only
+
+Options:
+  -h, --help       Show this help message and exit.
+  -r, --rebuild    Rebuild the cached index before searching.
+      --format FMT Output format: full (default), path, filename, dirname, symbol.
+  -a, --absolute   Print absolute paths.
+  -o, --open       Open the selected symbol in \$EDITOR at its line.
+      --raw        Print FORMAT<US>PATH<US>LINE<US>SYMBOL for shell integrations.
+      --root       Print the resolved root and index path, then exit.
+      --preview FILE LINE
+                   Internal: render the fzf preview for FILE at LINE.
+
+Positional arguments are joined into the initial fzf query.
+EOF
+}
+
+die() {
+    printf '%s: %s\n' "$PROG" "$*" >&2
+    exit 1
+}
+
+# Absolute Git root, or the physical current directory when not in Git.
+resolve_root() {
+    local root
+    if root=$(git rev-parse --show-toplevel 2>/dev/null) && [[ -n $root ]]; then
+        printf '%s\n' "$root"
+    else
+        pwd -P
+    fi
+}
+
+sha256_hex() {
+    local hash
+    if command -v sha256sum >/dev/null 2>&1; then
+        hash=$(printf '%s' "$1" | sha256sum)
+    elif command -v shasum >/dev/null 2>&1; then
+        hash=$(printf '%s' "$1" | shasum -a 256)
+    else
+        die "sha256sum or shasum is required"
+    fi
+    printf '%s\n' "${hash%% *}"
+}
+
+index_path() {
+    printf '%s/%s.tags\n' "$STATE_DIR" "$(sha256_hex "$1")"
+}
+
+# Print NUL-separated paths relative to the root.
+list_files() {
+    local root=$1
+    local ex
+    local -a prune=()
+
+    if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        git -C "$root" ls-files -z --cached --others --exclude-standard
+        return
+    fi
+
+    for ex in "${DEFAULT_EXCLUDES[@]}"; do
+        (( ${#prune[@]} )) && prune+=(-o)
+        prune+=(-name "$ex")
+    done
+
+    find "$root" -mindepth 1 \( "${prune[@]}" \) -prune -o -type f -print0
+}
+
+# Drop the default excluded directories from a NUL-separated path list.
+filter_files() {
+    local root=$1
+    local file rel ex skip
+
+    while IFS= read -r -d '' file; do
+        if [[ $root == / ]]; then
+            rel=${file#/}
+        elif [[ $file == "$root"/* ]]; then
+            rel=${file#"$root"/}
+        else
+            rel=${file#./}
+        fi
+
+        skip=0
+        for ex in "${DEFAULT_EXCLUDES[@]}"; do
+            if [[ "/$rel/" == *"/$ex/"* ]]; then
+                skip=1
+                break
+            fi
+        done
+        (( skip )) && continue
+
+        printf '%s\0' "$rel"
+    done
+}
+
+build_tags() {
+    local root=$1
+    (
+        cd "$root" || return 1
+        list_files "$root" |
+            filter_files "$root" |
+            tr '\0' '\n' |
+            ctags --quiet=yes --sort=yes --excmd=number --fields=+KSnzZ \
+                --kinds-Sh=-h --kinds-Zsh=-h \
+                -f - -L -
+    )
+}
+
+build_index() {
+    local root=$1 index=$2
+    local tmp
+
+    if [[ -e $STATE_DIR && ! -d $STATE_DIR ]]; then
+        die "$STATE_DIR exists but is not a directory"
+    fi
+    [[ -d $STATE_DIR ]] || mkdir -p -m 700 -- "$STATE_DIR" || die "cannot create $STATE_DIR"
+
+    tmp=$(mktemp "$STATE_DIR/.tags.XXXXXX") || die "cannot create a temporary tags file"
+    if ! build_tags "$root" >"$tmp"; then
+        rm -f -- "$tmp"
+        die "ctags failed for $root"
+    fi
+    mv -f -- "$tmp" "$index" || {
+        rm -f -- "$tmp"
+        die "cannot write $index"
+    }
+}
+
+# name<US>kind<US>scope<US>file<US>line
+emit_records() {
+    local index=$1
+
+    awk -F '\t' -v sep="$FIELD_SEP" '
+        /^!/ { next }
+        NF < 4 { next }
+        {
+            line = $3
+            sub(/;"$/, "", line)
+            if (line !~ /^[0-9]+$/) next
+
+            kind = "symbol"
+            scope = ""
+            for (i = 4; i <= NF; i++) {
+                if ($i ~ /^kind:/) {
+                    kind = $i
+                    sub(/^kind:/, "", kind)
+                } else if ($i ~ /^scope:/) {
+                    scope = $i
+                    sub(/^scope:/, "", scope)
+                }
+            }
+
+            # Here-document labels (usually "EOF") are parser artifacts, not
+            # navigable symbols. Filter them from cached indexes as well as
+            # disabling the kind when building a fresh index.
+            if (kind == "heredoc") next
+
+            file = $2
+            sub(/^\.\//, "", file)
+
+            printf "%s%s%s%s%s%s%s%s%s\n", \
+                   $1, sep, kind, sep, scope, sep, file, sep, line
+        }
+    ' "$index"
+}
+
+# Internal fzf preview. Called as: ctags-navigate --preview FILE LINE
+preview_file() {
+    local rel=$1 line=$2 root file start end shown
+    root=$(resolve_root)
+    file="$root/$rel"
+
+    [[ $line =~ ^[0-9]+$ ]] || line=1
+    start=$(( line > 2 ? line - 2 : 1 ))
+    end=$(( line + 2 ))
+
+    shown=$(relative_path "$root" "$rel")
+    printf '%s:%s\n\n' "$shown" "$line"
+
+    if command -v batcat >/dev/null 2>&1; then
+        batcat --color=always --style=numbers \
+            --highlight-line "$line" --line-range "$start:$end" -- "$file"
+    elif command -v bat >/dev/null 2>&1; then
+        bat --color=always --style=numbers \
+            --highlight-line "$line" --line-range "$start:$end" -- "$file"
+    else
+        awk -v start="$start" -v end="$end" -v line="$line" '
+            NR >= start && NR <= end {
+                printf "%s%6d  %s\n", (NR == line ? ">" : " "), NR, $0
+            }
+        ' "$file"
+    fi
+}
+
+relative_path() {
+    local root=$1 rel=$2
+    local target="$root/$rel" pwd_phys path
+
+    pwd_phys=$(pwd -P)
+    if command -v realpath >/dev/null 2>&1; then
+        path=$(realpath -m -s --relative-to="$pwd_phys" -- "$target")
+    elif [[ $target == "$pwd_phys"/* ]]; then
+        path=${target#"$pwd_phys"/}
+    else
+        path=$target
+    fi
+    printf '%s\n' "$path"
+}
+
+self_path() {
+    local self=${BASH_SOURCE[0]}
+    if command -v readlink >/dev/null 2>&1; then
+        self=$(readlink -f -- "$self" 2>/dev/null || printf '%s' "$self")
+    fi
+    printf '%s\n' "$self"
+}
+
+force_rebuild=0
+format=full
+print_absolute=0
+open_editor=0
+raw_output=0
+query=""
+
+while (( $# > 0 )); do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -r|--rebuild)
+            force_rebuild=1
+            shift
+            ;;
+        --format)
+            (( $# >= 2 )) || die "--format requires an argument"
+            format=$2
+            shift 2
+            ;;
+        --format=*)
+            format=${1#*=}
+            shift
+            ;;
+        -a|--absolute)
+            print_absolute=1
+            shift
+            ;;
+        -o|--open)
+            open_editor=1
+            shift
+            ;;
+        --raw)
+            raw_output=1
+            shift
+            ;;
+        --root)
+            root=$(resolve_root)
+            printf 'root: %s\nindex: %s\n' "$root" "$(index_path "$root")"
+            exit 0
+            ;;
+        --preview)
+            (( $# >= 3 )) || die "--preview requires FILE and LINE"
+            preview_file "$2" "$3"
+            exit 0
+            ;;
+        --)
+            shift
+            while (( $# > 0 )); do
+                query+="${query:+ }$1"
+                shift
+            done
+            ;;
+        -?*)
+            printf '%s: unknown option: %s\n' "$PROG" "$1" >&2
+            usage >&2
+            exit 2
+            ;;
+        *)
+            query+="${query:+ }$1"
+            shift
+            ;;
+    esac
+done
+
+case "$format" in
+    full|path|filename|dirname|symbol) ;;
+    *) die "invalid format: $format (expected full, path, filename, dirname, or symbol)" ;;
+esac
+
+command -v ctags >/dev/null 2>&1 || die "ctags is required"
+command -v fzf >/dev/null 2>&1 || die "fzf is required"
+
+root=$(resolve_root)
+index=$(index_path "$root")
+
+if (( force_rebuild )) || [[ ! -f $index ]]; then
+    printf '%s: building symbol index for %s\n' "$PROG" "$root" >&2
+    build_index "$root" "$index"
+fi
+
+self=$(self_path)
+self_q=$(printf '%q' "$self")
+
+selected=$(
+    emit_records "$index" |
+        fzf --delimiter="$FIELD_SEP" \
+            --with-nth=1 \
+            --nth=1 \
+            --query="$query" \
+            --prompt='symbol> ' \
+            --reverse \
+            --tmux=center,80%,80% \
+            --expect=alt-p,alt-f,alt-d,alt-s \
+            --header="enter: $format   alt-p: path   alt-f: filename   alt-d: dirname   alt-s: symbol" \
+            --preview-window='right,60%,wrap' \
+            --preview="$self_q --preview {4} {5}"
+) || {
+    status=$?
+    # 1: no match, 130: cancelled.
+    (( status == 1 || status == 130 )) && exit 0
+    exit "$status"
+}
+
+[[ -n $selected ]] || exit 0
+
+key=
+record=
+if [[ $selected == *$'\n'* ]]; then
+    first=${selected%%$'\n'*}
+    rest=${selected#*$'\n'}
+    case $first in
+        alt-p|alt-f|alt-d|alt-s|"")
+            key=$first
+            record=${rest%%$'\n'*}
+            ;;
+        *)
+            record=$first
+            ;;
+    esac
+else
+    record=$selected
+fi
+
+[[ -n $record ]] || exit 0
+
+case $key in
+    alt-p) format=path ;;
+    alt-f) format=filename ;;
+    alt-d) format=dirname ;;
+    alt-s) format=symbol ;;
+esac
+
+IFS=$FIELD_SEP read -r name kind scope file line <<<"$record"
+target="$root/$file"
+
+if (( open_editor )); then
+    read -r -a editor <<<"${EDITOR:-vi}"
+    exec "${editor[@]}" "+$line" "$target"
+fi
+
+if (( print_absolute )); then
+    path=$target
+else
+    path=$(relative_path "$root" "$file")
+fi
+
+if (( raw_output )); then
+    printf '%s%s%s%s%s%s%s\n' \
+        "$format" "$FIELD_SEP" "$path" "$FIELD_SEP" "$line" "$FIELD_SEP" "$name"
+    exit 0
+fi
+
+case $format in
+    full) printf '%s:%s\n' "$path" "$line" ;;
+    path) printf '%s\n' "$path" ;;
+    filename) printf '%s\n' "${path##*/}" ;;
+    dirname)
+        dir=${path%/*}
+        [[ $dir == "$path" ]] && dir=.
+        printf '%s\n' "$dir"
+        ;;
+    symbol) printf '%s\n' "$name" ;;
+esac

@@ -1,0 +1,129 @@
+#!/bin/bash
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [OPTIONS] [PATH ...]
+
+Run OpenCode in a rootless Podman container.
+
+Arguments:
+  PATH            Existing directories or files to mount under
+                  /workspace/<basename>.
+                  If omitted, a random temporary workspace is used.
+
+Options:
+  -h, --help      Show this help message and exit.
+
+Examples:
+  $(basename "$0")
+  $(basename "$0") ~/projects/myapp
+  $(basename "$0") testtest/ myapp/ README.md
+EOF
+}
+
+PATHS=()
+while (( $# > 0 )); do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      PATHS+=("$@")
+      break
+      ;;
+    -*)
+      echo "Error: unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+    *)
+      PATHS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+SESSION_ROOT="${TMPDIR:-/tmp}/ai-isolation-chamber"
+mkdir -p -- "$SESSION_ROOT"
+chmod 700 -- "$SESSION_ROOT"
+
+declare -a RESOLVED=()
+declare -A SEEN_PATHS=()
+declare -A SEEN_NAMES=()
+
+for path in "${PATHS[@]}"; do
+  if [[ ! -e "$path" ]]; then
+    echo "Error: path does not exist: $path" >&2
+    exit 1
+  fi
+
+  if [[ ! -d "$path" && ! -f "$path" ]]; then
+    echo "Error: path is not a directory or regular file: $path" >&2
+    exit 1
+  fi
+
+  resolved="$(realpath -e -- "$path")"
+
+  if [[ -n "${SEEN_PATHS[$resolved]:-}" ]]; then
+    continue
+  fi
+  SEEN_PATHS["$resolved"]=1
+
+  name="$(basename -- "$resolved")"
+  if [[ -z "$name" || "$name" == "/" || "$name" == "." || "$name" == ".." ]]; then
+    echo "Error: cannot mount path with an invalid basename: $path" >&2
+    exit 1
+  fi
+
+  if [[ -n "${SEEN_NAMES[$name]:-}" ]]; then
+    echo "Error: duplicate destination name '$name': ${SEEN_NAMES[$name]} and $path" >&2
+    exit 1
+  fi
+
+  SEEN_NAMES["$name"]="$path"
+  RESOLVED+=("$resolved")
+done
+
+if (( ${#RESOLVED[@]} == 0 )); then
+  SESSION_DIR="$(mktemp -d "$SESSION_ROOT/session-XXXXXX")"
+  MOUNTS=()
+else
+  mapfile -d '' -t MOUNTS < <(printf '%s\0' "${RESOLVED[@]}" | LC_ALL=C sort -z)
+  HASH="$(printf '%s\0' "${MOUNTS[@]}" | sha256sum | cut -c1-12)"
+  SLUG="$(basename -- "${MOUNTS[0]}" | sed 's/[^A-Za-z0-9._-]/-/g' | cut -c1-32)"
+  if [[ -z "$SLUG" || "$SLUG" == "." || "$SLUG" == ".." ]]; then
+    SLUG="session"
+  fi
+  SESSION_DIR="$SESSION_ROOT/${SLUG}-${HASH}"
+  mkdir -p -- "$SESSION_DIR"
+fi
+
+chmod 700 -- "$SESSION_DIR"
+mkdir -p -- "$SESSION_DIR/workspace" "$SESSION_DIR/home"
+chmod 700 -- "$SESSION_DIR/workspace" "$SESSION_DIR/home"
+
+VOLUMES=(
+  --volume "$SESSION_DIR/workspace:/workspace"
+  --volume "$SESSION_DIR/home:/home/opencode"
+)
+
+for resolved in "${MOUNTS[@]}"; do
+  VOLUMES+=(--volume "$resolved:/workspace/$(basename -- "$resolved")")
+done
+
+echo "Session directory: $SESSION_DIR"
+echo "Workspace: $SESSION_DIR/workspace"
+echo "Container home: $SESSION_DIR/home"
+
+exec podman run -it \
+  --userns=keep-id \
+  "${VOLUMES[@]}" \
+  --env HOME=/home/opencode \
+  --env XDG_CONFIG_HOME=/home/opencode/.config \
+  --env XDG_DATA_HOME=/home/opencode/.local/share \
+  --env XDG_STATE_HOME=/home/opencode/.local/state \
+  --workdir /workspace \
+  ghcr.io/anomalyco/opencode

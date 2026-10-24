@@ -44,7 +44,8 @@ Pick a symbol from the current project and print its location.
 The tags index is built once per project root and cached in
 /tmp/ctags-navigate. Inside a Git repository it contains tracked and untracked
 (non-ignored) files; outside Git the current directory is used as the root and
-only the default filters apply.
+only the default filters apply. Nested Git repositories are never crawled:
+their symbols belong to their own index.
 
 Inside fzf:
   Enter            Full location: FILE:LINE
@@ -115,7 +116,12 @@ list_files() {
         prune+=(-name "$ex")
     done
 
-    find "$root" -mindepth 1 \( "${prune[@]}" \) -prune -o -type f -print0
+    # Do not descend into nested repositories: their symbols belong to their
+    # own index, not to the directory that happens to contain them.
+    find "$root" -mindepth 1 \
+        \( "${prune[@]}" \) -prune -o \
+        -type d -exec test -e '{}/.git' \; -prune -o \
+        -type f -print0
 }
 
 # Drop the default excluded directories from a NUL-separated path list.

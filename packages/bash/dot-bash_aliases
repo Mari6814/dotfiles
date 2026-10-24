@@ -26,7 +26,7 @@ aalias() {
 
 
 aalias clipboard="xclip -sel clip"
-
+aalias bat=batcat
 aalias e="$EDITOR"
 
 # Shortcuts to edit specific files

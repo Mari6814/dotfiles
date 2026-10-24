@@ -9,22 +9,25 @@
 # that key to the current pane; inside tmux, fzf opens its own popup via
 # --tmux.
 #
-# The index is cached under /tmp/ctags-navigate/<sha256-of-root>.tags.
+# The index is cached under /tmp/ctags-navigate/<cache-key>.tags.
 # Rebuild it with --rebuild.
 
 set -euo pipefail
 
 PROG=${0##*/}
 STATE_DIR=/tmp/ctags-navigate
+CACHE_VERSION=2
+MAX_DEPTH=5
 # Unit separator: fzf's and read's default tab handling would collapse empty
 # fields (scope is often empty), shifting the following columns.
 FIELD_SEP=$'\x1f'
 
 # Directory names that are never useful for symbol navigation. Git's ignore
-# rules are applied separately via `git ls-files`.
+# rules are applied separately via `git ls-files`. `vendor` is handled
+# separately: only Composer-generated vendor directories are skipped.
 DEFAULT_EXCLUDES=(
     .git .hg .svn
-    node_modules vendor
+    node_modules
     build dist target
     .venv venv
     __pycache__ .mypy_cache .pytest_cache .ruff_cache .tox
@@ -43,16 +46,22 @@ Pick a symbol from the current project and print its location.
 
 The tags index is built once per project root and cached in
 /tmp/ctags-navigate. Inside a Git repository it contains tracked and untracked
-(non-ignored) files; outside Git the current directory is used as the root and
-only the default filters apply. Nested Git repositories are never crawled:
-their symbols belong to their own index.
+(non-ignored) files. Outside Git the current directory is used as the root and
+traversal stops after $MAX_DEPTH directory levels. Nested Git repositories
+are never crawled: their symbols belong to their own index. Generated
+directories such as node_modules, .venv, and Composer vendor directories are
+skipped.
 
-Inside fzf:
-  Enter            Full location: FILE:LINE
+With no options in interactive Bash, $PROG changes the current directory to
+the search root. Alt-o in the picker also opens the selection in \$EDITOR.
+
+Inside fzf (available keys depend on the command being completed):
+  Enter            Context-dependent insertion
   Alt-p            Path only
   Alt-f            Filename only
   Alt-d            Directory only
   Alt-s            Symbol only
+  Alt-o            Direct invocation: open in \$EDITOR
 
 Options:
   -h, --help       Show this help message and exit.
@@ -60,7 +69,9 @@ Options:
       --format FMT Output format: full (default), path, filename, dirname, symbol.
   -a, --absolute   Print absolute paths.
   -o, --open       Open the selected symbol in \$EDITOR at its line.
-      --raw        Print FORMAT<US>PATH<US>LINE<US>SYMBOL for shell integrations.
+      --actions SPEC
+                   Internal: comma-separated KEY=ACTION list for fzf.
+      --raw        Print ACTION<US>PATH<US>LINE<US>SYMBOL<US>ROOT for shell integrations.
       --root       Print the resolved root and index path, then exit.
       --preview FILE LINE
                    Internal: render the fzf preview for FILE at LINE.
@@ -97,7 +108,7 @@ sha256_hex() {
 }
 
 index_path() {
-    printf '%s/%s.tags\n' "$STATE_DIR" "$(sha256_hex "$1")"
+    printf '%s/%s.tags\n' "$STATE_DIR" "$(sha256_hex "$CACHE_VERSION:$1")"
 }
 
 # Print NUL-separated paths relative to the root.
@@ -117,17 +128,21 @@ list_files() {
     done
 
     # Do not descend into nested repositories: their symbols belong to their
-    # own index, not to the directory that happens to contain them.
-    find "$root" -mindepth 1 \
+    # own index, not to the directory that happens to contain them. A vendor
+    # directory is only generated when Composer left autoload.php in it.
+    find "$root" -mindepth 1 -maxdepth "$MAX_DEPTH" \
         \( "${prune[@]}" \) -prune -o \
+        -type d -name vendor -exec test -e '{}/autoload.php' \; -prune -o \
         -type d -exec test -e '{}/.git' \; -prune -o \
         -type f -print0
 }
 
-# Drop the default excluded directories from a NUL-separated path list.
+# Drop excluded and generated directories from a NUL-separated path list.
 filter_files() {
     local root=$1
-    local file rel ex skip
+    local file rel ex skip part prefix
+    local -a parts
+    local -A generated_vendor=()
 
     while IFS= read -r -d '' file; do
         if [[ $root == / ]]; then
@@ -145,6 +160,31 @@ filter_files() {
                 break
             fi
         done
+        (( skip )) && continue
+
+        # A vendor directory is only generated when Composer left
+        # autoload.php in it. Cache the decision per vendor directory.
+        if [[ $rel == vendor/* || $rel == */vendor/* ]]; then
+            prefix=
+            IFS=/ read -r -a parts <<<"$rel"
+            for part in "${parts[@]}"; do
+                prefix+=${prefix:+/}$part
+                [[ $part == vendor ]] || continue
+
+                if [[ -z ${generated_vendor[$prefix]+x} ]]; then
+                    if [[ -e $root/$prefix/autoload.php ]]; then
+                        generated_vendor[$prefix]=1
+                    else
+                        generated_vendor[$prefix]=0
+                    fi
+                fi
+
+                if (( generated_vendor[$prefix] )); then
+                    skip=1
+                    break
+                fi
+            done
+        fi
         (( skip )) && continue
 
         printf '%s\0' "$rel"
@@ -278,6 +318,7 @@ format=full
 print_absolute=0
 open_editor=0
 raw_output=0
+actions_spec=""
 query=""
 
 while (( $# > 0 )); do
@@ -301,6 +342,15 @@ while (( $# > 0 )); do
             ;;
         -a|--absolute)
             print_absolute=1
+            shift
+            ;;
+        --actions)
+            (( $# >= 2 )) || die "--actions requires an argument"
+            actions_spec=$2
+            shift 2
+            ;;
+        --actions=*)
+            actions_spec=${1#*=}
             shift
             ;;
         -o|--open)
@@ -345,6 +395,64 @@ case "$format" in
     *) die "invalid format: $format (expected full, path, filename, dirname, or symbol)" ;;
 esac
 
+# Actions are KEY=ACTION pairs. The shell passes a context-specific list so
+# the fzf modal only offers shortcuts that make sense for the command line.
+if [[ -z $actions_spec ]]; then
+    case $format in
+        full) enter_action=location-generic ;;
+        path) enter_action=path ;;
+        filename) enter_action=filename ;;
+        dirname) enter_action=dirname ;;
+        symbol) enter_action=symbol ;;
+    esac
+    actions_spec="enter=$enter_action,alt-p=path,alt-f=filename,alt-d=dirname,alt-s=symbol"
+fi
+
+declare -A action_for=()
+declare -A action_label=(
+    [location-vim]='+LINE FILE'
+    [location-code]='-g FILE:LINE'
+    [location-generic]='FILE:LINE'
+    [path]='path'
+    [filename]='filename'
+    [dirname]='directory'
+    [symbol]='symbol'
+    [cd-root]='cd to project root'
+    [open-editor]="open in ${EDITOR:-vi}"
+)
+action_keys=()
+IFS=',' read -r -a action_entries <<<"$actions_spec"
+for entry in "${action_entries[@]}"; do
+    [[ -n $entry ]] || continue
+    key=${entry%%=*}
+    action=${entry#*=}
+    if [[ $key == "$entry" || -z $action ]]; then
+        die "invalid action: $entry"
+    fi
+    if [[ -z ${action_label[$action]+x} ]]; then
+        die "invalid action: $action"
+    fi
+    action_for[$key]=$action
+    action_keys+=("$key")
+done
+[[ -n ${action_for[enter]+x} ]] || die "actions must define enter"
+
+expect_keys=()
+for key in "${action_keys[@]}"; do
+    [[ $key == enter ]] && continue
+    expect_keys+=("$key")
+done
+expect_list=
+if (( ${#expect_keys[@]} )); then
+    expect_list=$(IFS=,; printf '%s' "${expect_keys[*]}")
+fi
+
+header=
+for key in "${action_keys[@]}"; do
+    action=${action_for[$key]}
+    header+="${header:+   }$key: ${action_label[$action]}"
+done
+
 command -v ctags >/dev/null 2>&1 || die "ctags is required"
 command -v fzf >/dev/null 2>&1 || die "fzf is required"
 
@@ -359,19 +467,27 @@ fi
 self=$(self_path)
 self_q=$(printf '%q' "$self")
 
+fzf_args=(
+    --delimiter="$FIELD_SEP"
+    --with-nth=1
+    --nth=1
+    --query="$query"
+    --prompt='symbol> '
+    --reverse
+    --tmux=center,80%,80%
+)
+if [[ -n $expect_list ]]; then
+    fzf_args+=(--expect="$expect_list")
+fi
+fzf_args+=(
+    --header="$header"
+    --preview-window='right,60%,wrap'
+    --preview="$self_q --preview {4} {5}"
+)
+
 selected=$(
     emit_records "$index" |
-        fzf --delimiter="$FIELD_SEP" \
-            --with-nth=1 \
-            --nth=1 \
-            --query="$query" \
-            --prompt='symbol> ' \
-            --reverse \
-            --tmux=center,80%,80% \
-            --expect=alt-p,alt-f,alt-d,alt-s \
-            --header="enter: $format   alt-p: path   alt-f: filename   alt-d: dirname   alt-s: symbol" \
-            --preview-window='right,60%,wrap' \
-            --preview="$self_q --preview {4} {5}"
+        fzf "${fzf_args[@]}"
 ) || {
     status=$?
     # 1: no match, 130: cancelled.
@@ -381,37 +497,27 @@ selected=$(
 
 [[ -n $selected ]] || exit 0
 
-key=
-record=
+key=enter
+record=$selected
 if [[ $selected == *$'\n'* ]]; then
     first=${selected%%$'\n'*}
     rest=${selected#*$'\n'}
-    case $first in
-        alt-p|alt-f|alt-d|alt-s|"")
-            key=$first
-            record=${rest%%$'\n'*}
-            ;;
-        *)
-            record=$first
-            ;;
-    esac
-else
-    record=$selected
+    record=${rest%%$'\n'*}
+    [[ -n $first ]] && key=$first
 fi
 
 [[ -n $record ]] || exit 0
 
-case $key in
-    alt-p) format=path ;;
-    alt-f) format=filename ;;
-    alt-d) format=dirname ;;
-    alt-s) format=symbol ;;
-esac
+action=${action_for[$key]-}
+[[ -n $action ]] || die "unexpected fzf key: $key"
 
 IFS=$FIELD_SEP read -r name kind scope file line <<<"$record"
 target="$root/$file"
 
-if (( open_editor )); then
+if (( open_editor )) || [[ $action == open-editor ]]; then
+    if [[ $action == open-editor ]]; then
+        cd -- "$root" || exit 1
+    fi
     read -r -a editor <<<"${EDITOR:-vi}"
     exec "${editor[@]}" "+$line" "$target"
 fi
@@ -423,13 +529,16 @@ else
 fi
 
 if (( raw_output )); then
-    printf '%s%s%s%s%s%s%s\n' \
-        "$format" "$FIELD_SEP" "$path" "$FIELD_SEP" "$line" "$FIELD_SEP" "$name"
+    printf '%s%s%s%s%s%s%s%s%s\n' \
+        "$action" "$FIELD_SEP" "$path" "$FIELD_SEP" "$line" "$FIELD_SEP" \
+        "$name" "$FIELD_SEP" "$root"
     exit 0
 fi
 
-case $format in
-    full) printf '%s:%s\n' "$path" "$line" ;;
+case $action in
+    location-vim) printf '+%s %q\n' "$line" "$path" ;;
+    location-code) printf -- '-g %q:%s\n' "$path" "$line" ;;
+    location-generic) printf '%s:%s\n' "$path" "$line" ;;
     path) printf '%s\n' "$path" ;;
     filename) printf '%s\n' "${path##*/}" ;;
     dirname)
@@ -438,4 +547,5 @@ case $format in
         printf '%s\n' "$dir"
         ;;
     symbol) printf '%s\n' "$name" ;;
+    cd-root) printf '%s\n' "$root" ;;
 esac

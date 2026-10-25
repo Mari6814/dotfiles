@@ -156,6 +156,7 @@ cleanup_stale_symlink_inventory() {
         elif [[ ! -e "$path" ]]; then
             if rm -- "$path"; then
                 echo "Cleaned up stale symlink: $path"
+                prune_empty_parents "$(dirname -- "$path")"
                 cleaned_up=true
             else
                 echo "Failed to remove: $path" >&2
@@ -204,6 +205,19 @@ resolve_link_path() {
     printf '%s' "$path"
 }
 
+# After unlinking a symlink, remove its parent directory and keep walking up
+# while the directories are empty. Stops at the first rmdir failure (non-empty
+# directory, or a parent that is itself a symlink) and never touches "/".
+prune_empty_parents() {
+    local dir=$1
+    while [[ "$dir" != "/" && "$dir" != "." ]]; do
+        rmdir -- "$dir" 2>/dev/null || break
+        [[ "$VERBOSE_ENABLED" = "true" ]] && echo "$PACKAGE_ICON $dir removed"
+        dir=$(dirname -- "$dir")
+    done
+    return 0
+}
+
 function package_show_files() {
     # Operate on each package provided
     PACKAGE_NAMES="${@:-$PACKAGES_LIST}"
@@ -247,10 +261,12 @@ function package_show_files() {
                     if [ "$VERBOSE_ENABLED" = "true" ]; then
                         rm -v "$DEST" \
                             && echo "$LINK_ICON$BLUE $DEST$RESET" \
+                            && prune_empty_parents "$(dirname -- "$DEST")" \
                             || echo "${RED}Failed to unlink $DEST$LINK_ICON$RESET" >&2
                     else
                         rm "$DEST" \
                             && echo "$LINK_ICON$BLUE $DEST$RESET" \
+                            && prune_empty_parents "$(dirname -- "$DEST")" \
                             || echo "${RED}Failed to unlink $DEST$LINK_ICON$RESET" >&2
                     fi
                 else

@@ -192,14 +192,27 @@ filter_files() {
 }
 
 build_tags() {
-    local root=$1
+    local root=$1 languages lang
+    local -a kind_args=()
+
+    # Heredocs are parser artifacts, not navigable symbols, so disable that
+    # kind per shell language. Only pass the flag for languages this ctags
+    # build actually knows about; otherwise ctags warns and skips the index.
+    languages=$(ctags --list-languages 2>/dev/null) || languages=
+    languages=${languages//$'\n'/ }
+    for lang in Sh Zsh; do
+        if [[ " $languages " == *" $lang "* ]]; then
+            kind_args+=("--kinds-$lang=-h")
+        fi
+    done
+
     (
         cd "$root" || return 1
         list_files "$root" |
             filter_files "$root" |
             tr '\0' '\n' |
             ctags --quiet=yes --sort=yes --excmd=number --fields=+KSnzZ \
-                --kinds-Sh=-h --kinds-Zsh=-h \
+                ${kind_args[@]+"${kind_args[@]}"} \
                 -f - -L -
     )
 }

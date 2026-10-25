@@ -156,6 +156,17 @@ if [[ $- == *i* ]]; then
         fi
     }
 
+    # Run the picker and print one raw record. The query seeds fzf's search.
+    _ctags_navigate_pick() {
+        local actions=$1 query=$2
+
+        if [[ -n $query ]]; then
+            command ctags-navigate --raw --actions "$actions" -- "$query" || return
+        else
+            command ctags-navigate --raw --actions "$actions" || return
+        fi
+    }
+
     _ctags_navigate_insert() {
         local line cmd raw action file line_no name root text
         local query start actions
@@ -180,11 +191,7 @@ if [[ $- == *i* ]]; then
             start=${#line}
         fi
 
-        if [[ -n $query ]]; then
-            raw=$(command ctags-navigate --raw --actions "$actions" -- "$query") || return
-        else
-            raw=$(command ctags-navigate --raw --actions "$actions") || return
-        fi
+        raw=$(_ctags_navigate_pick "$actions" "$query") || return
         [[ -n $raw ]] || return
 
         IFS=$'\x1f' read -r action file line_no name root <<<"$raw"
@@ -193,6 +200,26 @@ if [[ $- == *i* ]]; then
 
         READLINE_LINE="${READLINE_LINE:0:start}${text}${READLINE_LINE:READLINE_POINT}"
         READLINE_POINT=$((start + ${#text}))
+    }
+
+    # Tab completion: fzf picks a symbol with the word being completed as its
+    # initial query, and readline replaces that word with the selected text
+    # (the action's text, e.g. FILE:LINE). Register it per command, e.g.:
+    #     complete -F _ctags_navigate_complete mycommand
+    _ctags_navigate_complete() {
+        local cmd=$1 query=$2 raw action file line_no name root text actions
+
+        COMPREPLY=()
+        actions=$(_ctags_navigate_actions "$cmd")
+
+        raw=$(_ctags_navigate_pick "$actions" "$query") || return
+        [[ -n $raw ]] || return
+
+        IFS=$'\x1f' read -r action file line_no name root <<<"$raw"
+        text=$(_ctags_navigate_text "$action" "$file" "$line_no" "$name") || return
+        [[ -n $text ]] || return
+
+        COMPREPLY=("$text")
     }
 
     bind -x '"\C-x\C-t": _ctags_navigate_insert'

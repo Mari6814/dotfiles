@@ -63,7 +63,7 @@ export LOCAL="$HOME/.local"
 [ -s "$LOCAL/bashrc" ] && \. "$LOCAL/bashrc"
 
 # Dynamically load bashrc modules. Used when other packages want to dynamically extend bashrc without modifying bashrc.
-[ -d "$HOME/bashrc.d" ] && for f in "$HOME/bashrc.d/"*.{bash,sh}; do
+[ -d "$HOME/.bashrc.d" ] && for f in "$HOME/.bashrc.d/"*.{bash,sh}; do
     [ -s "$f" ] && \. "$f"
 done
 

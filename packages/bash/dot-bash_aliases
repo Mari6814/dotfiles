@@ -1,4 +1,3 @@
-#!/bin/bash
 export SOURCED=".bash_aliases@`date +%H%m%S`:$SOURCED"
 
 aalias() {

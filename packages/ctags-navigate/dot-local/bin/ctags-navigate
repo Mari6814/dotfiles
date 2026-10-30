@@ -6,8 +6,7 @@
 # symbol's location. Nothing is written into the project.
 #
 # The ctags-navigate package binds C-x C-t in Bash. The tmux fragment sends
-# that key to the current pane; inside tmux, fzf opens its own popup via
-# --tmux.
+# that key to the current pane.
 #
 # The index is cached under /tmp/ctags-navigate/<cache-key>.tags.
 # Rebuild it with --rebuild.
@@ -487,13 +486,13 @@ fzf_args=(
     --query="$query"
     --prompt='symbol> '
     --reverse
-    --tmux=center,80%,80%
 )
 if [[ -n $expect_list ]]; then
     fzf_args+=(--expect="$expect_list")
 fi
 fzf_args+=(
     --header="$header"
+    --height='30%'
     --preview-window='right,60%,wrap'
     --preview="$self_q --preview {4} {5}"
 )

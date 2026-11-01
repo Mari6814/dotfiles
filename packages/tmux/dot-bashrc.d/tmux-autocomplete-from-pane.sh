@@ -29,13 +29,16 @@ if [ ! -z "${TMUX:-}" ]; then
                     line = $0
                     gsub(/\t/, " ", line)
 
-                    # Quoted single-line strings (keep the quotes)
+                    # Quoted single-line strings: the quoted form and the
+                    # bare content, so both "abc" and abc are offered.
                     s = line
                     while (match(s, /"[^"\\]*(\\.[^"\\]*)*"|'"'"'[^'"'"']*'"'"'/)) {
                         q = substr(s, RSTART, RLENGTH)
                         content = substr(q, 2, length(q) - 2)
-                        if (length(content) >= minlen && content ~ /[[:alnum:]]/)
+                        if (length(content) >= minlen && content ~ /[[:alnum:]]/) {
                             emit(q)
+                            emit(content)
+                        }
                         s = substr(s, RSTART + RLENGTH)
                     }
 

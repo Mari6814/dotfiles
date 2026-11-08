@@ -113,7 +113,7 @@ require("lazy").setup({
             { '<leader>gf', function() require('telescope.builtin').git_files() end, desc = 'Git files' },
         },
     },
-    { 'neovim/nvim-lspconfig' },
+    { 'neovim/nvim-lspconfig', commit = '993d048db0d83d8e8ba3f9cb376456321acdcce3' },
     {
         'tpope/vim-fugitive',
         cmd = {

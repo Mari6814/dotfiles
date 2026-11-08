@@ -1,5 +1,9 @@
 export SOURCED="$BASH_SOURCE@`date +%H%m%S`:$SOURCED"
 
+# Older versions defined a ctags-navigate shell function; drop it so direct
+# CLI use reaches the executable.
+unset -f ctags-navigate 2>/dev/null || true
+
 if [[ $- == *i* ]]; then
     # Resolve single-command aliases (e.g. e='vim'), but not aliases that
     # expand to a command plus arguments (e.g. evim='e ~/.vimrc').
@@ -104,57 +108,9 @@ if [[ $- == *i* ]]; then
         esac
     }
 
-    # True when the invocation has no options and can change the shell's cwd.
-    _ctags_navigate_bare() {
-        local arg seen_end=0
-
-        for arg in "$@"; do
-            (( seen_end )) && continue
-            case $arg in
-                --) seen_end=1 ;;
-                -*) return 1 ;;
-            esac
-        done
-    }
-
-    # Direct invocation: cd to the search root; Alt-o opens the selection.
-    # A child process cannot change the parent shell's directory, so this has
-    # to be a shell function. Internal calls use `command ctags-navigate`.
-    ctags-navigate() {
-        local -a query_args=()
-        local -a editor=()
-        local arg raw action file line_no name root seen_end=0
-
-        if ! _ctags_navigate_bare "$@"; then
-            command ctags-navigate "$@"
-            return
-        fi
-
-        for arg in "$@"; do
-            if (( seen_end )); then
-                query_args+=("$arg")
-                continue
-            fi
-            case $arg in
-                --) seen_end=1 ;;
-                *) query_args+=("$arg") ;;
-            esac
-        done
-
-        raw=$(command ctags-navigate --raw --absolute \
-            --actions 'enter=cd-root,alt-o=open-editor' -- "${query_args[@]}") || return
-        [[ -n $raw ]] || return
-
-        IFS=$'\x1f' read -r action file line_no name root <<<"$raw"
-        [[ -n $root ]] || return
-
-        cd -- "$root" || return
-
-        if [[ $action == open-editor ]]; then
-            read -r -a editor <<<"${EDITOR:-vi}"
-            "${editor[@]}" "+$line_no" "$file"
-        fi
-    }
+    # Direct CLI use is handled by the ctags-navigate executable, which opens
+    # the selection in $EDITOR by default. The helpers below only insert and
+    # complete symbol locations on the command line.
 
     # Run the picker and print one raw record. The query seeds fzf's search.
     _ctags_navigate_pick() {

@@ -117,7 +117,17 @@ require("lazy").setup({
         end
     },
     { 'neovim/nvim-lspconfig' },
-    { 'tpope/vim-fugitive' },
+    {
+        'tpope/vim-fugitive',
+        cmd = {
+            'Git', 'G',
+            'Gadd', 'Gam', 'Gamend', 'Gblame', 'Gcapture', 'Gclog',
+            'Gcommit', 'Gdiffsplit', 'Gdrop', 'Gedit', 'Gfetch', 'Ggrep',
+            'Ghdiffsplit', 'Gitadd', 'Glgrep', 'Gllog', 'Gmerge', 'Gpedit',
+            'Gpull', 'Gpush', 'Gread', 'Grebase', 'Gsplit', 'Gstatus',
+            'Gtabedit', 'Gvdiffsplit', 'Gvsplit', 'Gwrite',
+        },
+    },
     {
       "vimwiki/vimwiki",
       cmd = { "VimwikiIndex", "VimwikiTabIndex", "VimwikiDiaryIndex", "VimwikiMakeDiaryNote", "VimwikiTabMakeDiaryNote", "VimwikiMakeTomorrowDiaryNote" },
@@ -151,15 +161,11 @@ require("lazy").setup({
         }
       end,
     },
-    { 'tpope/vim-dadbod', },
     { 'stevearc/oil.nvim',
         lazy = false, -- required to be able to do `$ nvim .`
         opts = { default_file_explorer = true },
         keys = {
             { "-", "<CMD>Oil<CR>", { desc = "Open parent directory" } },
-        },
-        dependencies={
-            'nvim-tree/nvim-web-devicons'
         },
     },
     {

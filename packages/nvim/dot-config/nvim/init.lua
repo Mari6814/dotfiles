@@ -162,6 +162,12 @@ require("lazy").setup({
             'nvim-tree/nvim-web-devicons'
         },
     },
+    {
+        url = "git@github.com:Mari6814/nvim-ctags-navigate.git",
+        keys = { "<C-]>" },
+        cmd = { "Ctags", "CtagsReferences", "CtagsNavigate", "CtagsGenerate" },
+        opts = {},
+    },
 })
 
 --- $ npm i -g pyright

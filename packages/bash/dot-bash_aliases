@@ -71,7 +71,7 @@ if [ -x /usr/bin/dircolors ]; then
 fi
 
 # Modify the default values for builtins
-aalias ls="ls --color=auto --group-directories-first -CFh"
+aalias ls="ls --color=auto -CFh"
 aalias ll='ls -al' # List all files *with details*, including dotfiles
 aalias la='ls -A' # List all file *names* except . and .., including dotfiles
 aalias l='ls -CF' # shorthand for ls

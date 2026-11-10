@@ -97,29 +97,37 @@ require("lazy").setup({
     -- $ sudo apt install ripgrep fd-find
     -- $ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
     { 'nvim-telescope/telescope.nvim',
+        commit = '1e1bab730218eaf97fce743be3f56e51075928ac',
+        cmd = { 'Telescope' },
         dependencies = {
             'nvim-lua/plenary.nvim',
-            {
-                'nvim-telescope/telescope-fzf-native.nvim',
-                build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release'
-            }
         },
-        init = function ()
-            local builtin = require('telescope.builtin')
-            vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
-            vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
-            vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
-            vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
-            vim.keymap.set('n', '<leader>gb', builtin.git_branches, {})
-            vim.keymap.set('n', '<leader>gs', builtin.git_status, {})
-            vim.keymap.set('n', '<leader>gh', builtin.git_bcommits, {})
-            vim.keymap.set('n', '<leader>gf', builtin.git_files, {})
-        end
+        keys = {
+            { '<leader>ff', function() require('telescope.builtin').find_files() end, desc = 'Find files' },
+            { '<leader>fg', function() require('telescope.builtin').live_grep() end, desc = 'Live grep' },
+            { '<leader>fb', function() require('telescope.builtin').buffers() end, desc = 'Buffers' },
+            { '<leader>fh', function() require('telescope.builtin').help_tags() end, desc = 'Help tags' },
+            { '<leader>gb', function() require('telescope.builtin').git_branches() end, desc = 'Git branches' },
+            { '<leader>gs', function() require('telescope.builtin').git_status() end, desc = 'Git status' },
+            { '<leader>gh', function() require('telescope.builtin').git_bcommits() end, desc = 'Git buffer commits' },
+            { '<leader>gf', function() require('telescope.builtin').git_files() end, desc = 'Git files' },
+        },
     },
-    { 'neovim/nvim-lspconfig' },
-    { 'tpope/vim-fugitive' },
+    { 'neovim/nvim-lspconfig', commit = '993d048db0d83d8e8ba3f9cb376456321acdcce3' },
+    {
+        'tpope/vim-fugitive',
+        cmd = {
+            'Git', 'G',
+            'Gadd', 'Gam', 'Gamend', 'Gblame', 'Gcapture', 'Gclog',
+            'Gcommit', 'Gdiffsplit', 'Gdrop', 'Gedit', 'Gfetch', 'Ggrep',
+            'Ghdiffsplit', 'Gitadd', 'Glgrep', 'Gllog', 'Gmerge', 'Gpedit',
+            'Gpull', 'Gpush', 'Gread', 'Grebase', 'Gsplit', 'Gstatus',
+            'Gtabedit', 'Gvdiffsplit', 'Gvsplit', 'Gwrite',
+        },
+    },
     {
       "vimwiki/vimwiki",
+      commit = "a54a3002e229c4b43d69ced170ff77663a5b2c40",
       cmd = { "VimwikiIndex", "VimwikiTabIndex", "VimwikiDiaryIndex", "VimwikiMakeDiaryNote", "VimwikiTabMakeDiaryNote", "VimwikiMakeTomorrowDiaryNote" },
       event = "BufEnter *.wiki",
       keys = {
@@ -151,16 +159,19 @@ require("lazy").setup({
         }
       end,
     },
-    { 'tpope/vim-dadbod', },
     { 'stevearc/oil.nvim',
+        commit = 'd3733d933833a0e59b813ecec99341527adf0c28',
         lazy = false, -- required to be able to do `$ nvim .`
         opts = { default_file_explorer = true },
         keys = {
             { "-", "<CMD>Oil<CR>", { desc = "Open parent directory" } },
         },
-        dependencies={
-            'nvim-tree/nvim-web-devicons'
-        },
+    },
+    {
+        url = "git@github.com:Mari6814/nvim-ctags-navigate.git",
+        keys = { "<C-]>" },
+        cmd = { "Ctags", "CtagsReferences", "CtagsNavigate", "CtagsGenerate" },
+        opts = {},
     },
 })
 

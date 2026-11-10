@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# ctags-navigate - pick a symbol from the current project and print its location.
+# ctags-navigate - pick a symbol from the current project and open or print
+# its location.
 #
 # Builds an ad-hoc ctags index for the current Git root (or the current
-# directory outside Git) in /tmp, lets fzf pick a symbol, and prints the
-# symbol's location. Nothing is written into the project.
+# directory outside Git) in /tmp, lets fzf pick a symbol, and opens it in
+# $EDITOR or prints its location. Nothing is written into the project.
 #
 # The ctags-navigate package binds C-x C-t in Bash. The tmux fragment sends
 # that key to the current pane.
@@ -41,7 +42,8 @@ usage() {
     cat <<EOF
 Usage: $PROG [OPTIONS] [QUERY...]
 
-Pick a symbol from the current project and print its location.
+Pick a symbol from the current project and open it in \$EDITOR, or print its
+location.
 
 The tags index is built once per project root and cached in
 /tmp/ctags-navigate. Inside a Git repository it contains tracked and untracked
@@ -51,23 +53,28 @@ are never crawled: their symbols belong to their own index. Generated
 directories such as node_modules, .venv, and Composer vendor directories are
 skipped.
 
-With no options in interactive Bash, $PROG changes the current directory to
-the search root. Alt-o in the picker also opens the selection in \$EDITOR.
+By default, pressing Enter in the picker opens the selection in \$EDITOR.
+Passing --format makes Enter print it instead. --non-interactive skips the
+picker and prints every matching location.
 
 Inside fzf (available keys depend on the command being completed):
-  Enter            Context-dependent insertion
+  Enter            Open the selection in \$EDITOR, or print it with --format
   Alt-p            Path only
   Alt-f            Filename only
   Alt-d            Directory only
   Alt-s            Symbol only
-  Alt-o            Direct invocation: open in \$EDITOR
+  Alt-o            Open in \$EDITOR
 
 Options:
   -h, --help       Show this help message and exit.
   -r, --rebuild    Rebuild the cached index before searching.
-      --format FMT Output format: full (default), path, filename, dirname, symbol.
+      --format FMT Output format: full (FILE:LINE), path, filename, dirname,
+                   or symbol. With the picker, prints the selection instead
+                   of opening it.
   -a, --absolute   Print absolute paths.
   -o, --open       Open the selected symbol in \$EDITOR at its line.
+      --non-interactive
+                   Skip the picker and print every matching location.
       --actions SPEC
                    Internal: comma-separated KEY=ACTION list for fzf.
       --raw        Print ACTION<US>PATH<US>LINE<US>SYMBOL<US>ROOT for shell integrations.
@@ -75,7 +82,8 @@ Options:
       --preview FILE LINE
                    Internal: render the fzf preview for FILE at LINE.
 
-Positional arguments are joined into the initial fzf query.
+Positional arguments are joined into the fzf query, or used to filter matches
+with --non-interactive.
 EOF
 }
 
@@ -307,14 +315,90 @@ relative_path() {
     local target="$root/$rel" pwd_phys path
 
     pwd_phys=$(pwd -P)
+    if [[ $target == "$pwd_phys"/* ]]; then
+        printf '%s\n' "${target#"$pwd_phys"/}"
+        return
+    fi
     if command -v realpath >/dev/null 2>&1; then
         path=$(realpath -m -s --relative-to="$pwd_phys" -- "$target")
-    elif [[ $target == "$pwd_phys"/* ]]; then
-        path=${target#"$pwd_phys"/}
     else
         path=$target
     fi
     printf '%s\n' "$path"
+}
+
+# Action name used when printing a location in a given --format.
+format_action() {
+    case $1 in
+        full) printf '%s' location-generic ;;
+        path) printf '%s' path ;;
+        filename) printf '%s' filename ;;
+        dirname) printf '%s' dirname ;;
+        symbol) printf '%s' symbol ;;
+        *) return 1 ;;
+    esac
+}
+
+resolve_path() {
+    local root=$1 file=$2
+    if (( print_absolute )); then
+        printf '%s/%s\n' "$root" "$file"
+    else
+        relative_path "$root" "$file"
+    fi
+}
+
+print_raw_record() {
+    local action=$1 path=$2 line=$3 name=$4 root=$5
+    printf '%s%s%s%s%s%s%s%s%s\n' \
+        "$action" "$FIELD_SEP" "$path" "$FIELD_SEP" "$line" "$FIELD_SEP" \
+        "$name" "$FIELD_SEP" "$root"
+}
+
+print_formatted_record() {
+    local action=$1 path=$2 line=$3 name=$4 dir
+    case $action in
+        location-vim) printf '+%s %q\n' "$line" "$path" ;;
+        location-code) printf -- '-g %q:%s\n' "$path" "$line" ;;
+        location-generic) printf '%s:%s\n' "$path" "$line" ;;
+        path) printf '%s\n' "$path" ;;
+        filename) printf '%s\n' "${path##*/}" ;;
+        dirname)
+            dir=${path%/*}
+            [[ $dir == "$path" ]] && dir=.
+            printf '%s\n' "$dir"
+            ;;
+        symbol) printf '%s\n' "$name" ;;
+        *) return 1 ;;
+    esac
+}
+
+print_record() {
+    local action=$1 root=$2 name=$3 file=$4 line=$5
+    local path
+    path=$(resolve_path "$root" "$file") || return
+    if (( raw_output )); then
+        print_raw_record "$action" "$path" "$line" "$name" "$root"
+    else
+        print_formatted_record "$action" "$path" "$line" "$name"
+    fi
+}
+
+# Non-interactive mode: filter the index with fzf's own matcher, then print
+# every match. --nth=1 limits matching to the symbol name, just like the
+# picker. --tiebreak=index prefers the tags file's sorted order on ties.
+print_matches() {
+    local index=$1 query=$2 action=$3 root=$4
+    local name kind scope file line status=0
+
+    emit_records "$index" |
+        fzf --filter="$query" --delimiter="$FIELD_SEP" --nth=1 \
+            --tiebreak=index |
+        while IFS=$FIELD_SEP read -r name kind scope file line; do
+            print_record "$action" "$root" "$name" "$file" "$line" || exit 1
+        done || status=$?
+
+    return "$status"
 }
 
 self_path() {
@@ -327,8 +411,10 @@ self_path() {
 
 force_rebuild=0
 format=full
+format_set=0
 print_absolute=0
 open_editor=0
+non_interactive=0
 raw_output=0
 actions_spec=""
 query=""
@@ -346,10 +432,12 @@ while (( $# > 0 )); do
         --format)
             (( $# >= 2 )) || die "--format requires an argument"
             format=$2
+            format_set=1
             shift 2
             ;;
         --format=*)
             format=${1#*=}
+            format_set=1
             shift
             ;;
         -a|--absolute)
@@ -367,6 +455,10 @@ while (( $# > 0 )); do
             ;;
         -o|--open)
             open_editor=1
+            shift
+            ;;
+        --non-interactive)
+            non_interactive=1
             shift
             ;;
         --raw)
@@ -407,17 +499,37 @@ case "$format" in
     *) die "invalid format: $format (expected full, path, filename, dirname, or symbol)" ;;
 esac
 
+if (( non_interactive )); then
+    (( open_editor )) && die "--open cannot be used with --non-interactive"
+    [[ -z $actions_spec ]] || die "--actions cannot be used with --non-interactive"
+fi
+
+command -v ctags >/dev/null 2>&1 || die "ctags is required"
+command -v fzf >/dev/null 2>&1 || die "fzf is required"
+
+root=$(resolve_root)
+index=$(index_path "$root")
+
+if (( force_rebuild )) || [[ ! -f $index ]]; then
+    printf '%s: building symbol index for %s\n' "$PROG" "$root" >&2
+    build_index "$root" "$index"
+fi
+
+if (( non_interactive )); then
+    action=$(format_action "$format") || die "invalid format: $format"
+    print_matches "$index" "$query" "$action" "$root" || exit $?
+    exit 0
+fi
+
 # Actions are KEY=ACTION pairs. The shell passes a context-specific list so
 # the fzf modal only offers shortcuts that make sense for the command line.
 if [[ -z $actions_spec ]]; then
-    case $format in
-        full) enter_action=location-generic ;;
-        path) enter_action=path ;;
-        filename) enter_action=filename ;;
-        dirname) enter_action=dirname ;;
-        symbol) enter_action=symbol ;;
-    esac
-    actions_spec="enter=$enter_action,alt-p=path,alt-f=filename,alt-d=dirname,alt-s=symbol"
+    if (( ! format_set || open_editor )); then
+        enter_action=open-editor
+    else
+        enter_action=$(format_action "$format") || die "invalid format: $format"
+    fi
+    actions_spec="enter=$enter_action,alt-o=open-editor,alt-p=path,alt-f=filename,alt-d=dirname,alt-s=symbol"
 fi
 
 declare -A action_for=()
@@ -429,7 +541,6 @@ declare -A action_label=(
     [filename]='filename'
     [dirname]='directory'
     [symbol]='symbol'
-    [cd-root]='cd to project root'
     [open-editor]="open in ${EDITOR:-vi}"
 )
 action_keys=()
@@ -464,17 +575,6 @@ for key in "${action_keys[@]}"; do
     action=${action_for[$key]}
     header+="${header:+   }$key: ${action_label[$action]}"
 done
-
-command -v ctags >/dev/null 2>&1 || die "ctags is required"
-command -v fzf >/dev/null 2>&1 || die "fzf is required"
-
-root=$(resolve_root)
-index=$(index_path "$root")
-
-if (( force_rebuild )) || [[ ! -f $index ]]; then
-    printf '%s: building symbol index for %s\n' "$PROG" "$root" >&2
-    build_index "$root" "$index"
-fi
 
 self=$(self_path)
 self_q=$(printf '%q' "$self")
@@ -526,38 +626,17 @@ action=${action_for[$key]-}
 IFS=$FIELD_SEP read -r name kind scope file line <<<"$record"
 target="$root/$file"
 
+# --raw is used by shell integrations inside command substitutions. It must
+# always return the record and never launch an editor.
+if (( raw_output )); then
+    print_record "$action" "$root" "$name" "$file" "$line"
+    exit 0
+fi
+
 if (( open_editor )) || [[ $action == open-editor ]]; then
-    if [[ $action == open-editor ]]; then
-        cd -- "$root" || exit 1
-    fi
     read -r -a editor <<<"${EDITOR:-vi}"
     exec "${editor[@]}" "+$line" "$target"
 fi
 
-if (( print_absolute )); then
-    path=$target
-else
-    path=$(relative_path "$root" "$file")
-fi
-
-if (( raw_output )); then
-    printf '%s%s%s%s%s%s%s%s%s\n' \
-        "$action" "$FIELD_SEP" "$path" "$FIELD_SEP" "$line" "$FIELD_SEP" \
-        "$name" "$FIELD_SEP" "$root"
-    exit 0
-fi
-
-case $action in
-    location-vim) printf '+%s %q\n' "$line" "$path" ;;
-    location-code) printf -- '-g %q:%s\n' "$path" "$line" ;;
-    location-generic) printf '%s:%s\n' "$path" "$line" ;;
-    path) printf '%s\n' "$path" ;;
-    filename) printf '%s\n' "${path##*/}" ;;
-    dirname)
-        dir=${path%/*}
-        [[ $dir == "$path" ]] && dir=.
-        printf '%s\n' "$dir"
-        ;;
-    symbol) printf '%s\n' "$name" ;;
-    cd-root) printf '%s\n' "$root" ;;
-esac
+print_record "$action" "$root" "$name" "$file" "$line" ||
+    die "cannot print action: $action"

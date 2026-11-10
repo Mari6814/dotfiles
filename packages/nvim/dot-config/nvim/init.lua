@@ -93,7 +93,7 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
     { "shortcuts/no-neck-pain.nvim", commit = "55f69b7ff536303dcd37460d7cbced9691b3f0a2" },
-    { 'nvim-treesitter/nvim-treesitter' },
+    { 'nvim-treesitter/nvim-treesitter', commit = "cf12346a3414fa1b06af75c79faebe7f76df080a" }, -- last commit of the legacy master branch; main is a breaking rewrite
     -- $ sudo apt install ripgrep fd-find
     -- $ git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
     { 'nvim-telescope/telescope.nvim',

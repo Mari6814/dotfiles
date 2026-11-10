@@ -49,6 +49,20 @@ if ! shopt -oq posix; then
     . /usr/share/bash-completion/bash_completion
   elif [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
+  elif [ -f /opt/homebrew/etc/profile.d/bash_completion.sh ]; then
+    # Homebrew formulae drop completions into etc/bash_completion.d, which
+    # bash-completion sources eagerly. Skip them at startup and source each
+    # one on the first Tab for the command of the same name instead.
+    BASH_COMPLETION_COMPAT_IGNORE='*'
+    . /opt/homebrew/etc/profile.d/bash_completion.sh
+    _brew_compat_load() {
+      local cmd=${1##*/}
+      complete -r -- "$cmd"
+      . "/opt/homebrew/etc/bash_completion.d/$cmd" && return 124
+    }
+    for f in /opt/homebrew/etc/bash_completion.d/*; do
+      complete -F _brew_compat_load -o bashdefault -o default -- "${f##*/}"
+    done
   fi
 fi
 
@@ -70,7 +84,12 @@ done
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash --cmd z)"
 
 export FZF_CTRL_R_OPTS="--height=7 --reverse --inline-info"
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+if [ -f ~/.fzf.bash ]; then
+    source ~/.fzf.bash
+elif command -v fzf >/dev/null 2>&1; then
+    # Package-manager installs (Homebrew, newer apt) ship the integration inside the binary
+    eval "$(fzf --bash 2>/dev/null)"
+fi
 
 # Load aliases as a separate module
 [ -s "$HOME/.bash_aliases" ] && \. "$HOME/.bash_aliases"

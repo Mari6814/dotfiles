@@ -25,8 +25,8 @@ FIELD_SEP=$'\x1f'
 # different implementation (e.g. BSD ctags in /usr/bin on macOS).
 CTAGS=${CTAGS_NAVIGATE_CTAGS:-ctags}
 
-# Directory names that are never useful for symbol navigation. Git's ignore
-# rules are applied separately via `git ls-files`. `vendor` is handled
+# Directory names skipped outside Git. Inside Git, `git ls-files` applies the
+# repository's ignore rules instead. Outside Git, `vendor` is handled
 # separately: only Composer-generated vendor directories are skipped.
 DEFAULT_EXCLUDES=(
     .git .hg .svn
@@ -121,14 +121,13 @@ index_path() {
     printf '%s/%s.tags\n' "$STATE_DIR" "$(sha256_hex "$CACHE_VERSION:$1")"
 }
 
-# Print NUL-separated paths relative to the root.
+# Print paths relative to the root, one per line. Run from the root.
 list_files() {
-    local root=$1
     local ex
     local -a prune=()
 
-    if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        git -C "$root" ls-files -z --cached --others --exclude-standard
+    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        git ls-files --cached --others --exclude-standard
         return
     fi
 
@@ -140,65 +139,12 @@ list_files() {
     # Do not descend into nested repositories: their symbols belong to their
     # own index, not to the directory that happens to contain them. A vendor
     # directory is only generated when Composer left autoload.php in it.
-    find "$root" -mindepth 1 -maxdepth "$MAX_DEPTH" \
+    find . -mindepth 1 -maxdepth "$MAX_DEPTH" \
         \( "${prune[@]}" \) -prune -o \
         -type d -name vendor -exec test -e '{}/autoload.php' \; -prune -o \
         -type d -exec test -e '{}/.git' \; -prune -o \
-        -type f -print0
-}
-
-# Drop excluded and generated directories from a NUL-separated path list.
-filter_files() {
-    local root=$1
-    local file rel ex skip part prefix
-    local -a parts
-    local -A generated_vendor=()
-
-    while IFS= read -r -d '' file; do
-        if [[ $root == / ]]; then
-            rel=${file#/}
-        elif [[ $file == "$root"/* ]]; then
-            rel=${file#"$root"/}
-        else
-            rel=${file#./}
-        fi
-
-        skip=0
-        for ex in "${DEFAULT_EXCLUDES[@]}"; do
-            if [[ "/$rel/" == *"/$ex/"* ]]; then
-                skip=1
-                break
-            fi
-        done
-        (( skip )) && continue
-
-        # A vendor directory is only generated when Composer left
-        # autoload.php in it. Cache the decision per vendor directory.
-        if [[ $rel == vendor/* || $rel == */vendor/* ]]; then
-            prefix=
-            IFS=/ read -r -a parts <<<"$rel"
-            for part in "${parts[@]}"; do
-                prefix+=${prefix:+/}$part
-                [[ $part == vendor ]] || continue
-
-                if [[ -z ${generated_vendor[$prefix]+x} ]]; then
-                    if [[ -e $root/$prefix/autoload.php ]]; then
-                        generated_vendor[$prefix]=1
-                    else
-                        generated_vendor[$prefix]=0
-                    fi
-                fi
-
-                if (( generated_vendor[$prefix] )); then
-                    skip=1
-                    break
-                fi
-            done
-        fi
-        (( skip )) && continue
-
-        printf '%s\0' "$rel"
-    done
+        -type f -print |
+        sed 's|^\./||'
 }
 
 build_tags() {
@@ -218,9 +164,7 @@ build_tags() {
 
     (
         cd "$root" || return 1
-        list_files "$root" |
-            filter_files "$root" |
-            tr '\0' '\n' |
+        list_files |
             "$CTAGS" --quiet=yes --sort=yes --excmd=number --fields=+KSnzZ \
                 ${kind_args[@]+"${kind_args[@]}"} \
                 -f - -L -

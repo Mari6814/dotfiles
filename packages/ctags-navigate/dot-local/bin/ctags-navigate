@@ -477,18 +477,36 @@ if [[ -z $actions_spec ]]; then
     actions_spec="enter=$enter_action,alt-o=open-editor,alt-p=path,alt-f=filename,alt-d=dirname,alt-s=symbol"
 fi
 
-declare -A action_for=()
-declare -A action_label=(
-    [location-vim]='+LINE FILE'
-    [location-code]='-g FILE:LINE'
-    [location-generic]='FILE:LINE'
-    [path]='path'
-    [filename]='filename'
-    [dirname]='directory'
-    [symbol]='symbol'
-    [open-editor]="open in ${EDITOR:-vi}"
-)
+# Header label for an action; fails for unknown actions.
+action_label() {
+    case $1 in
+        location-vim) printf '%s' '+LINE FILE' ;;
+        location-code) printf '%s' '-g FILE:LINE' ;;
+        location-generic) printf '%s' 'FILE:LINE' ;;
+        path) printf '%s' path ;;
+        filename) printf '%s' filename ;;
+        dirname) printf '%s' directory ;;
+        symbol) printf '%s' symbol ;;
+        open-editor) printf '%s' "open in ${EDITOR:-vi}" ;;
+        *) return 1 ;;
+    esac
+}
+
+# Action bound to an fzf key; fails for unbound keys. action_keys and
+# action_values are parallel arrays (no associative arrays in bash 3.2).
+action_for() {
+    local i
+    for (( i = 0; i < ${#action_keys[@]}; i++ )); do
+        if [[ ${action_keys[i]} == "$1" ]]; then
+            printf '%s' "${action_values[i]}"
+            return 0
+        fi
+    done
+    return 1
+}
+
 action_keys=()
+action_values=()
 IFS=',' read -r -a action_entries <<<"$actions_spec"
 for entry in "${action_entries[@]}"; do
     [[ -n $entry ]] || continue
@@ -497,13 +515,11 @@ for entry in "${action_entries[@]}"; do
     if [[ $key == "$entry" || -z $action ]]; then
         die "invalid action: $entry"
     fi
-    if [[ -z ${action_label[$action]+x} ]]; then
-        die "invalid action: $action"
-    fi
-    action_for[$key]=$action
+    action_label "$action" >/dev/null || die "invalid action: $action"
     action_keys+=("$key")
+    action_values+=("$action")
 done
-[[ -n ${action_for[enter]+x} ]] || die "actions must define enter"
+action_for enter >/dev/null || die "actions must define enter"
 
 expect_keys=()
 for key in "${action_keys[@]}"; do
@@ -517,8 +533,8 @@ fi
 
 header=
 for key in "${action_keys[@]}"; do
-    action=${action_for[$key]}
-    header+="${header:+   }$key: ${action_label[$action]}"
+    action=$(action_for "$key")
+    header+="${header:+   }$key: $(action_label "$action")"
 done
 
 self=$(self_path)
@@ -565,8 +581,7 @@ fi
 
 [[ -n $record ]] || exit 0
 
-action=${action_for[$key]-}
-[[ -n $action ]] || die "unexpected fzf key: $key"
+action=$(action_for "$key") || die "unexpected fzf key: $key"
 
 IFS=$FIELD_SEP read -r name kind scope file line <<<"$record"
 target="$root/$file"

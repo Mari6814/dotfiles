@@ -134,7 +134,6 @@
 	default = current
 [pull]
     default = current
-    rebase = true
 [rebase]
     autoStash = true
 [rerere]

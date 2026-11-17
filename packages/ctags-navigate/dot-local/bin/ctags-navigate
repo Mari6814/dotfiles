@@ -21,6 +21,9 @@ MAX_DEPTH=5
 # Unit separator: fzf's and read's default tab handling would collapse empty
 # fields (scope is often empty), shifting the following columns.
 FIELD_SEP=$'\x1f'
+# Universal Ctags executable. Override when the first `ctags` on PATH is a
+# different implementation (e.g. BSD ctags in /usr/bin on macOS).
+CTAGS=${CTAGS_NAVIGATE_CTAGS:-ctags}
 
 # Directory names that are never useful for symbol navigation. Git's ignore
 # rules are applied separately via `git ls-files`. `vendor` is handled
@@ -205,7 +208,7 @@ build_tags() {
     # Heredocs are parser artifacts, not navigable symbols, so disable that
     # kind per shell language. Only pass the flag for languages this ctags
     # build actually knows about; otherwise ctags warns and skips the index.
-    languages=$(ctags --list-languages 2>/dev/null) || languages=
+    languages=$("$CTAGS" --list-languages 2>/dev/null) || languages=
     languages=${languages//$'\n'/ }
     for lang in Sh Zsh; do
         if [[ " $languages " == *" $lang "* ]]; then
@@ -218,7 +221,7 @@ build_tags() {
         list_files "$root" |
             filter_files "$root" |
             tr '\0' '\n' |
-            ctags --quiet=yes --sort=yes --excmd=number --fields=+KSnzZ \
+            "$CTAGS" --quiet=yes --sort=yes --excmd=number --fields=+KSnzZ \
                 ${kind_args[@]+"${kind_args[@]}"} \
                 -f - -L -
     )
@@ -504,7 +507,7 @@ if (( non_interactive )); then
     [[ -z $actions_spec ]] || die "--actions cannot be used with --non-interactive"
 fi
 
-command -v ctags >/dev/null 2>&1 || die "ctags is required"
+command -v "$CTAGS" >/dev/null 2>&1 || die "ctags is required: $CTAGS"
 command -v fzf >/dev/null 2>&1 || die "fzf is required"
 
 root=$(resolve_root)

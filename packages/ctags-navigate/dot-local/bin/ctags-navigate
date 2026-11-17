@@ -266,11 +266,9 @@ relative_path() {
         printf '%s\n' "${target#"$pwd_phys"/}"
         return
     fi
-    if command -v realpath >/dev/null 2>&1; then
-        path=$(realpath -m -s --relative-to="$pwd_phys" -- "$target")
-    else
+    # GNU realpath only; BSD realpath (macOS) has no --relative-to.
+    path=$(realpath -m -s --relative-to="$pwd_phys" -- "$target" 2>/dev/null) ||
         path=$target
-    fi
     printf '%s\n' "$path"
 }
 

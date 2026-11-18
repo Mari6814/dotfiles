@@ -140,4 +140,4 @@ exec podman run -it \
   --env XDG_DATA_HOME=/home/opencode/.local/share \
   --env XDG_STATE_HOME=/home/opencode/.local/state \
   --workdir /workspace \
-  ghcr.io/anomalyco/opencode
+  ghcr.io/anomalyco/opencode:2.3.2

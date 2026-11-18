@@ -16,17 +16,37 @@ Options:
   -h, --help      Show this help message and exit.
   --gpu           Expose the host GPU to the container via CDI
                   (adds --device nvidia.com/gpu=all to podman run).
+  --image IMAGE   Podman image to run OpenCode from (default:
+                  ghcr.io/anomalyco/opencode:2.3.2). Can also be set
+                  via AI_ISOLATION_CHAMBER_IMAGE.
+  --containerfile=FILE
+                  Build this Containerfile and run the resulting
+                  image. The build context is the directory containing
+                  the Containerfile. Layers are cached, so rebuilding
+                  is incremental.
+  --tag NAME      Tag for the image built from --containerfile
+                  (default: chamber-<context-dir-name>).
 
 Examples:
   $(basename "$0")
   $(basename "$0") ~/projects/myapp
   $(basename "$0") testtest/ myapp/ README.md
   $(basename "$0") --gpu ~/projects/myapp
+  $(basename "$0") --gpu --image intelligence-chamber ~/projects/intelligence
+  $(basename "$0") --gpu \
+      --containerfile ~/projects/intelligence/chamber/Containerfile \
+      --tag intelligence-chamber \
+      ~/projects/intelligence
 EOF
 }
 
 PATHS=()
 GPU=0
+DEFAULT_IMAGE="ghcr.io/anomalyco/opencode:2.3.2"
+IMAGE="${AI_ISOLATION_CHAMBER_IMAGE:-$DEFAULT_IMAGE}"
+IMAGE_EXPLICIT=0
+CONTAINERFILE=""
+TAG=""
 while (( $# > 0 )); do
   case "$1" in
     -h|--help)
@@ -36,6 +56,31 @@ while (( $# > 0 )); do
     --gpu)
       GPU=1
       shift
+      ;;
+    --image)
+      if [[ -z "${2:-}" ]]; then
+        echo "Error: --image requires a value" >&2
+        exit 1
+      fi
+      IMAGE="$2"
+      IMAGE_EXPLICIT=1
+      shift 2
+      ;;
+    --containerfile)
+      if [[ -z "${2:-}" ]]; then
+        echo "Error: --containerfile requires a value" >&2
+        exit 1
+      fi
+      CONTAINERFILE="$2"
+      shift 2
+      ;;
+    --tag)
+      if [[ -z "${2:-}" ]]; then
+        echo "Error: --tag requires a value" >&2
+        exit 1
+      fi
+      TAG="$2"
+      shift 2
       ;;
     --)
       shift
@@ -53,6 +98,16 @@ while (( $# > 0 )); do
       ;;
   esac
 done
+
+if [[ -n "$TAG" && -z "$CONTAINERFILE" ]]; then
+  echo "Error: --tag requires --containerfile" >&2
+  exit 1
+fi
+
+if (( IMAGE_EXPLICIT )) && [[ -n "$CONTAINERFILE" ]]; then
+  echo "Error: --image and --containerfile are mutually exclusive" >&2
+  exit 1
+fi
 
 SESSION_ROOT="${TMPDIR:-/tmp}/ai-isolation-chamber"
 mkdir -p -- "$SESSION_ROOT"
@@ -131,6 +186,27 @@ if (( GPU )); then
   GPU_FLAGS=(--device nvidia.com/gpu=all)
 fi
 
+if [[ -n "$CONTAINERFILE" ]]; then
+  if [[ ! -f "$CONTAINERFILE" ]]; then
+    echo "Error: Containerfile does not exist: $CONTAINERFILE" >&2
+    exit 1
+  fi
+  CONTAINERFILE="$(realpath -e -- "$CONTAINERFILE")"
+  CONTEXT_DIR="$(dirname -- "$CONTAINERFILE")"
+  if [[ -z "$TAG" ]]; then
+    TAG="chamber-$(basename -- "$CONTEXT_DIR" \
+      | sed 's/[^A-Za-z0-9._-]/-/g' | tr '[:upper:]' '[:lower:]' | cut -c1-32)"
+    if [[ -z "${TAG#chamber-}" || "${TAG#chamber-}" == "." || "${TAG#chamber-}" == ".." ]]; then
+      TAG="chamber"
+    fi
+  fi
+  echo "Building image: $TAG"
+  podman build -f "$CONTAINERFILE" -t "$TAG" "$CONTEXT_DIR"
+  IMAGE="$TAG"
+fi
+
+echo "Image: $IMAGE"
+
 exec podman run -it \
   --userns=keep-id \
   "${GPU_FLAGS[@]}" \
@@ -140,4 +216,4 @@ exec podman run -it \
   --env XDG_DATA_HOME=/home/opencode/.local/share \
   --env XDG_STATE_HOME=/home/opencode/.local/state \
   --workdir /workspace \
-  ghcr.io/anomalyco/opencode:2.3.2
+  "$IMAGE"

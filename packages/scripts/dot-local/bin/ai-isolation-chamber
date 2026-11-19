@@ -16,6 +16,9 @@ Options:
   -h, --help      Show this help message and exit.
   --gpu           Expose the host GPU to the container via CDI
                   (adds --device nvidia.com/gpu=all to podman run).
+  --persistent    Store session state under XDG_STATE_HOME
+                  (default ~/.local/state) instead of /tmp,
+                  so it survives reboots and tmp cleanup.
   --image IMAGE   Podman image to run OpenCode from (default:
                   ghcr.io/anomalyco/opencode:2.3.2). Can also be set
                   via AI_ISOLATION_CHAMBER_IMAGE.
@@ -42,6 +45,7 @@ EOF
 
 PATHS=()
 GPU=0
+PERSISTENT=0
 DEFAULT_IMAGE="ghcr.io/anomalyco/opencode:2.3.2"
 IMAGE="${AI_ISOLATION_CHAMBER_IMAGE:-$DEFAULT_IMAGE}"
 IMAGE_EXPLICIT=0
@@ -55,6 +59,10 @@ while (( $# > 0 )); do
       ;;
     --gpu)
       GPU=1
+      shift
+      ;;
+    --persistent)
+      PERSISTENT=1
       shift
       ;;
     --image)
@@ -109,7 +117,11 @@ if (( IMAGE_EXPLICIT )) && [[ -n "$CONTAINERFILE" ]]; then
   exit 1
 fi
 
-SESSION_ROOT="${TMPDIR:-/tmp}/ai-isolation-chamber"
+if (( PERSISTENT )); then
+  SESSION_ROOT="${XDG_STATE_HOME:-$HOME/.local/state}/ai-isolation-chamber"
+else
+  SESSION_ROOT="${TMPDIR:-/tmp}/ai-isolation-chamber"
+fi
 mkdir -p -- "$SESSION_ROOT"
 chmod 700 -- "$SESSION_ROOT"
 
